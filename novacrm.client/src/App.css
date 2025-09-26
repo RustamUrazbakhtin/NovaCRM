@@ -9,3 +9,11 @@ th, td {
     padding-left: 1rem;
     padding-right: 1rem;
 }
+
+.app-container {
+    display: flex;
+    justify-content: center; /* горизонтально */
+    align-items: center; /* вертикально */
+    height: 100vh; /* во всю высоту окна */
+    background: linear-gradient(to bottom right, #f6f9fc, #e9eff5);
+}
