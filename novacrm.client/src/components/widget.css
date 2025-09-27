@@ -1,0 +1,35 @@
+.nx-widget {
+    background: color-mix(in oklab,#fff 92%, transparent);
+    backdrop-filter: blur(16px);
+    border: 1px solid color-mix(in oklab,#000 10%, transparent);
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow: 0 8px 26px rgba(0,0,0,.08);
+    width: 100%;
+}
+
+.dark .nx-widget {
+    background: color-mix(in oklab,#0b1220 86%, transparent);
+    border-color: color-mix(in oklab,#fff 12%, transparent);
+}
+
+.nx-widget-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+    .nx-widget-head h4 {
+        margin: 0;
+        font-size: 15px;
+    }
+
+.nx-widget-foot {
+    font-size: 12px;
+    opacity: .6;
+}
+
+.nx-widget-body {
+    margin-top: 10px;
+}
