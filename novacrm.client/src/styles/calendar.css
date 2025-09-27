@@ -1,0 +1,71 @@
+.mc {
+    display: grid;
+    gap: 10px
+}
+
+.mc-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between
+}
+
+.mc-title {
+    font-weight: 800;
+    font-size: 18px
+}
+
+.mc-grid {
+    display: grid;
+    grid-template-columns: repeat(7,1fr);
+    grid-template-rows: repeat(5, calc((100% - (5 - 1) * 8px) / 5));
+    gap: 8px;
+    height: 100%;
+    width: 100%;
+}
+
+.mc-dayname {
+    font-size: 12px;
+    opacity: .6;
+    text-align: center
+}
+
+.mc-cell {
+    background: color-mix(in oklab,#000 6%, transparent);
+    border: 1px solid color-mix(in oklab,#000 10%, transparent);
+    border-radius: 12px;
+    padding: 8px;
+    min-height: unset;
+    display: flex;
+    flex-direction: column;
+    gap: 6px
+}
+
+.dark .mc-cell {
+    background: color-mix(in oklab,#fff 6%, transparent);
+    border-color: color-mix(in oklab,#fff 12%, transparent)
+}
+
+.mc-date {
+    font-size: 12px;
+    opacity: .75
+}
+
+.mc-today .mc-date {
+    color: var(--accent);
+    font-weight: 800
+}
+
+.mc-dot {
+    height: 6px;
+    width: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg,var(--accent),var(--accent-2))
+}
+
+.mc-event {
+    font-size: 12px;
+    border-left: 3px solid var(--accent);
+    padding-left: 6px;
+    line-height: 1.2;
+    opacity: .95
+}

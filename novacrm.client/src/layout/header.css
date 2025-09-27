@@ -1,0 +1,146 @@
+.nx-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    backdrop-filter: blur(18px);
+    background: color-mix(in oklab, var(--bg, #ffffff) 80%, transparent);
+    border-bottom: 1px solid color-mix(in oklab, #000 8%, transparent);
+}
+
+.dark .nx-header {
+    --bg: #0b1220;
+    border-bottom-color: color-mix(in oklab, #fff 10%, transparent);
+}
+
+.nx-left {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.nx-logo {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-weight: 700;
+}
+
+.nx-mark {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: linear-gradient(180deg,#4f46e5,#3b82f6);
+    color: #fff;
+    font-size: 12px;
+}
+
+.nx-divider {
+    width: 1px;
+    height: 18px;
+    background: color-mix(in oklab,#000 12%,transparent);
+}
+
+.dark .nx-divider {
+    background: color-mix(in oklab,#fff 18%,transparent);
+}
+
+.nx-breadcrumb {
+    opacity: .7;
+}
+
+.nx-right {
+    position: relative;
+}
+
+.nx-user {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 10px;
+}
+
+    .nx-user:hover {
+        background: color-mix(in oklab,#000 6%,transparent);
+    }
+
+.dark .nx-user:hover {
+    background: color-mix(in oklab,#fff 10%,transparent);
+}
+
+.nx-user img {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+}
+
+.nx-user-name {
+    opacity: .8;
+    font-weight: 600;
+}
+
+.nx-menu {
+    position: absolute;
+    right: 0;
+    margin-top: 8px;
+    min-width: 220px;
+    background: color-mix(in oklab, var(--bg,#fff) 92%, transparent);
+    backdrop-filter: blur(18px);
+    border: 1px solid color-mix(in oklab,#000 10%,transparent);
+    border-radius: 14px;
+    padding: 8px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.12);
+}
+
+.dark .nx-menu {
+    border-color: color-mix(in oklab,#fff 12%,transparent);
+}
+
+.nx-menu button {
+    width: 100%;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+    .nx-menu button:hover {
+        background: color-mix(in oklab,#000 6%,transparent);
+    }
+
+.dark .nx-menu button:hover {
+    background: color-mix(in oklab,#fff 10%,transparent);
+}
+
+.nx-sub {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    opacity: .8;
+    padding: 6px 10px;
+}
+
+    .nx-sub select {
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        padding: 6px;
+        background: transparent;
+        color: inherit;
+    }
+
+.dark .nx-sub select {
+    border-color: #334155;
+}
