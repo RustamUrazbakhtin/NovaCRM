@@ -120,6 +120,7 @@
 
 .mc-grid > *:nth-child(7n) {
     border-right: none;
+
 }
 
 .mc-dayname {
@@ -262,7 +263,6 @@
 .mc-week::-webkit-scrollbar {
     height: 6px;
 }
-
 
 .mc-week-times {
     display: flex;

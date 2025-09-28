@@ -255,6 +255,122 @@ export default function MonthCalendar({ events = [] }: Props) {
             };
         }
 
+        if (view === "month") {
+            const firstDay = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+            const start = startOfWeek(firstDay);
+            const lastDay = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+            const offset = (firstDay.getDay() + 6) % 7;
+            const totalCells = Math.ceil((offset + lastDay.getDate()) / 7) * 7;
+            const cells = Array.from({ length: totalCells }, (_, index) => {
+                const date = new Date(start);
+                date.setDate(start.getDate() + index);
+                const iso = date.toISOString().slice(0, 10);
+                const bucket = eventsByDate.get(iso) ?? [];
+                return {
+                    iso,
+                    day: date.getDate(),
+                    isToday: iso === todayISO,
+                    isCurrentMonth: date.getMonth() === cursor.getMonth(),
+                    events: bucket,
+                };
+            });
+
+            return {
+                label: cursor.toLocaleString(undefined, {
+                    month: "long",
+                    year: "numeric",
+                }),
+                type: "month" as const,
+                dayNames: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+                cells,
+            };
+        }
+
+        if (view === "week") {
+            const weekStart = startOfWeek(cursor);
+            const hours = Array.from(
+                { length: WEEK_END_HOUR - WEEK_START_HOUR + 1 },
+                (_, index) => {
+                    const hour = WEEK_START_HOUR + index;
+                    return {
+                        minutes: hour * 60,
+                        label: `${String(hour).padStart(2, "0")}:00`,
+                    };
+                },
+            );
+
+            const weekDays = Array.from({ length: 7 }, (_, index) => {
+                const date = new Date(weekStart);
+                date.setDate(weekStart.getDate() + index);
+                const iso = date.toISOString().slice(0, 10);
+                const bucket = eventsByDate.get(iso) ?? [];
+
+                const enrichedEvents = bucket
+                    .map((event) => {
+                        const startCandidate =
+                            extractTimeMinutes(event.start) ??
+                            extractTimeMinutes(event.time) ??
+                            extractTimeMinutes(event.title);
+                        const rawStart = startCandidate ?? WEEK_START_MINUTES;
+                        const startMinutes = clamp(rawStart, WEEK_START_MINUTES, WEEK_END_MINUTES - MIN_EVENT_DURATION_MIN);
+                        const startWasClamped = rawStart !== startMinutes;
+
+                        const endCandidate = extractTimeMinutes(event.end);
+                        const rawEnd = endCandidate ?? (startCandidate ?? WEEK_START_MINUTES) + MIN_EVENT_DURATION_MIN;
+                        const minEnd = startMinutes + MIN_EVENT_DURATION_MIN;
+                        const endMinutes = clamp(Math.max(rawEnd, minEnd), minEnd, WEEK_END_MINUTES);
+                        const endWasClamped = rawEnd !== endMinutes;
+
+                        const startLabel =
+                            startWasClamped
+                                ? formatMinutes(startMinutes)
+                                : event.start ?? event.time ?? formatMinutes(startMinutes);
+                        const endLabel =
+                            endWasClamped
+                                ? formatMinutes(endMinutes)
+                                : event.end ?? (event.start || event.time ? formatMinutes(endMinutes) : undefined);
+
+                        return {
+                            ...event,
+                            startMinutes,
+                            endMinutes,
+                            startLabel,
+                            endLabel: endLabel ?? formatMinutes(endMinutes),
+                        };
+                    })
+                    .sort((a, b) => a.startMinutes - b.startMinutes);
+
+                return {
+                    iso,
+                    label: date.toLocaleDateString(undefined, {
+                        weekday: "short",
+                    }),
+                    display: date.toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                    }),
+                    isToday: iso === todayISO,
+                    events: enrichedEvents,
+                };
+            });
+
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+
+            return {
+                label: `${weekStart.toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                })} – ${weekEnd.toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                })}`,
+                type: "week" as const,
+                hours,
+                days: weekDays,
+            };
+        }
+
         const year = cursor.getFullYear();
         const months = Array.from({ length: 12 }, (_, index) => {
             const monthDate = new Date(year, index, 1);
