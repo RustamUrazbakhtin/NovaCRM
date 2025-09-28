@@ -29,12 +29,13 @@ export default function Dashboard() {
     const tomorrowISO = new Date(today.getTime() + 86400000).toISOString().slice(0, 10);
 
     const events = [
-        { date: todayISO, title: "Haircut — Anna", start: "12:00", end: "12:45" },
-        { date: todayISO, title: "Nails — Kate", start: "15:30", end: "16:30" },
-        { date: todayISO, title: "Brows — Lina", start: "17:30", end: "18:15" },
-        { date: todayISO, title: "Balayage — Mia", start: "18:15", end: "19:30" },
-        { date: tomorrowISO, title: "Coloring — Maria", start: "11:00", end: "12:00" },
-        { date: tomorrowISO, title: "Massage — Leo", start: "16:00", end: "17:00" },
+        { date: todayISO, title: "Haircut — Anna", start: "12:00", end: "12:45", master: "Alsu" },
+        { date: todayISO, title: "Nails — Kate", start: "15:30", end: "16:30", master: "Julia" },
+        { date: todayISO, title: "Brows — Lina", start: "17:30", end: "18:15", master: "Mia" },
+        { date: todayISO, title: "Balayage — Mia", start: "18:15", end: "19:30", master: "Aigul" },
+        { date: tomorrowISO, title: "Coloring — Maria", start: "11:00", end: "12:00", master: "Alsu" },
+        { date: tomorrowISO, title: "Massage — Leo", start: "16:00", end: "17:00", master: "Mia" },
+
     ];
 
     const open = (s: string) => alert(s);

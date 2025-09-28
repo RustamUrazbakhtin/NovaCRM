@@ -18,6 +18,8 @@ export type CalendarEvent = {
 
 type CalendarView = "month" | "week" | "year";
 
+const DEFAULT_STAFF = ["Alsu", "Mia", "Julia", "Aigul"];
+
 type Props = {
     events?: CalendarEvent[];
 };
@@ -172,6 +174,131 @@ export default function MonthCalendar({ events = [] }: Props) {
                 },
             );
 
+            const collectedStaff = new Set<string>();
+            const weekDays = Array.from({ length: 7 }, (_, index) => {
+                const date = new Date(weekStart);
+                date.setDate(weekStart.getDate() + index);
+                const iso = date.toISOString().slice(0, 10);
+                const bucket = eventsByDate.get(iso) ?? [];
+
+                const enrichedEvents = bucket
+                    .map((event) => {
+                        if (event.master) {
+                            collectedStaff.add(event.master);
+                        }
+                        const startCandidate =
+                            extractTimeMinutes(event.start) ??
+                            extractTimeMinutes(event.time) ??
+                            extractTimeMinutes(event.title);
+                        const rawStart = startCandidate ?? WEEK_START_MINUTES;
+                        const startMinutes = clamp(rawStart, WEEK_START_MINUTES, WEEK_END_MINUTES - MIN_EVENT_DURATION_MIN);
+                        const startWasClamped = rawStart !== startMinutes;
+
+                        const endCandidate = extractTimeMinutes(event.end);
+                        const rawEnd = endCandidate ?? (startCandidate ?? WEEK_START_MINUTES) + MIN_EVENT_DURATION_MIN;
+                        const minEnd = startMinutes + MIN_EVENT_DURATION_MIN;
+                        const endMinutes = clamp(Math.max(rawEnd, minEnd), minEnd, WEEK_END_MINUTES);
+                        const endWasClamped = rawEnd !== endMinutes;
+
+                        const startLabel =
+                            startWasClamped
+                                ? formatMinutes(startMinutes)
+                                : event.start ?? event.time ?? formatMinutes(startMinutes);
+                        const endLabel =
+                            endWasClamped
+                                ? formatMinutes(endMinutes)
+                                : event.end ?? (event.start || event.time ? formatMinutes(endMinutes) : undefined);
+
+                        return {
+                            ...event,
+                            startMinutes,
+                            endMinutes,
+                            startLabel,
+                            endLabel: endLabel ?? formatMinutes(endMinutes),
+                        };
+                    })
+                    .sort((a, b) => a.startMinutes - b.startMinutes);
+
+                return {
+                    iso,
+                    label: date.toLocaleDateString(undefined, {
+                        weekday: "short",
+                    }),
+                    display: date.toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                    }),
+                    isToday: iso === todayISO,
+                    events: enrichedEvents,
+                };
+            });
+
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+
+            const staff = [...DEFAULT_STAFF, ...Array.from(collectedStaff)].filter(
+                (name, index, source) => source.indexOf(name) === index,
+            );
+
+            return {
+                label: `${weekStart.toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                })} – ${weekEnd.toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                })}`,
+                type: "week" as const,
+                hours,
+                days: weekDays,
+                staff,
+            };
+        }
+
+        if (view === "month") {
+            const firstDay = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+            const start = startOfWeek(firstDay);
+            const lastDay = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+            const offset = (firstDay.getDay() + 6) % 7;
+            const totalCells = Math.ceil((offset + lastDay.getDate()) / 7) * 7;
+            const cells = Array.from({ length: totalCells }, (_, index) => {
+                const date = new Date(start);
+                date.setDate(start.getDate() + index);
+                const iso = date.toISOString().slice(0, 10);
+                const bucket = eventsByDate.get(iso) ?? [];
+                return {
+                    iso,
+                    day: date.getDate(),
+                    isToday: iso === todayISO,
+                    isCurrentMonth: date.getMonth() === cursor.getMonth(),
+                    events: bucket,
+                };
+            });
+
+            return {
+                label: cursor.toLocaleString(undefined, {
+                    month: "long",
+                    year: "numeric",
+                }),
+                type: "month" as const,
+                dayNames: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+                cells,
+            };
+        }
+
+        if (view === "week") {
+            const weekStart = startOfWeek(cursor);
+            const hours = Array.from(
+                { length: WEEK_END_HOUR - WEEK_START_HOUR + 1 },
+                (_, index) => {
+                    const hour = WEEK_START_HOUR + index;
+                    return {
+                        minutes: hour * 60,
+                        label: `${String(hour).padStart(2, "0")}:00`,
+                    };
+                },
+            );
+
             const weekDays = Array.from({ length: 7 }, (_, index) => {
                 const date = new Date(weekStart);
                 date.setDate(weekStart.getDate() + index);
@@ -276,7 +403,8 @@ export default function MonthCalendar({ events = [] }: Props) {
 
     const getMonthEventLabel = (event: CalendarEvent) => {
         const start = event.start ?? event.time;
-        return start ? `${start} · ${event.title}` : event.title;
+        const master = event.master ? `${event.master} — ` : "";
+        return start ? `${start} · ${master}${event.title}` : `${master}${event.title}`;
     };
 
     return (
@@ -350,11 +478,14 @@ export default function MonthCalendar({ events = [] }: Props) {
                             >
                                 <div className="mc-date">{cell.day}</div>
                                 <div className="mc-events">
-                                    {visibleEvents.map((event, index) => (
-                                        <span key={index} className="mc-pill" title={event.title}>
-                                            {getMonthEventLabel(event)}
-                                        </span>
-                                    ))}
+                                    {visibleEvents.map((event, index) => {
+                                        const label = getMonthEventLabel(event);
+                                        return (
+                                            <span key={index} className="mc-pill" title={label}>
+                                                {label}
+                                            </span>
+                                        );
+                                    })}
                                     {remaining > 0 && (
                                         <span className="mc-more" title={`${remaining} more event(s)`}>
                                             +{remaining}
@@ -368,66 +499,80 @@ export default function MonthCalendar({ events = [] }: Props) {
             )}
 
             {data.type === "week" && (
-                <div className="mc-week" role="grid">
-                    <div className="mc-week-times" aria-hidden="true">
-                        <div className="mc-week-time-spacer" />
-                        {data.hours.map((hour) => (
-                            <div key={hour.minutes} className="mc-week-time">
-                                {hour.label}
-                            </div>
+                <>
+                    <div className="mc-week-staff" role="list">
+                        {data.staff.map((member) => (
+                            <span key={member} className="mc-week-staff-pill" role="listitem">
+                                {member}
+                            </span>
                         ))}
                     </div>
 
-                    {data.days.map((day) => (
-                        <div
-                            key={day.iso}
-                            className={`mc-week-day ${day.isToday ? "is-today" : ""}`}
-                            role="gridcell"
-                        >
-                            <header className="mc-week-head">
-                                <span className="mc-week-label">{day.label}</span>
-                                <span className="mc-week-date">{day.display}</span>
-                            </header>
-
-                            <div className="mc-week-track">
-                                <div className="mc-week-gridlines">
-                                    {data.hours.slice(1).map((hour, index) => (
-                                        <span
-                                            key={hour.minutes}
-                                            className="mc-week-gridline"
-                                            style={{
-                                                top: `${((index + 1) / (data.hours.length - 1)) * 100}%`,
-                                            }}
-                                        />
-                                    ))}
+                    <div className="mc-week" role="grid">
+                        <div className="mc-week-times" aria-hidden="true">
+                            <div className="mc-week-time-spacer" />
+                            {data.hours.map((hour) => (
+                                <div key={hour.minutes} className="mc-week-time">
+                                    {hour.label}
                                 </div>
-
-                                {day.events.map((event, index) => {
-                                    const offsetTop = ((event.startMinutes - WEEK_START_MINUTES) / WEEK_RANGE_MINUTES) * 100;
-                                    const height = ((event.endMinutes - event.startMinutes) / WEEK_RANGE_MINUTES) * 100;
-
-                                    return (
-                                        <article
-                                            key={index}
-                                            className="mc-week-event"
-                                            style={{
-                                                top: `${offsetTop}%`,
-                                                height: `${height}%`,
-                                            }}
-                                            title={`${event.startLabel} – ${event.endLabel}: ${event.title}`}
-                                        >
-                                            <span className="mc-week-event-time">
-                                                {event.startLabel}
-                                                {event.endLabel ? ` – ${event.endLabel}` : ""}
-                                            </span>
-                                            <span className="mc-week-event-title">{event.title}</span>
-                                        </article>
-                                    );
-                                })}
-                            </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
+
+                        {data.days.map((day) => (
+                            <div
+                                key={day.iso}
+                                className={`mc-week-day ${day.isToday ? "is-today" : ""}`}
+                                role="gridcell"
+                            >
+                                <header className="mc-week-head">
+                                    <span className="mc-week-label">{day.label}</span>
+                                    <span className="mc-week-date">{day.display}</span>
+                                </header>
+
+                                <div className="mc-week-track">
+                                    <div className="mc-week-gridlines">
+                                        {data.hours.slice(1).map((hour, index) => (
+                                            <span
+                                                key={hour.minutes}
+                                                className="mc-week-gridline"
+                                                style={{
+                                                    top: `${((index + 1) / (data.hours.length - 1)) * 100}%`,
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    {day.events.map((event, index) => {
+                                        const offsetTop = ((event.startMinutes - WEEK_START_MINUTES) / WEEK_RANGE_MINUTES) * 100;
+                                        const height = ((event.endMinutes - event.startMinutes) / WEEK_RANGE_MINUTES) * 100;
+                                        const masterHint = event.master ? ` (${event.master})` : "";
+
+                                        return (
+                                            <article
+                                                key={index}
+                                                className="mc-week-event"
+                                                style={{
+                                                    top: `${offsetTop}%`,
+                                                    height: `${height}%`,
+                                                }}
+                                                title={`${event.startLabel} – ${event.endLabel}: ${event.title}${masterHint}`}
+                                            >
+                                                <span className="mc-week-event-time">
+                                                    {event.startLabel}
+                                                    {event.endLabel ? ` – ${event.endLabel}` : ""}
+                                                </span>
+                                                {event.master && (
+                                                    <span className="mc-week-event-master">{event.master}</span>
+                                                )}
+                                                <span className="mc-week-event-title">{event.title}</span>
+                                            </article>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </>
             )}
 
             {data.type === "year" && (

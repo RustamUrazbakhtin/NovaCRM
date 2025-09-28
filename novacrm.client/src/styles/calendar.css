@@ -101,12 +101,26 @@
 }
 
 .mc-grid {
+    --mc-border: color-mix(in oklab, #000 12%, transparent);
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 10px;
     flex: 1;
     min-height: 0;
     grid-auto-rows: minmax(96px, 1fr);
+    border: 1px solid var(--mc-border);
+    border-radius: 20px;
+    overflow: hidden;
+    background: color-mix(in oklab, #fff 92%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, #fff 60%, transparent);
+}
+
+.mc-grid > * {
+    border-right: 1px solid var(--mc-border);
+}
+
+.mc-grid > *:nth-child(7n) {
+    border-right: none;
+
 }
 
 .mc-dayname {
@@ -116,24 +130,35 @@
     letter-spacing: 0.5px;
     color: color-mix(in oklab, var(--ink) 58%, transparent);
     text-align: center;
+    padding: 12px 4px;
+    background: color-mix(in oklab, #000 4%, transparent);
+    border-bottom: 1px solid var(--mc-border);
 }
 
 .mc-cell {
-    background: color-mix(in oklab, #000 6%, transparent);
-    border: 1px solid color-mix(in oklab, #000 12%, transparent);
-    border-radius: 18px;
-    padding: 14px 14px 12px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+    padding: 12px;
     position: relative;
+    border-bottom: 1px solid var(--mc-border);
+    background: transparent;
+    transition: background 0.2s ease;
     overflow: hidden;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.dark .mc-cell {
-    background: color-mix(in oklab, #fff 6%, transparent);
-    border-color: color-mix(in oklab, #fff 14%, transparent);
+.mc-cell:nth-last-child(-n + 7) {
+    border-bottom: none;
+}
+
+.dark .mc-grid {
+    --mc-border: color-mix(in oklab, #fff 18%, transparent);
+    background: color-mix(in oklab, #fff 8%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, #fff 14%, transparent);
+}
+
+.dark .mc-dayname {
+    background: color-mix(in oklab, #fff 8%, transparent);
 }
 
 .mc-cell.is-outside {
@@ -141,39 +166,26 @@
 }
 
 .mc-cell.is-today {
-    border-color: color-mix(in oklab, var(--accent) 65%, transparent);
-    box-shadow: 0 14px 30px color-mix(in srgb, var(--accent) 32%, transparent);
+    background: color-mix(in oklab, var(--accent) 12%, transparent);
 }
 
 .mc-cell.is-today .mc-date {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    color: #fff;
-    box-shadow: 0 6px 14px color-mix(in srgb, var(--accent) 38%, transparent);
-    border: none;
+    color: color-mix(in oklab, var(--accent) 70%, var(--ink) 20%);
 }
 
 .mc-date {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 28px;
-    min-width: 32px;
-    padding: 0 10px;
-    border-radius: 999px;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     letter-spacing: 0.2px;
     font-variant-numeric: tabular-nums;
-    background: color-mix(in oklab, #fff 82%, transparent);
-    color: color-mix(in oklab, var(--ink) 82%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, #000 10%, transparent);
+    color: color-mix(in oklab, var(--ink) 80%, transparent);
 }
 
 .mc-events {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-top: auto;
+    gap: 4px;
+    margin-top: 6px;
     overflow: hidden;
 }
 
@@ -182,18 +194,21 @@
     align-items: center;
     max-width: 100%;
     padding: 4px 10px;
-    border-radius: 999px;
+    border-radius: 10px;
     font-size: 11px;
     font-weight: 600;
-    background: color-mix(in oklab, var(--accent) 18%, #fff 82%);
-    color: color-mix(in oklab, var(--ink) 88%, transparent);
+    background: color-mix(in oklab, var(--accent) 14%, #fff 86%);
+    border: 1px solid color-mix(in oklab, var(--accent) 45%, transparent);
+    color: color-mix(in oklab, var(--accent) 70%, #000 20%);
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+    box-shadow: none;
 }
 
 .dark .mc-pill {
-    background: color-mix(in oklab, var(--accent) 22%, transparent);
+    background: color-mix(in oklab, var(--accent) 28%, transparent);
+    border-color: color-mix(in oklab, var(--accent) 55%, transparent);
     color: #fff;
 }
 
@@ -203,6 +218,36 @@
     text-transform: uppercase;
     letter-spacing: 0.6px;
     color: var(--accent);
+}
+
+.mc-week-staff {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 0 4px;
+}
+
+.mc-week-staff-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    background: color-mix(in oklab, #fff 92%, transparent);
+    border: 1px solid color-mix(in oklab, #000 12%, transparent);
+    color: color-mix(in oklab, var(--ink) 78%, transparent);
+    box-shadow: 0 4px 12px rgba(15, 27, 40, 0.06);
+}
+
+.dark .mc-week-staff-pill {
+    background: color-mix(in oklab, #000 18%, transparent);
+    border-color: color-mix(in oklab, #fff 14%, transparent);
+    color: color-mix(in oklab, #fff 82%, transparent);
+    box-shadow: none;
 }
 
 .mc-week {
@@ -218,7 +263,6 @@
 .mc-week::-webkit-scrollbar {
     height: 6px;
 }
-
 
 .mc-week-times {
     display: flex;
@@ -257,13 +301,13 @@
 }
 
 .mc-week-day {
-    background: color-mix(in oklab, #000 6%, transparent);
+    background: color-mix(in oklab, #000 5%, transparent);
     border: 1px solid color-mix(in oklab, #000 12%, transparent);
-    border-radius: 22px;
-    padding: 16px;
+    border-radius: 20px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     min-height: calc(var(--mc-week-hours) * var(--mc-week-hour-height) + 72px);
     position: relative;
     overflow: hidden;
@@ -303,9 +347,9 @@
     position: relative;
     flex: 1;
     min-height: calc(var(--mc-week-hours) * var(--mc-week-hour-height));
-    border-radius: 18px;
-    background: color-mix(in oklab, #fff 86%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, #000 6%, transparent);
+    border-radius: 14px;
+    background: color-mix(in oklab, #fff 90%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, #000 5%, transparent);
     overflow: hidden;
 }
 
@@ -336,15 +380,16 @@
     position: absolute;
     left: 12px;
     right: 12px;
-    border-radius: 16px;
-    padding: 10px 12px;
+    border-radius: 12px;
+    padding: 8px 10px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    min-height: 44px;
-    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 72%, transparent), var(--accent-2));
-    color: #fff;
-    box-shadow: 0 16px 32px color-mix(in srgb, var(--accent) 32%, transparent);
+    gap: 4px;
+    min-height: 42px;
+    background: color-mix(in oklab, var(--accent) 18%, #fff 82%);
+    border: 1px solid color-mix(in oklab, var(--accent) 50%, transparent);
+    color: color-mix(in oklab, var(--accent) 70%, #000 15%);
+    box-shadow: none;
     overflow: hidden;
 }
 
@@ -352,13 +397,21 @@
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.3px;
-    opacity: 0.85;
+    opacity: 0.9;
+}
+
+.mc-week-event-master {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: color-mix(in oklab, var(--accent) 58%, transparent);
 }
 
 .mc-week-event-title {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
-    line-height: 1.35;
+    line-height: 1.3;
 }
 
 .mc-week-event::after {
@@ -366,7 +419,7 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, #fff 55%, transparent);
     pointer-events: none;
 }
 
