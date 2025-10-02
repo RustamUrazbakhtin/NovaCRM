@@ -35,6 +35,7 @@ export default function Dashboard() {
         { date: todayISO, title: "Balayage — Mia", start: "18:15", end: "19:30", master: "Aigul" },
         { date: tomorrowISO, title: "Coloring — Maria", start: "11:00", end: "12:00", master: "Alsu" },
         { date: tomorrowISO, title: "Massage — Leo", start: "16:00", end: "17:00", master: "Mia" },
+
     ];
 
     const open = (s: string) => alert(s);
