@@ -399,7 +399,6 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
                             </span>
                         ))}
                     </div>
-
                     <div className="mc-week" role="grid">
                         <div className="mc-week-times" aria-hidden="true">
                             <div className="mc-week-time-spacer" />
