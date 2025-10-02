@@ -100,8 +100,8 @@ export default function Dashboard() {
 
                 <section className="fx-row fx-main">
                     <div className="fx-left">
-                        <Widget title="Calendar" minH={420}>
-                            <MonthCalendar events={events} />
+                        <Widget minH={420}>
+                            <MonthCalendar title="Calendar" events={events} />
                         </Widget>
                     </div>
 
