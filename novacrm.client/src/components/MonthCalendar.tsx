@@ -22,6 +22,7 @@ const DEFAULT_STAFF = ["Alsu", "Mia", "Julia", "Aigul"];
 
 type Props = {
     events?: CalendarEvent[];
+    title?: string;
 };
 
 const MAX_EVENTS_PER_DAY = 3;
@@ -106,7 +107,7 @@ const VIEW_OPTIONS: { key: CalendarView; label: string }[] = [
     { key: "year", label: "Year" },
 ];
 
-export default function MonthCalendar({ events = [] }: Props) {
+export default function MonthCalendar({ events = [], title = "Calendar" }: Props) {
     const today = useMemo(() => {
         const now = new Date();
         now.setHours(0, 0, 0, 0);
@@ -135,7 +136,8 @@ export default function MonthCalendar({ events = [] }: Props) {
             const start = startOfWeek(firstDay);
             const lastDay = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
             const offset = (firstDay.getDay() + 6) % 7;
-            const totalCells = Math.ceil((offset + lastDay.getDate()) / 7) * 7;
+            const weeks = Math.max(5, Math.ceil((offset + lastDay.getDate()) / 7));
+            const totalCells = weeks * 7;
             const cells = Array.from({ length: totalCells }, (_, index) => {
                 const date = new Date(start);
                 date.setDate(start.getDate() + index);
@@ -255,122 +257,6 @@ export default function MonthCalendar({ events = [] }: Props) {
             };
         }
 
-        if (view === "month") {
-            const firstDay = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
-            const start = startOfWeek(firstDay);
-            const lastDay = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
-            const offset = (firstDay.getDay() + 6) % 7;
-            const totalCells = Math.ceil((offset + lastDay.getDate()) / 7) * 7;
-            const cells = Array.from({ length: totalCells }, (_, index) => {
-                const date = new Date(start);
-                date.setDate(start.getDate() + index);
-                const iso = date.toISOString().slice(0, 10);
-                const bucket = eventsByDate.get(iso) ?? [];
-                return {
-                    iso,
-                    day: date.getDate(),
-                    isToday: iso === todayISO,
-                    isCurrentMonth: date.getMonth() === cursor.getMonth(),
-                    events: bucket,
-                };
-            });
-
-            return {
-                label: cursor.toLocaleString(undefined, {
-                    month: "long",
-                    year: "numeric",
-                }),
-                type: "month" as const,
-                dayNames: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-                cells,
-            };
-        }
-
-        if (view === "week") {
-            const weekStart = startOfWeek(cursor);
-            const hours = Array.from(
-                { length: WEEK_END_HOUR - WEEK_START_HOUR + 1 },
-                (_, index) => {
-                    const hour = WEEK_START_HOUR + index;
-                    return {
-                        minutes: hour * 60,
-                        label: `${String(hour).padStart(2, "0")}:00`,
-                    };
-                },
-            );
-
-            const weekDays = Array.from({ length: 7 }, (_, index) => {
-                const date = new Date(weekStart);
-                date.setDate(weekStart.getDate() + index);
-                const iso = date.toISOString().slice(0, 10);
-                const bucket = eventsByDate.get(iso) ?? [];
-
-                const enrichedEvents = bucket
-                    .map((event) => {
-                        const startCandidate =
-                            extractTimeMinutes(event.start) ??
-                            extractTimeMinutes(event.time) ??
-                            extractTimeMinutes(event.title);
-                        const rawStart = startCandidate ?? WEEK_START_MINUTES;
-                        const startMinutes = clamp(rawStart, WEEK_START_MINUTES, WEEK_END_MINUTES - MIN_EVENT_DURATION_MIN);
-                        const startWasClamped = rawStart !== startMinutes;
-
-                        const endCandidate = extractTimeMinutes(event.end);
-                        const rawEnd = endCandidate ?? (startCandidate ?? WEEK_START_MINUTES) + MIN_EVENT_DURATION_MIN;
-                        const minEnd = startMinutes + MIN_EVENT_DURATION_MIN;
-                        const endMinutes = clamp(Math.max(rawEnd, minEnd), minEnd, WEEK_END_MINUTES);
-                        const endWasClamped = rawEnd !== endMinutes;
-
-                        const startLabel =
-                            startWasClamped
-                                ? formatMinutes(startMinutes)
-                                : event.start ?? event.time ?? formatMinutes(startMinutes);
-                        const endLabel =
-                            endWasClamped
-                                ? formatMinutes(endMinutes)
-                                : event.end ?? (event.start || event.time ? formatMinutes(endMinutes) : undefined);
-
-                        return {
-                            ...event,
-                            startMinutes,
-                            endMinutes,
-                            startLabel,
-                            endLabel: endLabel ?? formatMinutes(endMinutes),
-                        };
-                    })
-                    .sort((a, b) => a.startMinutes - b.startMinutes);
-
-                return {
-                    iso,
-                    label: date.toLocaleDateString(undefined, {
-                        weekday: "short",
-                    }),
-                    display: date.toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                    }),
-                    isToday: iso === todayISO,
-                    events: enrichedEvents,
-                };
-            });
-
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekEnd.getDate() + 6);
-
-            return {
-                label: `${weekStart.toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                })} – ${weekEnd.toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                })}`,
-                type: "week" as const,
-                hours,
-                days: weekDays,
-            };
-        }
-
         const year = cursor.getFullYear();
         const months = Array.from({ length: 12 }, (_, index) => {
             const monthDate = new Date(year, index, 1);
@@ -410,23 +296,26 @@ export default function MonthCalendar({ events = [] }: Props) {
     return (
         <div className="mc">
             <div className="mc-toolbar">
-                <div className="mc-nav">
-                    <button
-                        type="button"
-                        className="mc-btn mc-btn-circle"
-                        onClick={handlePrev}
-                        aria-label="Previous period"
-                    >
-                        ‹
-                    </button>
-                    <button
-                        type="button"
-                        className="mc-btn mc-btn-circle"
-                        onClick={handleNext}
-                        aria-label="Next period"
-                    >
-                        ›
-                    </button>
+                <div className="mc-toolbar-left">
+                    {title && <span className="mc-caption">{title}</span>}
+                    <div className="mc-nav">
+                        <button
+                            type="button"
+                            className="mc-btn mc-btn-circle"
+                            onClick={handlePrev}
+                            aria-label="Previous period"
+                        >
+                            ‹
+                        </button>
+                        <button
+                            type="button"
+                            className="mc-btn mc-btn-circle"
+                            onClick={handleNext}
+                            aria-label="Next period"
+                        >
+                            ›
+                        </button>
+                    </div>
                 </div>
 
                 <div className="mc-title">{data.label}</div>
@@ -458,43 +347,47 @@ export default function MonthCalendar({ events = [] }: Props) {
             </div>
 
             {data.type === "month" && (
-                <div className="mc-grid" role="grid">
-                    {data.dayNames.map((day) => (
-                        <div key={day} className="mc-dayname" role="columnheader">
-                            {day}
-                        </div>
-                    ))}
-
-                    {data.cells.map((cell) => {
-                        const visibleEvents = cell.events.slice(0, MAX_EVENTS_PER_DAY);
-                        const remaining = cell.events.length - visibleEvents.length;
-                        return (
-                            <div
-                                key={cell.iso}
-                                className={`mc-cell ${cell.isCurrentMonth ? "" : "is-outside"} ${
-                                    cell.isToday ? "is-today" : ""
-                                }`}
-                                role="gridcell"
-                            >
-                                <div className="mc-date">{cell.day}</div>
-                                <div className="mc-events">
-                                    {visibleEvents.map((event, index) => {
-                                        const label = getMonthEventLabel(event);
-                                        return (
-                                            <span key={index} className="mc-pill" title={label}>
-                                                {label}
-                                            </span>
-                                        );
-                                    })}
-                                    {remaining > 0 && (
-                                        <span className="mc-more" title={`${remaining} more event(s)`}>
-                                            +{remaining}
-                                        </span>
-                                    )}
-                                </div>
+                <div className="mc-month" role="grid" aria-label={`${data.label} calendar`}>
+                    <div className="mc-month-head" role="row">
+                        {data.dayNames.map((day) => (
+                            <div key={day} className="mc-dayname" role="columnheader">
+                                {day}
                             </div>
-                        );
-                    })}
+                        ))}
+                    </div>
+
+                    <div className="mc-month-body" role="rowgroup">
+                        {data.cells.map((cell) => {
+                            const visibleEvents = cell.events.slice(0, MAX_EVENTS_PER_DAY);
+                            const remaining = cell.events.length - visibleEvents.length;
+                            return (
+                                <div
+                                    key={cell.iso}
+                                    className={`mc-cell ${cell.isCurrentMonth ? "" : "is-outside"} ${
+                                        cell.isToday ? "is-today" : ""
+                                    }`}
+                                    role="gridcell"
+                                >
+                                    <div className="mc-date">{cell.day}</div>
+                                    <div className="mc-events">
+                                        {visibleEvents.map((event, index) => {
+                                            const label = getMonthEventLabel(event);
+                                            return (
+                                                <span key={index} className="mc-pill" title={label}>
+                                                    {label}
+                                                </span>
+                                            );
+                                        })}
+                                        {remaining > 0 && (
+                                            <span className="mc-more" title={`${remaining} more event(s)`}>
+                                                +{remaining}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             )}
 
