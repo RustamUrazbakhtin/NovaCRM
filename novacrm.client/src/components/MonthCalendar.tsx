@@ -217,7 +217,8 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
                             extractTimeMinutes(event.time) ??
                             extractTimeMinutes(event.title);
                         const rawStart = startCandidate ?? WEEK_START_MINUTES;
-                        const startMinutes = clamp(rawStart, WEEK_START_MINUTES, WEEK_END_MINUTES - MIN_EVENT_DURATION_MIN);
+                        const latestStart = WEEK_END_MINUTES - MIN_EVENT_DURATION_MIN;
+                        const startMinutes = clamp(rawStart, WEEK_START_MINUTES, latestStart);
                         const startWasClamped = rawStart !== startMinutes;
 
                         const endCandidate = extractTimeMinutes(event.end);
@@ -359,7 +360,8 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
                 extractTimeMinutes(event.time) ??
                 extractTimeMinutes(event.title);
             const rawStart = startCandidate ?? WEEK_START_MINUTES;
-            const startMinutes = clamp(rawStart, WEEK_START_MINUTES, WEEK_END_MINUTES - MIN_EVENT_DURATION_MIN);
+            const latestStart = WEEK_END_MINUTES - MIN_EVENT_DURATION_MIN;
+            const startMinutes = clamp(rawStart, WEEK_START_MINUTES, latestStart);
             const startWasClamped = rawStart !== startMinutes;
 
             const endCandidate = extractTimeMinutes(event.end);
