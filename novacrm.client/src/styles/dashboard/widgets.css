@@ -1,0 +1,95 @@
+/* ===== dashboard widget chrome ===== */
+.nx-widget {
+    background: var(--card-bg);
+    border: 1px solid var(--card-bd);
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    color: inherit;
+    font: inherit;
+    text-decoration: none;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.nx-widget:where(button) {
+    appearance: none;
+    border: 1px solid var(--card-bd);
+}
+
+.nx-widget:where(button, a) {
+    background: var(--card-bg);
+    border-radius: 20px;
+}
+
+.nx-widget:where(button) {
+    cursor: pointer;
+}
+
+.nx-widget.is-clickable {
+    cursor: pointer;
+}
+
+.nx-widget.is-clickable:hover {
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.nx-widget.is-clickable:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.nx-widget-head h4 {
+    margin: 0;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+    font-size: 16px;
+}
+
+.nx-widget-foot {
+    font-size: 12px;
+    opacity: 0.55;
+}
+
+.nx-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14px;
+    display: grid;
+    gap: 6px;
+}
+
+.nx-subtle {
+    font-size: 13px;
+    color: color-mix(in oklab, var(--ink) 56%, transparent);
+}
+
+.nx-todos {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.nx-todos li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nx-number {
+    font-size: 30px;
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
