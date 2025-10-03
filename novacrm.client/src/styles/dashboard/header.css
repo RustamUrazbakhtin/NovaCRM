@@ -1,0 +1,14 @@
+/* ===== sticky dashboard header ===== */
+.nx-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    z-index: 1000;
+    background: color-mix(in oklab, var(--card-bg) 88%, transparent);
+    border-bottom: 1px solid var(--card-bd);
+    backdrop-filter: blur(12px);
+}
