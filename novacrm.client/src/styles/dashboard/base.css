@@ -32,10 +32,10 @@ body,
 body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #f6f8fc;
+    background: linear-gradient(180deg, #f9faff 0%, #eef2ff 50%, #e6ebff 100%);
     color: var(--ink);
 }
 
 .dark body {
-    background: #1a1c24;
+    background: linear-gradient(180deg, #151722 0%, #0e1019 60%, #080a12 100%);
 }

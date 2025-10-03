@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTheme } from "../providers/ThemeProvider";
 import "./header.css";
 
@@ -18,6 +18,7 @@ export default function Header({
     const { theme, setTheme, isDark } = useTheme();
     const [open, setOpen] = useState(false);
     const box = useRef<HTMLDivElement>(null);
+    const switchId = useId();
 
     useEffect(() => {
         const onDoc = (e: MouseEvent) => {
@@ -82,16 +83,25 @@ export default function Header({
                                 <span className="nx-theme-status">{themeStatusLabel}</span>
                             </div>
 
-                            <button
-                                type="button"
-                                className={`nx-switch ${isSwitchOn ? "is-on" : ""}`}
-                                role="switch"
-                                aria-checked={isSwitchOn}
-                                aria-label={isSwitchOn ? "Switch to light theme" : "Switch to dark theme"}
-                                onClick={handleThemeToggle}
-                            >
-                                <span className="nx-switch-thumb" />
-                            </button>
+                            <label className={`nx-switch ${isSwitchOn ? "is-on" : ""}`} htmlFor={switchId}>
+                                <input
+                                    id={switchId}
+                                    type="checkbox"
+                                    role="switch"
+                                    aria-label={isSwitchOn ? "Switch to light theme" : "Switch to dark theme"}
+                                    checked={isSwitchOn}
+                                    onChange={handleThemeToggle}
+                                />
+                                <span className="nx-switch-track">
+                                    <span className="nx-switch-icon nx-switch-sun" aria-hidden="true">
+                                        ☀️
+                                    </span>
+                                    <span className="nx-switch-icon nx-switch-moon" aria-hidden="true">
+                                        🌙
+                                    </span>
+                                    <span className="nx-switch-thumb" />
+                                </span>
+                            </label>
                         </div>
 
                         <button

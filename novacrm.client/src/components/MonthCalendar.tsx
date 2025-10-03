@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties, FormEvent, MouseEvent as ReactMouseEvent } from "react";
 import "../styles/calendar.css";
 
 export type CalendarEvent = {
@@ -19,13 +20,13 @@ export type CalendarEvent = {
 type CalendarView = "month" | "week" | "year";
 
 const DEFAULT_STAFF = ["Alsu", "Mia", "Julia", "Aigul"];
+const FALLBACK_MASTER = "Unassigned";
 
 type Props = {
     events?: CalendarEvent[];
     title?: string;
 };
 
-const MAX_EVENTS_PER_DAY = 3;
 const WEEK_START_HOUR = 8;
 const WEEK_END_HOUR = 20;
 const MIN_EVENT_DURATION_MIN = 45;
@@ -107,6 +108,21 @@ const VIEW_OPTIONS: { key: CalendarView; label: string }[] = [
     { key: "year", label: "Year" },
 ];
 
+type DaySchedule = {
+    iso: string;
+    label: string;
+    shortLabel: string;
+    staff: string[];
+    hours: { minutes: number; label: string }[];
+    events: (CalendarEvent & {
+        master: string;
+        startMinutes: number;
+        endMinutes: number;
+        startLabel: string;
+        endLabel: string;
+    })[];
+};
+
 export default function MonthCalendar({ events = [], title = "Calendar" }: Props) {
     const today = useMemo(() => {
         const now = new Date();
@@ -117,20 +133,28 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
 
     const [view, setView] = useState<CalendarView>("month");
     const [cursor, setCursor] = useState(() => normalizeCursor(today, "month"));
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+    const eventsByDate = useMemo(() => {
+        const map = new Map<string, CalendarEvent[]>();
+        for (const ev of events) {
+            const bucket = map.get(ev.date) ?? [];
+            bucket.push(ev);
+            map.set(ev.date, bucket);
+        }
+        return map;
+    }, [events]);
+
+    const eventsByMonth = useMemo(() => {
+        const monthMap = new Map<string, number>();
+        for (const ev of events) {
+            const monthKey = ev.date.slice(0, 7);
+            monthMap.set(monthKey, (monthMap.get(monthKey) ?? 0) + 1);
+        }
+        return monthMap;
+    }, [events]);
 
     const data = useMemo(() => {
-        const eventsByDate = new Map<string, CalendarEvent[]>();
-        const eventsByMonth = new Map<string, number>();
-
-        for (const ev of events) {
-            const dayBucket = eventsByDate.get(ev.date) ?? [];
-            dayBucket.push(ev);
-            eventsByDate.set(ev.date, dayBucket);
-
-            const monthKey = ev.date.slice(0, 7);
-            eventsByMonth.set(monthKey, (eventsByMonth.get(monthKey) ?? 0) + 1);
-        }
-
         if (view === "month") {
             const firstDay = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
             const start = startOfWeek(firstDay);
@@ -277,7 +301,7 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
             type: "year" as const,
             months,
         };
-    }, [cursor, events, today, todayISO, view]);
+    }, [cursor, eventsByDate, eventsByMonth, today, todayISO, view]);
 
     const handlePrev = () => setCursor((prev) => shiftCursor(prev, view, -1));
     const handleNext = () => setCursor((prev) => shiftCursor(prev, view, 1));
@@ -285,22 +309,118 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
         setView(next);
         setCursor((prev) => normalizeCursor(prev, next));
     };
-    const handleAdd = () => alert("Add new event");
+    const handleAdd = () => setSelectedDate(todayISO);
     const handleDayClick = (iso: string) => {
-        const label = new Date(iso).toLocaleDateString(undefined, {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-            year: "numeric",
+        setSelectedDate(iso);
+    };
+
+    const closeModal = () => setSelectedDate(null);
+
+    useEffect(() => {
+        if (!selectedDate) return;
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                event.preventDefault();
+                closeModal();
+            }
+        };
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        document.addEventListener("keydown", onKey);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener("keydown", onKey);
+        };
+    }, [selectedDate]);
+
+    const selectedSchedule: DaySchedule | null = useMemo(() => {
+        if (!selectedDate) {
+            return null;
+        }
+
+        const date = new Date(selectedDate);
+        if (Number.isNaN(date.getTime())) {
+            return null;
+        }
+
+        const hours = Array.from({ length: WEEK_END_HOUR - WEEK_START_HOUR + 1 }, (_, index) => {
+            const hour = WEEK_START_HOUR + index;
+            return {
+                minutes: hour * 60,
+                label: `${String(hour).padStart(2, "0")}:00`,
+            };
         });
         alert(`Open ${label}`);
     };
 
-    const getMonthEventLabel = (event: CalendarEvent) => {
-        const start = event.start ?? event.time;
-        const master = event.master ? `${event.master} — ` : "";
-        return start ? `${start} · ${master}${event.title}` : `${master}${event.title}`;
-    };
+        const dayEvents = (eventsByDate.get(selectedDate) ?? []).map((event) => {
+            const startCandidate =
+                extractTimeMinutes(event.start) ??
+                extractTimeMinutes(event.time) ??
+                extractTimeMinutes(event.title);
+            const rawStart = startCandidate ?? WEEK_START_MINUTES;
+            const startMinutes = clamp(
+                rawStart,
+                WEEK_START_MINUTES,
+                WEEK_END_MINUTES - MIN_EVENT_DURATION_MIN,
+            );
+            const startWasClamped = rawStart !== startMinutes;
+
+            const endCandidate = extractTimeMinutes(event.end);
+            const rawEnd = endCandidate ?? (startCandidate ?? WEEK_START_MINUTES) + MIN_EVENT_DURATION_MIN;
+            const minEnd = startMinutes + MIN_EVENT_DURATION_MIN;
+            const endMinutes = clamp(Math.max(rawEnd, minEnd), minEnd, WEEK_END_MINUTES);
+            const endWasClamped = rawEnd !== endMinutes;
+
+            const startLabel =
+                startWasClamped
+                    ? formatMinutes(startMinutes)
+                    : event.start ?? event.time ?? formatMinutes(startMinutes);
+            const endLabel =
+                endWasClamped
+                    ? formatMinutes(endMinutes)
+                    : event.end ?? (event.start || event.time ? formatMinutes(endMinutes) : undefined);
+
+            return {
+                ...event,
+                master: event.master ?? FALLBACK_MASTER,
+                startMinutes,
+                endMinutes,
+                startLabel,
+                endLabel: endLabel ?? formatMinutes(endMinutes),
+            };
+        });
+
+        const staffOrder = [...DEFAULT_STAFF];
+        for (const ev of dayEvents) {
+            if (ev.master && !staffOrder.includes(ev.master)) {
+                staffOrder.push(ev.master);
+            }
+        }
+
+        if (dayEvents.some((ev) => !ev.master || ev.master === FALLBACK_MASTER)) {
+            if (!staffOrder.includes(FALLBACK_MASTER)) {
+                staffOrder.push(FALLBACK_MASTER);
+            }
+        }
+
+        return {
+            iso: selectedDate,
+            label: date.toLocaleDateString(undefined, {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+            }),
+            shortLabel: date.toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+            }),
+            staff: staffOrder,
+            hours,
+            events: dayEvents,
+        };
+    }, [eventsByDate, selectedDate]);
 
     return (
         <div className="mc">
@@ -367,46 +487,32 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
 
                     <div className="mc-month-body" role="rowgroup">
                         {data.cells.map((cell) => {
-                            const visibleEvents = cell.events.slice(0, MAX_EVENTS_PER_DAY);
-                            const remaining = cell.events.length - visibleEvents.length;
+                            const count = cell.events.length;
                             const dayLabel = new Date(cell.iso).toLocaleDateString(undefined, {
                                 weekday: "long",
                                 month: "long",
                                 day: "numeric",
                                 year: "numeric",
                             });
+                            const countLabel = count === 1 ? "1 task" : `${count} tasks`;
                             return (
-                                <div
+                                <button
                                     key={cell.iso}
-                                    className={`mc-cell ${cell.isCurrentMonth ? "" : "is-outside"} ${
+                                    type="button"
+                                    className={`mc-cell-btn ${cell.isCurrentMonth ? "" : "is-outside"} ${
                                         cell.isToday ? "is-today" : ""
                                     }`}
-                                    role="gridcell"
+                                    onClick={() => handleDayClick(cell.iso)}
+                                    aria-label={`${dayLabel}. ${countLabel}`}
                                 >
-                                    <button
-                                        type="button"
-                                        className="mc-date-btn"
-                                        onClick={() => handleDayClick(cell.iso)}
-                                        aria-label={dayLabel}
-                                    >
+                                    <span className="mc-date" aria-hidden="true">
                                         {cell.day}
-                                    </button>
-                                    <div className="mc-events">
-                                        {visibleEvents.map((event, index) => {
-                                            const label = getMonthEventLabel(event);
-                                            return (
-                                                <span key={index} className="mc-pill" title={label}>
-                                                    {label}
-                                                </span>
-                                            );
-                                        })}
-                                        {remaining > 0 && (
-                                            <span className="mc-more" title={`${remaining} more event(s)`}>
-                                                +{remaining}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
+                                    </span>
+                                    <span className="mc-count" aria-hidden="true">
+                                        {count}
+                                        <small>{count === 1 ? "task" : "tasks"}</small>
+                                    </span>
+                                </button>
                             );
                         })}
                     </div>
@@ -510,6 +616,195 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
                     ))}
                 </div>
             )}
+
+            {selectedSchedule && (
+                <CalendarScheduleModal schedule={selectedSchedule} onClose={closeModal} />
+            )}
+        </div>
+    );
+}
+
+function CalendarScheduleModal({
+    schedule,
+    onClose,
+}: {
+    schedule: DaySchedule;
+    onClose: () => void;
+}) {
+    const { label, shortLabel, staff, hours, events } = schedule;
+    const totalTasks = events.length;
+
+    const columns = staff.map((member) => ({
+        member,
+        events: events.filter((event) => event.master === member),
+    }));
+
+    const gridStyle = useMemo(
+        () => ({
+            "--mc-modal-columns": staff.length,
+        }) as CSSProperties,
+        [staff.length],
+    );
+
+    const [formOpen, setFormOpen] = useState(false);
+
+    const handleClose = () => {
+        setFormOpen(false);
+        onClose();
+    };
+
+    const handleOverlayClick = (event: ReactMouseEvent<HTMLDivElement>) => {
+        if (event.target === event.currentTarget) {
+            handleClose();
+        }
+    };
+
+    const handleCreate = () => setFormOpen((prev) => !prev);
+
+    const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const master = (formData.get("master") as string | null) ?? FALLBACK_MASTER;
+        const time = (formData.get("time") as string | null) ?? "";
+        const title = (formData.get("title") as string | null) ?? "";
+        const notes = (formData.get("notes") as string | null) ?? "";
+        alert(`Task saved for ${master}${time ? ` at ${time}` : ""}: ${title || "(untitled)"}${
+            notes ? `\nNotes: ${notes}` : ""
+        }`);
+        event.currentTarget.reset();
+        setFormOpen(false);
+    };
+
+    return (
+        <div
+            className="mc-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${label} schedule`}
+            onMouseDown={handleOverlayClick}
+        >
+            <div className="mc-sheet" role="document">
+                <header className="mc-sheet-head">
+                    <div className="mc-sheet-meta">
+                        <span className="mc-sheet-chip">{shortLabel}</span>
+                        <h3>{label}</h3>
+                        <p>{totalTasks === 1 ? "1 task" : `${totalTasks} tasks`}</p>
+                    </div>
+
+                    <div className="mc-sheet-actions">
+                        <button type="button" className="mc-btn mc-btn-ghost" onClick={handleClose}>
+                            Close
+                        </button>
+                        <button
+                            type="button"
+                            className="mc-btn mc-btn-accent"
+                            onClick={handleCreate}
+                            aria-expanded={formOpen}
+                        >
+                            New task
+                        </button>
+                    </div>
+                </header>
+
+                <div
+                    className="mc-modal-grid"
+                    style={gridStyle}
+                >
+                    <div className="mc-modal-hours" aria-hidden="true">
+                        <div className="mc-modal-hours-spacer" />
+                        {hours.map((hour) => (
+                            <span key={hour.minutes}>{hour.label}</span>
+                        ))}
+                    </div>
+
+                    {columns.map((column) => (
+                        <section key={column.member} className="mc-modal-column">
+                            <header className="mc-modal-column-head">{column.member}</header>
+                            <div className="mc-modal-track">
+                                <div className="mc-modal-gridlines" aria-hidden="true">
+                                    {hours.slice(1).map((hour, index) => (
+                                        <span
+                                            key={hour.minutes}
+                                            style={{
+                                                top: `${((index + 1) / (hours.length - 1)) * 100}%`,
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+
+                                {column.events.map((event, index) => {
+                                    const offsetTop =
+                                        ((event.startMinutes - WEEK_START_MINUTES) / WEEK_RANGE_MINUTES) * 100;
+                                    const height =
+                                        ((event.endMinutes - event.startMinutes) / WEEK_RANGE_MINUTES) * 100;
+
+                                    return (
+                                        <article
+                                            key={`${event.title}-${index}`}
+                                            className="mc-modal-event"
+                                            style={{
+                                                top: `${offsetTop}%`,
+                                                height: `${height}%`,
+                                            }}
+                                        >
+                                            <span className="mc-modal-event-time">
+                                                {event.startLabel}
+                                                {event.endLabel ? ` – ${event.endLabel}` : ""}
+                                            </span>
+                                            <span className="mc-modal-event-title">{event.title}</span>
+                                        </article>
+                                    );
+                                })}
+
+                                {column.events.length === 0 && (
+                                    <div className="mc-modal-empty">No scheduled tasks yet</div>
+                                )}
+                            </div>
+                        </section>
+                    ))}
+                </div>
+
+                {formOpen && (
+                    <form className="mc-modal-form" onSubmit={handleFormSubmit}>
+                        <div className="mc-modal-form-row">
+                            <label className="mc-modal-field">
+                                <span>Master</span>
+                                <select name="master" defaultValue={staff[0] ?? FALLBACK_MASTER}>
+                                    {staff.map((member) => (
+                                        <option key={member} value={member}>
+                                            {member}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="mc-modal-field">
+                                <span>Time</span>
+                                <input type="time" name="time" defaultValue="12:00" />
+                            </label>
+                            <label className="mc-modal-field">
+                                <span>Task</span>
+                                <input type="text" name="title" placeholder="Service name" required autoFocus />
+                            </label>
+                        </div>
+
+                        <div className="mc-modal-form-row">
+                            <label className="mc-modal-field mc-modal-field--full">
+                                <span>Notes</span>
+                                <textarea name="notes" rows={3} placeholder="Optional comment" />
+                            </label>
+                        </div>
+
+                        <div className="mc-modal-form-actions">
+                            <button type="button" className="mc-btn mc-btn-ghost" onClick={() => setFormOpen(false)}>
+                                Cancel
+                            </button>
+                            <button type="submit" className="mc-btn mc-btn-accent">
+                                Save task
+                            </button>
+                        </div>
+                    </form>
+                )}
+            </div>
         </div>
     );
 }
