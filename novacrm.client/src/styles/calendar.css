@@ -1,16 +1,31 @@
 .mc {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
     height: 100%;
 }
 
 .mc-toolbar {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
+    column-gap: 14px;
+    row-gap: 8px;
+}
+
+.mc-toolbar-left {
+    display: inline-flex;
+    align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
+}
+
+.mc-caption {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    color: color-mix(in oklab, var(--ink) 75%, transparent);
+    text-transform: none;
 }
 
 .mc-nav {
@@ -55,9 +70,11 @@
 
 .mc-title {
     font-weight: 800;
-    font-size: 20px;
+    font-size: 18px;
     letter-spacing: 0.2px;
     text-transform: capitalize;
+    justify-self: center;
+    text-align: center;
 }
 
 .mc-toolbar-end {
@@ -65,6 +82,8 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+    justify-content: flex-end;
+    justify-self: end;
 }
 
 .mc-toggle-group {
@@ -85,7 +104,7 @@
 .mc-toggle {
     border: none;
     background: transparent;
-    padding: 6px 16px;
+    padding: 5px 14px;
     border-radius: 999px;
     font-size: 13px;
     font-weight: 600;
@@ -100,40 +119,84 @@
     box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
 }
 
-.mc-grid {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 10px;
+.mc-month {
+    --mc-border: color-mix(in oklab, #000 12%, transparent);
+    display: flex;
+    flex-direction: column;
     flex: 1;
     min-height: 0;
-    grid-auto-rows: minmax(96px, 1fr);
+    border: 1px solid var(--mc-border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.mc-month-head,
+.mc-month-body {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.mc-month-body {
+    flex: 1;
+    min-height: 0;
+    grid-auto-rows: minmax(48px, 1fr);
+}
+
+.mc-month-head {
+    border-bottom: 1px solid var(--mc-border);
+    background: color-mix(in oklab, #000 4%, transparent);
+}
+
+.mc-month-head > *,
+.mc-month-body > * {
+    border-right: 1px solid var(--mc-border);
+}
+
+.mc-month-head > *:nth-child(7n),
+.mc-month-body > *:nth-child(7n) {
+    border-right: none;
 }
 
 .mc-dayname {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     color: color-mix(in oklab, var(--ink) 58%, transparent);
     text-align: center;
+    padding: 6px 4px;
+    background: transparent;
 }
 
 .mc-cell {
-    background: color-mix(in oklab, #000 6%, transparent);
-    border: 1px solid color-mix(in oklab, #000 12%, transparent);
-    border-radius: 18px;
-    padding: 14px 14px 12px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 3px;
+    padding: 6px 8px;
     position: relative;
+    border-bottom: 1px solid var(--mc-border);
+    background: transparent;
+    transition: background 0.2s ease;
     overflow: hidden;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.dark .mc-cell {
-    background: color-mix(in oklab, #fff 6%, transparent);
-    border-color: color-mix(in oklab, #fff 14%, transparent);
+.mc-month-body > .mc-cell:nth-last-child(-n + 7) {
+    border-bottom: none;
+}
+
+.dark .mc-month {
+    --mc-border: color-mix(in oklab, #fff 16%, transparent);
+    background: #1f2331;
+}
+
+.dark .mc-month-head {
+    background: color-mix(in oklab, #fff 10%, transparent);
+}
+
+.dark .mc-dayname {
+    background: transparent;
+    color: color-mix(in oklab, #fff 78%, transparent);
 }
 
 .mc-cell.is-outside {
@@ -141,39 +204,59 @@
 }
 
 .mc-cell.is-today {
-    border-color: color-mix(in oklab, var(--accent) 65%, transparent);
-    box-shadow: 0 14px 30px color-mix(in srgb, var(--accent) 32%, transparent);
+    background: color-mix(in oklab, var(--accent) 10%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 40%, transparent);
 }
 
-.mc-cell.is-today .mc-date {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    color: #fff;
-    box-shadow: 0 6px 14px color-mix(in srgb, var(--accent) 38%, transparent);
+.dark .mc-cell {
+    background: transparent;
+}
+
+.mc-cell.is-today .mc-date-btn {
+    color: color-mix(in oklab, var(--accent) 70%, var(--ink) 20%);
+}
+
+.dark .mc-cell.is-today {
+    background: color-mix(in oklab, var(--accent) 20%, transparent);
+}
+
+.mc-date-btn {
+    appearance: none;
+    background: transparent;
     border: none;
-}
-
-.mc-date {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 28px;
-    min-width: 32px;
-    padding: 0 10px;
-    border-radius: 999px;
+    padding: 0;
+    margin: 0;
     font-size: 13px;
     font-weight: 700;
     letter-spacing: 0.2px;
     font-variant-numeric: tabular-nums;
-    background: color-mix(in oklab, #fff 82%, transparent);
-    color: color-mix(in oklab, var(--ink) 82%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, #000 10%, transparent);
+    color: color-mix(in oklab, var(--ink) 80%, transparent);
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    cursor: pointer;
+    border-radius: 8px;
+    min-height: 24px;
+    padding: 2px 6px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.mc-date-btn:hover {
+    background: color-mix(in oklab, var(--accent) 12%, transparent);
+    color: color-mix(in oklab, var(--accent) 75%, var(--ink) 15%);
+}
+
+.mc-date-btn:focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--accent) 60%, transparent);
+    outline-offset: 2px;
 }
 
 .mc-events {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-top: auto;
+    gap: 3px;
+    margin-top: 2px;
     overflow: hidden;
 }
 
@@ -181,19 +264,22 @@
     display: inline-flex;
     align-items: center;
     max-width: 100%;
-    padding: 4px 10px;
-    border-radius: 999px;
+    padding: 3px 8px;
+    border-radius: 8px;
     font-size: 11px;
     font-weight: 600;
-    background: color-mix(in oklab, var(--accent) 18%, #fff 82%);
-    color: color-mix(in oklab, var(--ink) 88%, transparent);
+    background: color-mix(in oklab, var(--accent) 14%, #fff 86%);
+    border: 1px solid color-mix(in oklab, var(--accent) 45%, transparent);
+    color: color-mix(in oklab, var(--accent) 70%, #000 20%);
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+    box-shadow: none;
 }
 
 .dark .mc-pill {
-    background: color-mix(in oklab, var(--accent) 22%, transparent);
+    background: color-mix(in oklab, var(--accent) 28%, transparent);
+    border-color: color-mix(in oklab, var(--accent) 55%, transparent);
     color: #fff;
 }
 
@@ -205,11 +291,41 @@
     color: var(--accent);
 }
 
+.mc-week-staff {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 0 4px;
+}
+
+.mc-week-staff-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    background: color-mix(in oklab, #fff 92%, transparent);
+    border: 1px solid color-mix(in oklab, #000 12%, transparent);
+    color: color-mix(in oklab, var(--ink) 78%, transparent);
+    box-shadow: 0 4px 12px rgba(15, 27, 40, 0.06);
+}
+
+.dark .mc-week-staff-pill {
+    background: color-mix(in oklab, #000 18%, transparent);
+    border-color: color-mix(in oklab, #fff 14%, transparent);
+    color: color-mix(in oklab, #fff 82%, transparent);
+    box-shadow: none;
+}
+
 .mc-week {
     --mc-week-hour-height: 52px;
     --mc-week-hours: 12;
     display: grid;
-    grid-template-columns: max-content repeat(7, minmax(160px, 1fr));
+    grid-template-columns: max-content repeat(7, minmax(140px, 1fr));
     gap: 14px;
     overflow-x: auto;
     padding-bottom: 6px;
@@ -257,21 +373,21 @@
 }
 
 .mc-week-day {
-    background: color-mix(in oklab, #000 6%, transparent);
+    background: color-mix(in oklab, #000 5%, transparent);
     border: 1px solid color-mix(in oklab, #000 12%, transparent);
-    border-radius: 22px;
-    padding: 16px;
+    border-radius: 20px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     min-height: calc(var(--mc-week-hours) * var(--mc-week-hour-height) + 72px);
     position: relative;
     overflow: hidden;
 }
 
 .dark .mc-week-day {
-    background: color-mix(in oklab, #fff 6%, transparent);
-    border-color: color-mix(in oklab, #fff 14%, transparent);
+    background: #242838;
+    border-color: color-mix(in oklab, #fff 20%, transparent);
 }
 
 .mc-week-day.is-today {
@@ -303,15 +419,15 @@
     position: relative;
     flex: 1;
     min-height: calc(var(--mc-week-hours) * var(--mc-week-hour-height));
-    border-radius: 18px;
-    background: color-mix(in oklab, #fff 86%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, #000 6%, transparent);
+    border-radius: 14px;
+    background: color-mix(in oklab, #fff 90%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, #000 5%, transparent);
     overflow: hidden;
 }
 
 .dark .mc-week-track {
-    background: color-mix(in oklab, #000 16%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, #fff 8%, transparent);
+    background: color-mix(in oklab, #11131a 92%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, #fff 12%, transparent);
 }
 
 .mc-week-gridlines {
@@ -336,29 +452,44 @@
     position: absolute;
     left: 12px;
     right: 12px;
-    border-radius: 16px;
-    padding: 10px 12px;
+    border-radius: 12px;
+    padding: 8px 10px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    min-height: 44px;
-    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 72%, transparent), var(--accent-2));
-    color: #fff;
-    box-shadow: 0 16px 32px color-mix(in srgb, var(--accent) 32%, transparent);
+    gap: 4px;
+    min-height: 42px;
+    background: color-mix(in oklab, var(--accent) 18%, #fff 82%);
+    border: 1px solid color-mix(in oklab, var(--accent) 50%, transparent);
+    color: color-mix(in oklab, var(--accent) 70%, #000 15%);
+    box-shadow: none;
     overflow: hidden;
+}
+
+.dark .mc-week-event {
+    background: color-mix(in oklab, var(--accent) 40%, transparent);
+    border-color: color-mix(in oklab, var(--accent) 60%, transparent);
+    color: #fff;
 }
 
 .mc-week-event-time {
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.3px;
-    opacity: 0.85;
+    opacity: 0.9;
+}
+
+.mc-week-event-master {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: color-mix(in oklab, var(--accent) 58%, transparent);
 }
 
 .mc-week-event-title {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
-    line-height: 1.35;
+    line-height: 1.3;
 }
 
 .mc-week-event::after {
@@ -366,7 +497,7 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, #fff 55%, transparent);
     pointer-events: none;
 }
 
@@ -417,15 +548,18 @@
 
 @media (max-width: 900px) {
     .mc-toolbar {
-        align-items: flex-start;
+        grid-template-columns: 1fr;
     }
 
     .mc-title {
-        order: 3;
-        width: 100%;
+        justify-self: flex-start;
+    }
+
+    .mc-toolbar-end {
+        justify-self: flex-start;
     }
 
     .mc-week {
-        grid-template-columns: max-content repeat(7, minmax(140px, 1fr));
+        grid-template-columns: max-content repeat(7, minmax(120px, 1fr));
     }
 }
