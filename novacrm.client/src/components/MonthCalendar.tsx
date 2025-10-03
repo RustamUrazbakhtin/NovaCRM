@@ -286,6 +286,15 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
         setCursor((prev) => normalizeCursor(prev, next));
     };
     const handleAdd = () => alert("Add new event");
+    const handleDayClick = (iso: string) => {
+        const label = new Date(iso).toLocaleDateString(undefined, {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+        });
+        alert(`Open ${label}`);
+    };
 
     const getMonthEventLabel = (event: CalendarEvent) => {
         const start = event.start ?? event.time;
@@ -360,6 +369,12 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
                         {data.cells.map((cell) => {
                             const visibleEvents = cell.events.slice(0, MAX_EVENTS_PER_DAY);
                             const remaining = cell.events.length - visibleEvents.length;
+                            const dayLabel = new Date(cell.iso).toLocaleDateString(undefined, {
+                                weekday: "long",
+                                month: "long",
+                                day: "numeric",
+                                year: "numeric",
+                            });
                             return (
                                 <div
                                     key={cell.iso}
@@ -368,7 +383,14 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
                                     }`}
                                     role="gridcell"
                                 >
-                                    <div className="mc-date">{cell.day}</div>
+                                    <button
+                                        type="button"
+                                        className="mc-date-btn"
+                                        onClick={() => handleDayClick(cell.iso)}
+                                        aria-label={dayLabel}
+                                    >
+                                        {cell.day}
+                                    </button>
                                     <div className="mc-events">
                                         {visibleEvents.map((event, index) => {
                                             const label = getMonthEventLabel(event);

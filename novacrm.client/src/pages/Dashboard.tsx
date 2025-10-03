@@ -12,13 +12,10 @@ const renderLimitedList = (items: string[]) => {
     const shouldClamp = items.length > MAX_VISIBLE_ITEMS;
 
     return (
-        <ul className="nx-list">
+        <ul className="nx-list" title={shouldClamp ? items.join("\n") : undefined}>
             {visible.map((item, index) => (
                 <li key={index}>{item}</li>
             ))}
-            {shouldClamp && (
-                <li className="nx-list-more" aria-hidden="true">…</li>
-            )}
         </ul>
     );
 };
@@ -72,26 +69,46 @@ export default function Dashboard() {
             <main className="fx-page">
                 <section className="fx-row fx-top">
                     <div className="fx-quarter">
-                        <Widget title="Today (Salon)" footer="Overview" minH={176}>
+                        <Widget
+                            title="Today (Salon)"
+                            footer="Overview"
+                            minH={176}
+                            onClick={() => open("Today overview")}
+                        >
                             {renderLimitedList(salonOverview)}
                         </Widget>
                     </div>
 
                     <div className="fx-quarter">
-                        <Widget title="Next 2 hours" footer="Upcoming" minH={176}>
+                        <Widget
+                            title="Next 2 hours"
+                            footer="Upcoming"
+                            minH={176}
+                            onClick={() => open("Next 2 hours")}
+                        >
                             {renderLimitedList(upcomingHours)}
                         </Widget>
                     </div>
 
                     <div className="fx-quarter">
-                        <Widget title="Revenue" footer="This month" minH={176}>
+                        <Widget
+                            title="Revenue"
+                            footer="This month"
+                            minH={176}
+                            onClick={() => open("Revenue")}
+                        >
                             <div className="nx-number">$ 18,240</div>
                             <span className="nx-subtle">↑ 12% vs August</span>
                         </Widget>
                     </div>
 
                     <div className="fx-quarter">
-                        <Widget title="Staff" footer="Status" minH={176}>
+                        <Widget
+                            title="Staff"
+                            footer="Status"
+                            minH={176}
+                            onClick={() => open("Staff status")}
+                        >
                             {renderLimitedList(staffStatus)}
                         </Widget>
                     </div>
@@ -105,7 +122,12 @@ export default function Dashboard() {
                     </div>
 
                     <div className="fx-right">
-                        <Widget title="Tasks" footer="Today" minH={140}>
+                        <Widget
+                            title="Tasks"
+                            footer="Today"
+                            minH={140}
+                            onClick={() => open("Tasks")}
+                        >
                             <ul className="nx-todos">
                                 <li><input type="checkbox" defaultChecked /> Order hair dye</li>
                                 <li><input type="checkbox" /> Call supplier</li>
@@ -113,7 +135,12 @@ export default function Dashboard() {
                             </ul>
                         </Widget>
 
-                        <Widget title="Inventory" footer="Low stock" minH={140}>
+                        <Widget
+                            title="Inventory"
+                            footer="Low stock"
+                            minH={140}
+                            onClick={() => open("Inventory")}
+                        >
                             <ul className="nx-list">
                                 <li>Shampoo #4 — 6 left</li>
                                 <li>Nail base — 3 left</li>
@@ -121,7 +148,12 @@ export default function Dashboard() {
                             </ul>
                         </Widget>
 
-                        <Widget title="Reviews" footer="This week" minH={140}>
+                        <Widget
+                            title="Reviews"
+                            footer="This week"
+                            minH={140}
+                            onClick={() => open("Reviews")}
+                        >
                             <div className="nx-number">4.8 ★</div>
                             <span className="nx-subtle">+32 new responses</span>
                         </Widget>
