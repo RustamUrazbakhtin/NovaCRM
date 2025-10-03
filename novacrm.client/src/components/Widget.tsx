@@ -9,7 +9,7 @@ type WidgetProps = {
     href?: string;
 };
 
-export default function Widget({ title, footer, children, minH = 140, onClick, href }: WidgetProps) {
+export default function Widget({ title, footer, children, minH = 120, onClick, href }: WidgetProps) {
     const hasHead = Boolean((title ?? "").trim() || footer);
     const interactive = Boolean(onClick || href);
     const className = `nx-widget${interactive ? " is-clickable" : ""}`;

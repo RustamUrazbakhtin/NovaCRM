@@ -72,7 +72,7 @@ export default function Dashboard() {
                         <Widget
                             title="Today (Salon)"
                             footer="Overview"
-                            minH={176}
+                            minH={160}
                             onClick={() => open("Today overview")}
                         >
                             {renderLimitedList(salonOverview)}
@@ -83,7 +83,7 @@ export default function Dashboard() {
                         <Widget
                             title="Next 2 hours"
                             footer="Upcoming"
-                            minH={176}
+                            minH={160}
                             onClick={() => open("Next 2 hours")}
                         >
                             {renderLimitedList(upcomingHours)}
@@ -94,7 +94,7 @@ export default function Dashboard() {
                         <Widget
                             title="Revenue"
                             footer="This month"
-                            minH={176}
+                            minH={160}
                             onClick={() => open("Revenue")}
                         >
                             <div className="nx-number">$ 18,240</div>
@@ -106,7 +106,7 @@ export default function Dashboard() {
                         <Widget
                             title="Staff"
                             footer="Status"
-                            minH={176}
+                            minH={160}
                             onClick={() => open("Staff status")}
                         >
                             {renderLimitedList(staffStatus)}
@@ -116,7 +116,7 @@ export default function Dashboard() {
 
                 <section className="fx-row fx-main">
                     <div className="fx-left">
-                        <Widget minH={420}>
+                        <Widget minH={360}>
                             <MonthCalendar title="Calendar" events={events} />
                         </Widget>
                     </div>
@@ -125,7 +125,7 @@ export default function Dashboard() {
                         <Widget
                             title="Tasks"
                             footer="Today"
-                            minH={140}
+                            minH={120}
                             onClick={() => open("Tasks")}
                         >
                             <ul className="nx-todos">
@@ -138,7 +138,7 @@ export default function Dashboard() {
                         <Widget
                             title="Inventory"
                             footer="Low stock"
-                            minH={140}
+                            minH={120}
                             onClick={() => open("Inventory")}
                         >
                             <ul className="nx-list">
@@ -151,7 +151,7 @@ export default function Dashboard() {
                         <Widget
                             title="Reviews"
                             footer="This week"
-                            minH={140}
+                            minH={120}
                             onClick={() => open("Reviews")}
                         >
                             <div className="nx-number">4.8 ★</div>
