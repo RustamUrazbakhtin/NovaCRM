@@ -350,6 +350,8 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
                 label: `${String(hour).padStart(2, "0")}:00`,
             };
         });
+        alert(`Open ${label}`);
+    };
 
         const dayEvents = (eventsByDate.get(selectedDate) ?? []).map((event) => {
             const startCandidate =
