@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { CalendarEvent } from "./MonthCalendar";
 
@@ -12,7 +12,6 @@ export default function ScheduleModal({
     originRect: DOMRect | null;
 }) {
     const sheetRef = useRef<HTMLDivElement | null>(null);
-    const [mounted, setMounted] = useState(false);
 
     // Мастера и тайм-слоты
     const masters = useMemo(() => {
@@ -50,10 +49,11 @@ export default function ScheduleModal({
             el.style.width = `${vw}px`;
             el.style.height = `${vh}px`;
             el.style.opacity = "1";
-            setMounted(true);
         });
 
-        return () => setMounted(false);
+        return () => {
+            el.style.transition = "";
+        };
     }, [open, originRect]);
 
     const closeAnimated = () => {
