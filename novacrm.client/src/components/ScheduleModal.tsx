@@ -2,20 +2,24 @@ import { useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { CalendarEvent } from "./MonthCalendar";
 
-export default function ScheduleModal({
-    open, onClose, dateISO, items, originRect
-}: {
+type ScheduleEvent = CalendarEvent & { master?: string; time?: string };
+
+type Props = {
     open: boolean;
     onClose: () => void;
     dateISO: string;
-    items: CalendarEvent[];
+    items: ScheduleEvent[];
     originRect: DOMRect | null;
-}) {
+};
+
+export default function ScheduleModal({ open, onClose, dateISO, items, originRect }: Props) {
     const sheetRef = useRef<HTMLDivElement | null>(null);
 
-    // Мастера и тайм-слоты
     const masters = useMemo(() => {
-        const set = new Set(items.map(i => i.master));
+        const set = new Set<string>();
+        for (const item of items) {
+            if (item.master) set.add(item.master);
+        }
         return Array.from(set);
     }, [items]);
 
@@ -50,10 +54,6 @@ export default function ScheduleModal({
             el.style.height = `${vh}px`;
             el.style.opacity = "1";
         });
-
-        return () => {
-            el.style.transition = "";
-        };
     }, [open, originRect]);
 
     const closeAnimated = () => {
@@ -93,16 +93,22 @@ export default function ScheduleModal({
                         {/* сетка времени × мастера */}
                         <div
                             className="sch"
-                            style={{ ["--masters" as any]: masters.length }}
+                            style={{ ["--masters" as any]: Math.max(masters.length, 1) }}
                         >
                             <div></div>
-                            {masters.map(m => <div key={m} className="sch-head">{m}</div>)}
+                            {masters.map((m) => (
+                                <div key={m} className="sch-head">
+                                    {m}
+                                </div>
+                            ))}
 
-                            {times.map(t => (
+                            {times.map((t) => (
                                 <>
-                                    <div key={`t-${t}`} className="sch-time">{t}</div>
-                                    {masters.map(m => {
-                                        const ev = items.find(x => x.time === t && x.master === m);
+                                    <div key={`t-${t}`} className="sch-time">
+                                        {t}
+                                    </div>
+                                    {masters.map((m) => {
+                                        const ev = items.find((x) => x.time === t && x.master === m);
                                         return (
                                             <div key={`${t}-${m}`} className={`sch-slot ${ev ? "busy" : ""}`}>
                                                 {ev ? ev.title : ""}

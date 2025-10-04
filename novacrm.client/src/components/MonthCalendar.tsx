@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import type { CSSProperties, FormEvent, MouseEvent as ReactMouseEvent } from "react";
+import { useMemo } from "react";
 import "../styles/calendar.css";
 
 export type CalendarEvent = {
@@ -7,14 +6,10 @@ export type CalendarEvent = {
     date: string;
     /** Short title (e.g., "Haircut — Anna") */
     title: string;
-    /** Optional start time in HH:mm */
-    start?: string;
-    /** Optional end time in HH:mm */
-    end?: string;
-    /** Legacy single time slot */
-    time?: string;
-    /** Assigned staff member */
+    /** Optional staff member responsible for the event */
     master?: string;
+    /** Optional HH:mm label for scheduling */
+    time?: string;
 };
 
 type CalendarView = "month" | "week" | "year";
