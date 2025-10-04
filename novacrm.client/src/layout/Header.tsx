@@ -20,6 +20,7 @@ export default function Header({
     const { theme, setTheme, isDark } = useTheme();
     const [open, setOpen] = useState(false);
     const box = useRef<HTMLDivElement>(null);
+    const switchId = useId();
 
     useEffect(() => {
         const onDoc = (e: MouseEvent) => {
@@ -29,18 +30,26 @@ export default function Header({
         return () => document.removeEventListener("click", onDoc);
     }, []);
 
+    const isSwitchOn = theme === "dark" || (theme === "system" && isDark);
+    const themeStatusLabel =
+        theme === "system"
+            ? `System · ${isDark ? "Dark" : "Light"}`
+            : isSwitchOn
+                ? "Dark mode"
+                : "Light mode";
+
+    const handleThemeToggle = () => {
+        if (theme === "system") {
+            setTheme(isSwitchOn ? "light" : "dark");
+            return;
+        }
+
+        setTheme(isSwitchOn ? "light" : "dark");
+    };
+
     const items: MenuItem[] = [
         { label: "Profile", onClick: onOpenProfile },
         { label: "Settings", onClick: onOpenSettings },
-        {
-            label:
-                theme === "dark"
-                    ? "Switch to Light"
-                    : theme === "light"
-                        ? "Switch to Dark"
-                        : (isDark ? "Switch to Light" : "Switch to Dark") + " (System)",
-            onClick: () => setTheme(isDark ? "light" : "dark"),
-        },
         { label: "Admin Panel", onClick: onOpenAdmin },
         { label: "Sign out", onClick: onLogout },
     ];
@@ -88,6 +97,18 @@ export default function Header({
                                 <option value="dark">Dark</option>
                             </select>
                         </div>
+
+                        <button
+                            type="button"
+                            className={`nx-theme-system ${theme === "system" ? "is-active" : ""}`}
+                            aria-pressed={theme === "system"}
+                            onClick={() => {
+                                setTheme("system");
+                                setOpen(false);
+                            }}
+                        >
+                            Follow system settings
+                        </button>
                     </div>
                 )}
             </div>
