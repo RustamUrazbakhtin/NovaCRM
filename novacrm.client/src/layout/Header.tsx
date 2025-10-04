@@ -1,6 +1,8 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "../providers/ThemeProvider";
 import "./header.css";
+
+type ThemeOption = "light" | "dark" | "system";
 
 type MenuItem = { label: string; onClick: () => void };
 
@@ -55,7 +57,7 @@ export default function Header({
             </div>
 
             <div className="nx-right" ref={box}>
-                <button className="nx-user" onClick={() => setOpen(v => !v)} aria-haspopup="menu" aria-expanded={open}>
+                <button className="nx-user" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open}>
                     <img src="/react.svg" alt="user avatar" />
                     <span className="nx-user-name">User</span>
                 </button>
@@ -63,14 +65,24 @@ export default function Header({
                 {open && (
                     <div className="nx-menu" role="menu">
                         {items.map((it, i) => (
-                            <button key={i} role="menuitem" onClick={() => { it.onClick(); setOpen(false); }}>
+                            <button
+                                key={i}
+                                role="menuitem"
+                                onClick={() => {
+                                    it.onClick();
+                                    setOpen(false);
+                                }}
+                            >
                                 {it.label}
                             </button>
                         ))}
 
                         <div className="nx-sub">
                             Theme:
-                            <select value={theme} onChange={e => setTheme(e.target.value as any)}>
+                            <select
+                                value={theme}
+                                onChange={(e) => setTheme(e.target.value as ThemeOption)}
+                            >
                                 <option value="system">System</option>
                                 <option value="light">Light</option>
                                 <option value="dark">Dark</option>

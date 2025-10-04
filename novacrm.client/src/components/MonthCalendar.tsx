@@ -1,4 +1,4 @@
-﻿import { useMemo } from "react";
+import { useMemo } from "react";
 import "../styles/calendar.css";
 
 export type CalendarEvent = {
@@ -6,6 +6,10 @@ export type CalendarEvent = {
     date: string;
     /** Short title (e.g., "Haircut — Anna 12:00") */
     title: string;
+    /** Optional staff member responsible for the event */
+    master?: string;
+    /** Optional HH:mm label for scheduling */
+    time?: string;
 };
 
 type Props = {
