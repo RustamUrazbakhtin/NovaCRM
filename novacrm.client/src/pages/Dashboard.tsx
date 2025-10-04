@@ -78,7 +78,6 @@ export default function Dashboard() {
                             {renderLimitedList(salonOverview)}
                         </Widget>
                     </div>
-
                     <div className="fx-quarter">
                         <Widget
                             title="Next 2 hours"
@@ -89,7 +88,6 @@ export default function Dashboard() {
                             {renderLimitedList(upcomingHours)}
                         </Widget>
                     </div>
-
                     <div className="fx-quarter">
                         <Widget
                             title="Revenue"
@@ -101,7 +99,6 @@ export default function Dashboard() {
                             <span className="nx-subtle">↑ 12% vs August</span>
                         </Widget>
                     </div>
-
                     <div className="fx-quarter">
                         <Widget
                             title="Staff"
@@ -120,7 +117,6 @@ export default function Dashboard() {
                             <MonthCalendar title="Calendar" events={events} />
                         </Widget>
                     </div>
-
                     <div className="fx-right">
                         <Widget
                             title="Tasks"
@@ -134,7 +130,6 @@ export default function Dashboard() {
                                 <li><input type="checkbox" /> IG promo post</li>
                             </ul>
                         </Widget>
-
                         <Widget
                             title="Inventory"
                             footer="Low stock"
@@ -147,7 +142,6 @@ export default function Dashboard() {
                                 <li>Serum — 5 left</li>
                             </ul>
                         </Widget>
-
                         <Widget
                             title="Reviews"
                             footer="This week"
@@ -163,3 +157,4 @@ export default function Dashboard() {
         </ThemeProvider>
     );
 }
+

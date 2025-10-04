@@ -1,8 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTheme } from "../providers/ThemeProvider";
 import "./header.css";
-
-type ThemeOption = "light" | "dark" | "system";
 
 type MenuItem = { label: string; onClick: () => void };
 
@@ -20,7 +18,6 @@ export default function Header({
     const { theme, setTheme, isDark } = useTheme();
     const [open, setOpen] = useState(false);
     const box = useRef<HTMLDivElement>(null);
-    const switchId = useId();
 
     useEffect(() => {
         const onDoc = (e: MouseEvent) => {
@@ -66,7 +63,7 @@ export default function Header({
             </div>
 
             <div className="nx-right" ref={box}>
-                <button className="nx-user" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open}>
+                <button className="nx-user" onClick={() => setOpen(v => !v)} aria-haspopup="menu" aria-expanded={open}>
                     <img src="/react.svg" alt="user avatar" />
                     <span className="nx-user-name">User</span>
                 </button>
@@ -74,28 +71,26 @@ export default function Header({
                 {open && (
                     <div className="nx-menu" role="menu">
                         {items.map((it, i) => (
-                            <button
-                                key={i}
-                                role="menuitem"
-                                onClick={() => {
-                                    it.onClick();
-                                    setOpen(false);
-                                }}
-                            >
+                            <button key={i} role="menuitem" onClick={() => { it.onClick(); setOpen(false); }}>
                                 {it.label}
                             </button>
                         ))}
+                        <div className="nx-theme-row">
+                            <div className="nx-theme-info">
+                                <span className="nx-theme-label">Theme</span>
+                                <span className="nx-theme-status">{themeStatusLabel}</span>
+                            </div>
 
-                        <div className="nx-sub">
-                            Theme:
-                            <select
-                                value={theme}
-                                onChange={(e) => setTheme(e.target.value as ThemeOption)}
+                            <button
+                                type="button"
+                                className={`nx-switch ${isSwitchOn ? "is-on" : ""}`}
+                                role="switch"
+                                aria-checked={isSwitchOn}
+                                aria-label={isSwitchOn ? "Switch to light theme" : "Switch to dark theme"}
+                                onClick={handleThemeToggle}
                             >
-                                <option value="system">System</option>
-                                <option value="light">Light</option>
-                                <option value="dark">Dark</option>
-                            </select>
+                                <span className="nx-switch-thumb" />
+                            </button>
                         </div>
 
                         <button

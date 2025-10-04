@@ -46,10 +46,10 @@
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.mc-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
+    .mc-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
 
 .mc-btn-circle {
     width: 40px;
@@ -113,11 +113,11 @@
     transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.mc-toggle.is-active {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    color: #fff;
-    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
-}
+    .mc-toggle.is-active {
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #fff;
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+    }
 
 .mc-month {
     --mc-border: color-mix(in oklab, #000 12%, transparent);
@@ -148,15 +148,15 @@
     background: color-mix(in oklab, #000 4%, transparent);
 }
 
-.mc-month-head > *,
-.mc-month-body > * {
-    border-right: 1px solid var(--mc-border);
-}
+    .mc-month-head > *,
+    .mc-month-body > * {
+        border-right: 1px solid var(--mc-border);
+    }
 
-.mc-month-head > *:nth-child(7n),
-.mc-month-body > *:nth-child(7n) {
-    border-right: none;
-}
+        .mc-month-head > *:nth-child(7n),
+        .mc-month-body > *:nth-child(7n) {
+            border-right: none;
+        }
 
 .mc-dayname {
     font-size: 9px;
@@ -191,23 +191,23 @@
     color: inherit;
 }
 
-.mc-cell-btn:hover {
-    background: color-mix(in oklab, var(--accent) 12%, transparent);
-}
+    .mc-cell-btn:hover {
+        background: color-mix(in oklab, var(--accent) 12%, transparent);
+    }
 
-.mc-cell-btn:focus-visible {
-    outline: 2px solid color-mix(in oklab, var(--accent) 50%, transparent);
-    outline-offset: -2px;
-}
+    .mc-cell-btn:focus-visible {
+        outline: 2px solid color-mix(in oklab, var(--accent) 50%, transparent);
+        outline-offset: -2px;
+    }
 
-.mc-cell-btn.is-outside {
-    opacity: 0.45;
-}
+    .mc-cell-btn.is-outside {
+        opacity: 0.45;
+    }
 
-.mc-cell-btn.is-today {
-    background: color-mix(in oklab, var(--accent) 16%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 45%, transparent);
-}
+    .mc-cell-btn.is-today {
+        background: color-mix(in oklab, var(--accent) 16%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 45%, transparent);
+    }
 
 .dark .mc-cell-btn:hover {
     background: color-mix(in oklab, var(--accent) 24%, transparent);
@@ -249,12 +249,12 @@
     box-shadow: 0 8px 20px rgba(236, 72, 153, 0.18);
 }
 
-.mc-count small {
-    font-size: 9px;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    opacity: 0.7;
-}
+    .mc-count small {
+        font-size: 9px;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        opacity: 0.7;
+    }
 
 .mc-cell-btn.is-outside .mc-count {
     box-shadow: none;
@@ -281,9 +281,9 @@
     color: color-mix(in oklab, var(--ink) 80%, transparent);
 }
 
-.mc-btn-ghost:hover {
-    border-color: color-mix(in oklab, var(--accent) 40%, transparent);
-}
+    .mc-btn-ghost:hover {
+        border-color: color-mix(in oklab, var(--accent) 40%, transparent);
+    }
 
 .dark .mc-btn-ghost {
     border-color: color-mix(in oklab, #fff 20%, transparent);
@@ -337,18 +337,18 @@
     gap: 10px;
 }
 
-.mc-sheet-meta h3 {
-    margin: 0;
-    font-size: 22px;
-    font-weight: 800;
-    letter-spacing: 0.2px;
-}
+    .mc-sheet-meta h3 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+    }
 
-.mc-sheet-meta p {
-    margin: 0;
-    font-size: 14px;
-    opacity: 0.7;
-}
+    .mc-sheet-meta p {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.7;
+    }
 
 .mc-sheet-chip {
     display: inline-flex;
@@ -396,13 +396,13 @@
     gap: 0;
 }
 
-.mc-modal-hours span {
-    height: var(--mc-modal-hour-height);
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-end;
-    padding-top: 4px;
-}
+    .mc-modal-hours span {
+        height: var(--mc-modal-hour-height);
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-end;
+        padding-top: 4px;
+    }
 
 .mc-modal-hours-spacer {
     height: 40px;
@@ -444,13 +444,13 @@
     pointer-events: none;
 }
 
-.mc-modal-gridlines span {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: color-mix(in oklab, #000 12%, transparent);
-}
+    .mc-modal-gridlines span {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: color-mix(in oklab, #000 12%, transparent);
+    }
 
 .dark .mc-modal-gridlines span {
     background: color-mix(in oklab, #fff 18%, transparent);
@@ -550,14 +550,14 @@
     color: color-mix(in oklab, #fff 78%, transparent);
 }
 
-.dark .mc-modal-field input,
-.dark .mc-modal-field select,
-.dark .mc-modal-field textarea {
-    border-color: color-mix(in oklab, #fff 18%, transparent);
-    background: color-mix(in oklab, #11131a 92%, transparent);
-    color: #f8f9ff;
-    box-shadow: none;
-}
+    .dark .mc-modal-field input,
+    .dark .mc-modal-field select,
+    .dark .mc-modal-field textarea {
+        border-color: color-mix(in oklab, #fff 18%, transparent);
+        background: color-mix(in oklab, #11131a 92%, transparent);
+        color: #f8f9ff;
+        box-shadow: none;
+    }
 
 .mc-modal-form-actions {
     display: flex;
@@ -610,10 +610,9 @@
     padding-bottom: 6px;
 }
 
-.mc-week::-webkit-scrollbar {
-    height: 6px;
-}
-
+    .mc-week::-webkit-scrollbar {
+        height: 6px;
+    }
 
 .mc-week-times {
     display: flex;
