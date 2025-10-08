@@ -120,12 +120,12 @@
     }
 
 .mc-month {
-    --mc-border: color-mix(in oklab, #000 18%, transparent);
+    --mc-border: color-mix(in oklab, var(--accent) 55%, var(--ink) 25%);
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    border: 1px solid var(--mc-border);
+    border: 2px solid var(--mc-border);
     border-radius: 12px;
     overflow: hidden;
     background: #fff;
@@ -194,10 +194,6 @@
         border-right: none;
     }
 
-    .mc-month-body > .mc-cell-btn:nth-last-child(-n + 7) {
-        border-bottom: none;
-    }
-
     .mc-cell-btn:hover {
         background: color-mix(in oklab, var(--accent) 12%, transparent);
     }
@@ -212,8 +208,9 @@
     }
 
     .mc-cell-btn.is-today {
-        background: color-mix(in oklab, var(--accent) 16%, transparent);
-        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 45%, transparent);
+        background: color-mix(in oklab, var(--accent) 88%, transparent);
+        color: #fff;
+        box-shadow: inset 0 0 0 2px color-mix(in oklab, #fff 40%, transparent);
     }
 
 .dark .mc-cell-btn:hover {
@@ -221,7 +218,7 @@
 }
 
 .dark .mc-cell-btn.is-today {
-    background: color-mix(in oklab, var(--accent) 28%, transparent);
+    background: color-mix(in oklab, var(--accent) 70%, transparent);
 }
 
 .mc-date {
@@ -236,7 +233,12 @@
 }
 
 .mc-cell-btn.is-today .mc-date {
-    background: color-mix(in oklab, var(--accent) 30%, transparent);
+    background: rgba(255, 255, 255, 0.16);
+    color: inherit;
+}
+
+.dark .mc-cell-btn.is-today .mc-date {
+    background: rgba(255, 255, 255, 0.22);
     color: #fff;
 }
 
@@ -267,14 +269,24 @@
     box-shadow: none;
 }
 
+.mc-cell-btn.is-today .mc-count {
+    background: rgba(255, 255, 255, 0.2);
+    color: inherit;
+    box-shadow: none;
+}
+
 .dark .mc-count {
     background: color-mix(in oklab, var(--accent) 28%, transparent);
     color: #fff;
     box-shadow: none;
 }
 
+.dark .mc-cell-btn.is-today .mc-count {
+    background: rgba(255, 255, 255, 0.16);
+}
+
 .dark .mc-month {
-    --mc-border: color-mix(in oklab, #fff 16%, transparent);
+    --mc-border: color-mix(in oklab, var(--accent) 70%, #fff 30%);
     background: #1f2331;
 }
 
