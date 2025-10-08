@@ -120,7 +120,7 @@
     }
 
 .mc-month {
-    --mc-border: color-mix(in oklab, #000 12%, transparent);
+    --mc-border: color-mix(in oklab, #000 18%, transparent);
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -148,15 +148,13 @@
     background: color-mix(in oklab, #000 4%, transparent);
 }
 
-    .mc-month-head > *,
-    .mc-month-body > * {
+    .mc-month-head > * {
         border-right: 1px solid var(--mc-border);
     }
 
-        .mc-month-head > *:nth-child(7n),
-        .mc-month-body > *:nth-child(7n) {
-            border-right: none;
-        }
+    .mc-month-head > *:nth-child(7n) {
+        border-right: none;
+    }
 
 .mc-dayname {
     font-size: 9px;
@@ -169,10 +167,6 @@
     background: transparent;
 }
 
-.mc-month-body > .mc-cell-btn:nth-last-child(-n + 7) {
-    border-bottom: none;
-}
-
 .mc-cell-btn {
     position: relative;
     display: flex;
@@ -182,6 +176,7 @@
     gap: 10px;
     padding: 8px 12px 10px;
     border: none;
+    border-right: 1px solid var(--mc-border);
     border-bottom: 1px solid var(--mc-border);
     background: transparent;
     cursor: pointer;
@@ -190,6 +185,18 @@
     font: inherit;
     color: inherit;
 }
+
+    .mc-month-body > .mc-cell-btn:nth-child(n + 8) {
+        border-top: 1px solid var(--mc-border);
+    }
+
+    .mc-month-body > .mc-cell-btn:nth-child(7n) {
+        border-right: none;
+    }
+
+    .mc-month-body > .mc-cell-btn:nth-last-child(-n + 7) {
+        border-bottom: none;
+    }
 
     .mc-cell-btn:hover {
         background: color-mix(in oklab, var(--accent) 12%, transparent);
