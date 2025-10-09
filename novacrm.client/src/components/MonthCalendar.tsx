@@ -375,7 +375,7 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
                             return (
                                 <div
                                     key={cell.iso}
-                                    className={`mc-cell ${cell.isCurrentMonth ? "" : "is-outside"} ${cell.isToday ? "is-today" : ""
+                                    className={`mc-cell-btn ${cell.isCurrentMonth ? "" : "is-outside"} ${cell.isToday ? "is-today" : ""
                                         }`}
                                     role="gridcell"
                                 >
