@@ -120,7 +120,7 @@
     }
 
 .mc-month {
-    --mc-border: color-mix(in oklab, var(--accent) 55%, var(--ink) 25%);
+    --mc-border: #d7dbe6;
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -195,11 +195,11 @@
     }
 
     .mc-cell-btn:hover {
-        background: color-mix(in oklab, var(--accent) 12%, transparent);
+        background: color-mix(in oklab, #6da8ff 14%, transparent);
     }
 
     .mc-cell-btn:focus-visible {
-        outline: 2px solid color-mix(in oklab, var(--accent) 50%, transparent);
+        outline: 2px solid color-mix(in oklab, #6da8ff 60%, transparent);
         outline-offset: -2px;
     }
 
@@ -208,37 +208,56 @@
     }
 
     .mc-cell-btn.is-today {
-        background: color-mix(in oklab, var(--accent) 88%, transparent);
-        color: #fff;
-        box-shadow: inset 0 0 0 2px color-mix(in oklab, #fff 40%, transparent);
+        background: color-mix(in oklab, #5aa9ff 26%, transparent);
+        color: color-mix(in oklab, var(--ink) 15%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, #1f7bf3 35%, transparent);
     }
 
 .dark .mc-cell-btn:hover {
-    background: color-mix(in oklab, var(--accent) 24%, transparent);
+    background: color-mix(in oklab, #4b8ce0 28%, transparent);
 }
 
 .dark .mc-cell-btn.is-today {
-    background: color-mix(in oklab, var(--accent) 70%, transparent);
+    background: color-mix(in oklab, #4b8ce0 38%, transparent);
+    color: color-mix(in oklab, #ffffff 88%, transparent);
 }
 
-.mc-date {
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.2px;
-    font-variant-numeric: tabular-nums;
-    padding: 2px 8px;
+.mc-date-btn {
+    align-items: center;
+    background: transparent;
+    border: none;
     border-radius: 10px;
-    background: color-mix(in oklab, #000 4%, transparent);
-    color: color-mix(in oklab, var(--ink) 80%, transparent);
+    color: color-mix(in oklab, var(--ink) 70%, transparent);
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 13px;
+    font-weight: 600;
+    height: 30px;
+    justify-content: center;
+    letter-spacing: 0.2px;
+    min-width: 30px;
+    padding: 2px 6px;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
-.mc-cell-btn.is-today .mc-date {
-    background: rgba(255, 255, 255, 0.16);
-    color: inherit;
+.mc-date-btn:hover {
+    background: color-mix(in oklab, #6da8ff 16%, transparent);
+    color: color-mix(in oklab, var(--ink) 20%, transparent);
 }
 
-.dark .mc-cell-btn.is-today .mc-date {
-    background: rgba(255, 255, 255, 0.22);
+.mc-date-btn:focus-visible {
+    outline: 2px solid color-mix(in oklab, #6da8ff 60%, transparent);
+    outline-offset: 1px;
+}
+
+.mc-cell-btn.is-today .mc-date-btn {
+    background: color-mix(in oklab, #5aa9ff 38%, transparent);
+    color: color-mix(in oklab, var(--ink) 10%, transparent);
+    font-weight: 700;
+}
+
+.dark .mc-cell-btn.is-today .mc-date-btn {
+    background: color-mix(in oklab, #4b8ce0 52%, transparent);
     color: #fff;
 }
 
