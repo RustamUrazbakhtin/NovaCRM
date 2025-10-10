@@ -369,8 +369,11 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
                     </div>
                     <div className="mc-month-body" role="rowgroup">
                         {data.cells.map((cell) => {
-                            const visibleEvents = cell.events.slice(0, MAX_EVENTS_PER_DAY);
-                            const remaining = cell.events.length - visibleEvents.length;
+                            const showEvents = cell.isCurrentMonth;
+                            const visibleEvents = showEvents
+                                ? cell.events.slice(0, MAX_EVENTS_PER_DAY)
+                                : [];
+                            const remaining = showEvents ? cell.events.length - visibleEvents.length : 0;
                             const dayLabel = new Date(cell.iso).toLocaleDateString(undefined, {
                                 weekday: "long",
                                 month: "long",
@@ -389,6 +392,8 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
                                         className="mc-date-btn"
                                         onClick={() => handleDayClick(cell.iso)}
                                         aria-label={dayLabel}
+                                        disabled={!cell.isCurrentMonth}
+                                        aria-disabled={!cell.isCurrentMonth}
                                     >
                                         {cell.day}
                                     </button>
