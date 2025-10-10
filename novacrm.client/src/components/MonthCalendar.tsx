@@ -136,7 +136,12 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
             const start = startOfWeek(firstDay);
             const lastDay = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
             const offset = (firstDay.getDay() + 6) % 7;
-            const weeks = Math.max(5, Math.ceil((offset + lastDay.getDate()) / 7));
+            // Always render six rows so the calendar height stays consistent when moving
+            // between months (matching the requested fixed layout).
+            const weeks = Math.max(
+                6,
+                Math.ceil((offset + lastDay.getDate()) / 7),
+            );
             const totalCells = weeks * 7;
             const cells = Array.from({ length: totalCells }, (_, index) => {
                 const date = new Date(start);
