@@ -136,7 +136,12 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
             const start = startOfWeek(firstDay);
             const lastDay = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
             const offset = (firstDay.getDay() + 6) % 7;
-            const weeks = Math.max(5, Math.ceil((offset + lastDay.getDate()) / 7));
+            // Always render six rows so the calendar height stays consistent when moving
+            // between months (matching the requested fixed layout).
+            const weeks = Math.max(
+                6,
+                Math.ceil((offset + lastDay.getDate()) / 7),
+            );
             const totalCells = weeks * 7;
             const cells = Array.from({ length: totalCells }, (_, index) => {
                 const date = new Date(start);
@@ -364,8 +369,11 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
                     </div>
                     <div className="mc-month-body" role="rowgroup">
                         {data.cells.map((cell) => {
-                            const visibleEvents = cell.events.slice(0, MAX_EVENTS_PER_DAY);
-                            const remaining = cell.events.length - visibleEvents.length;
+                            const showEvents = cell.isCurrentMonth;
+                            const visibleEvents = showEvents
+                                ? cell.events.slice(0, MAX_EVENTS_PER_DAY)
+                                : [];
+                            const remaining = showEvents ? cell.events.length - visibleEvents.length : 0;
                             const dayLabel = new Date(cell.iso).toLocaleDateString(undefined, {
                                 weekday: "long",
                                 month: "long",
@@ -384,6 +392,8 @@ export default function MonthCalendar({ events = [], title = "Calendar" }: Props
                                         className="mc-date-btn"
                                         onClick={() => handleDayClick(cell.iso)}
                                         aria-label={dayLabel}
+                                        disabled={!cell.isCurrentMonth}
+                                        aria-disabled={!cell.isCurrentMonth}
                                     >
                                         {cell.day}
                                     </button>
