@@ -1,9 +1,10 @@
+import type { ReactElement } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AuthPage from "../pages/AuthPage";
 import Dashboard from "../pages/Dashboard";
 import { isAuthenticated } from "./auth";
 
-function Private({ children }: { children: JSX.Element }) {
+function Private({ children }: { children: ReactElement }) {
     return isAuthenticated() ? children : <Navigate to="/auth" replace />;
 }
 
