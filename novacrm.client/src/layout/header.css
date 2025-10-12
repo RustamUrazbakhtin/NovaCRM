@@ -1,4 +1,4 @@
-.nx-header {
+﻿.nx-header {
     position: sticky;
     top: 0;
     z-index: 20;
@@ -18,26 +18,38 @@
 
 .nx-left {
     display: flex;
-    gap: 10px;
-    align-items: center;
+    align-items: center; /* ← вертикальное выравнивание всех элементов */
+    gap: 12px;
+    min-width: 0;
 }
 
 .nx-logo {
-    display: flex;
+    display: inline-flex;
+    align-items: center; /* ← логотип и название по одной линии */
     gap: 8px;
-    align-items: center;
-    font-weight: 700;
+    min-width: 0;
 }
 
 .nx-mark {
-    display: grid;
-    place-items: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 6px;
-    background: linear-gradient(180deg,#4f46e5,#3b82f6);
-    color: #fff;
-    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+}
+
+    .nx-mark img {
+        display: block; /* ← убирает «прыжок» по baseline у <img> */
+        height: 28px; /* или 22–28px под макет */
+        width: auto;
+        /* при необходимости микро-нудж:
+     transform: translateY(-1px); */
+    }
+
+.brand__name {
+    font-weight: 800;
+    font-size: 18px;
+    line-height: 1; /* без лишних отступов по вертикали */
+    white-space: nowrap;
 }
 
 .nx-divider {

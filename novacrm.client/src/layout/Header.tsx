@@ -55,8 +55,10 @@ export default function Header({
         <header className="nx-header">
             <div className="nx-left">
                 <div className="nx-logo">
-                    <span className="nx-mark">◇</span>
-                    <span>NovaCRM</span>
+                    <span className="nx-mark">
+                        <img src="/NovaCRM_Logo.png" alt="NovaCRM" height={28} />
+                    </span>
+                    <span className="brand__name">NovaCRM</span>
                 </div>
                 <div className="nx-divider" />
                 <div className="nx-breadcrumb">Dashboard</div>
@@ -64,7 +66,7 @@ export default function Header({
 
             <div className="nx-right" ref={box}>
                 <button className="nx-user" onClick={() => setOpen(v => !v)} aria-haspopup="menu" aria-expanded={open}>
-                    <img src="/react.svg" alt="user avatar" />
+                    <img src="/user.svg" alt="user avatar" />
                     <span className="nx-user-name">User</span>
                 </button>
 
