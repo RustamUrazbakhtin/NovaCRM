@@ -1,0 +1,549 @@
+.clients-page {
+    --clients-gap: clamp(12px, 1.6vw, 22px);
+    --clients-border: color-mix(in oklab, #0b1220 8%, transparent);
+    --clients-muted: color-mix(in oklab, var(--ink) 55%, transparent);
+}
+
+.dark .clients-page {
+    --clients-border: color-mix(in oklab, #eaf1ff 12%, transparent);
+    --clients-muted: color-mix(in oklab, #eaf1ff 65%, transparent);
+}
+
+.clients-top {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--clients-gap);
+}
+
+.clients-content {
+    display: flex;
+    gap: var(--clients-gap);
+    flex: 1;
+    min-height: 0;
+}
+
+.clients-left {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.clients-right {
+    flex: 0 0 clamp(300px, 28%, 360px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--clients-gap);
+    min-width: 260px;
+}
+
+.client-metric-number {
+    font-size: clamp(28px, 4vw, 34px);
+    font-weight: 600;
+}
+
+.client-metric-number.warning {
+    color: #ff5b6a;
+}
+
+.client-metric-sub {
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+.clients-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.clients-search {
+    position: relative;
+    flex: 1 1 240px;
+    min-width: 200px;
+}
+
+.clients-search input {
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid var(--clients-border);
+    padding: 12px 16px;
+    background: color-mix(in oklab, #fff 92%, transparent);
+    font-size: 14px;
+    box-shadow: inset 0 1px 2px rgba(12, 20, 40, 0.06);
+}
+
+.dark .clients-search input {
+    background: color-mix(in oklab, #0b1220 88%, transparent);
+    box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.clients-segments {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.segment-chip {
+    border-radius: 14px;
+    border: 1px solid transparent;
+    padding: 8px 14px;
+    background: rgba(12, 18, 32, 0.05);
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.dark .segment-chip {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.segment-chip.is-active {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    color: white;
+    box-shadow: 0 6px 16px rgba(155, 140, 255, 0.35);
+}
+
+.clients-status-filters {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.status-chip {
+    border-radius: 999px;
+    border: 1px solid var(--clients-border);
+    padding: 6px 12px;
+    font-size: 12px;
+    background: transparent;
+    color: var(--clients-muted);
+    transition: all 0.2s ease;
+}
+
+.status-chip.is-active {
+    border-color: transparent;
+    color: white;
+}
+
+.status-chip.status-loyal.is-active {
+    background: linear-gradient(135deg, #7ee8fa 0%, #80ff72 100%);
+    color: #053323;
+}
+
+.status-chip.status-atrisk.is-active {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+    color: #531010;
+}
+
+.status-chip.status-prospect.is-active {
+    background: linear-gradient(135deg, #c2e9fb 0%, #a1c4fd 100%);
+    color: #0f2742;
+}
+
+.status-chip.status-new.is-active {
+    background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+    color: #3a174b;
+}
+
+.clients-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+}
+
+.clients-actions .primary,
+.clients-actions .ghost {
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 13px;
+}
+
+.clients-actions .primary {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    color: #fff;
+    border: none;
+    box-shadow: 0 8px 20px rgba(155, 140, 255, 0.35);
+}
+
+.clients-actions .ghost {
+    border: 1px solid var(--clients-border);
+    background: transparent;
+    color: var(--clients-muted);
+}
+
+.clients-table-wrapper {
+    border-radius: 16px;
+    border: 1px solid color-mix(in oklab, var(--ink) 6%, transparent);
+    overflow: hidden;
+}
+
+.dark .clients-table-wrapper {
+    border-color: color-mix(in oklab, #fff 12%, transparent);
+}
+
+.clients-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.clients-table thead {
+    background: color-mix(in oklab, #fff 86%, transparent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 11px;
+}
+
+.dark .clients-table thead {
+    background: color-mix(in oklab, #0b1220 86%, transparent);
+}
+
+.clients-table th,
+.clients-table td {
+    padding: 14px 18px;
+    text-align: left;
+    border-bottom: 1px solid color-mix(in oklab, var(--ink) 8%, transparent);
+}
+
+.dark .clients-table th,
+.dark .clients-table td {
+    border-color: color-mix(in oklab, #fff 14%, transparent);
+}
+
+.clients-table tbody tr {
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.clients-table tbody tr:hover {
+    background: color-mix(in oklab, var(--accent) 12%, transparent);
+}
+
+.clients-table tbody tr.is-active {
+    background: color-mix(in oklab, var(--accent-2) 16%, transparent);
+}
+
+.client-cell {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.client-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: #12203a;
+    box-shadow: 0 6px 16px rgba(17, 27, 48, 0.12);
+}
+
+.dark .client-avatar {
+    color: #0b1220;
+    box-shadow: none;
+}
+
+.client-ident strong {
+    display: block;
+    font-size: 14px;
+}
+
+.client-ident span {
+    font-size: 12px;
+    color: var(--clients-muted);
+}
+
+.client-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.client-tag {
+    padding: 6px 10px;
+    border-radius: 12px;
+    background: rgba(12, 18, 32, 0.06);
+    font-size: 12px;
+}
+
+.dark .client-tag {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.client-health {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.health-loyal {
+    background: rgba(128, 255, 114, 0.22);
+    color: #0f3f2b;
+}
+
+.health-atrisk {
+    background: rgba(255, 111, 138, 0.22);
+    color: #5c121a;
+}
+
+.health-prospect {
+    background: rgba(161, 196, 253, 0.25);
+    color: #0e2b4b;
+}
+
+.health-new {
+    background: rgba(246, 221, 255, 0.32);
+    color: #452155;
+}
+
+.client-next {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.client-next strong {
+    font-size: 13px;
+}
+
+.client-next span {
+    font-size: 12px;
+    color: var(--clients-muted);
+}
+
+.clients-empty {
+    text-align: center;
+    padding: 24px;
+    color: var(--clients-muted);
+}
+
+.client-profile {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.client-profile-head {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.client-profile-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 18px;
+    color: #0b1220;
+}
+
+.dark .client-profile-avatar {
+    color: #0b1220;
+}
+
+.client-profile-head h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.client-profile-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    font-size: 12px;
+}
+
+.client-profile-meta dt {
+    opacity: 0.6;
+}
+
+.client-profile-meta dd {
+    margin: 4px 0 0;
+    font-size: 13px;
+}
+
+.client-profile-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    text-align: center;
+}
+
+.client-profile-stats strong {
+    display: block;
+    font-size: 16px;
+}
+
+.client-profile-stats span {
+    font-size: 11px;
+    opacity: 0.6;
+}
+
+.client-profile-notes {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--clients-muted);
+}
+
+.client-timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 14px;
+}
+
+.client-timeline li {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 12px;
+    align-items: start;
+}
+
+.timeline-bullet {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-top: 4px;
+    background: var(--accent);
+}
+
+.timeline-bullet.type-call {
+    background: linear-gradient(135deg, #80ffea 0%, #8aff80 100%);
+}
+
+.timeline-bullet.type-visit {
+    background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+}
+
+.timeline-bullet.type-message {
+    background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+}
+
+.timeline-bullet.type-note {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+}
+
+.timeline-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+}
+
+.timeline-head span {
+    font-size: 12px;
+    opacity: 0.6;
+}
+
+.timeline-meta {
+    font-size: 11px;
+    opacity: 0.6;
+}
+
+.client-tasks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+}
+
+.client-tasks label {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 13px;
+}
+
+.client-tasks input[type="checkbox"] {
+    accent-color: var(--accent-2);
+    margin-top: 3px;
+}
+
+.client-tasks small {
+    display: block;
+    font-size: 11px;
+    opacity: 0.6;
+}
+
+.client-automations {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+}
+
+.client-automations li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+}
+
+.client-automations strong {
+    display: block;
+    font-size: 13px;
+}
+
+.client-automations span {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+@media (max-width: 1024px) {
+    .clients-content {
+        flex-direction: column;
+    }
+
+    .clients-right {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .clients-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .clients-actions .primary,
+    .clients-actions .ghost {
+        flex: 1;
+        text-align: center;
+    }
+
+    .clients-table thead {
+        display: none;
+    }
+
+    .clients-table tbody tr {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .clients-table td {
+        padding: 0;
+        border: none;
+    }
+
+    .clients-table-wrapper {
+        border: none;
+    }
+}
