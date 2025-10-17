@@ -12,13 +12,10 @@ const renderLimitedList = (items: string[]) => {
     const shouldClamp = items.length > MAX_VISIBLE_ITEMS;
 
     return (
-        <ul className="nx-list">
+        <ul className="nx-list" title={shouldClamp ? items.join("\n") : undefined}>
             {visible.map((item, index) => (
                 <li key={index}>{item}</li>
             ))}
-            {shouldClamp && (
-                <li className="nx-list-more" aria-hidden="true">…</li>
-            )}
         </ul>
     );
 };
@@ -29,12 +26,12 @@ export default function Dashboard() {
     const tomorrowISO = new Date(today.getTime() + 86400000).toISOString().slice(0, 10);
 
     const events = [
-        { date: todayISO, title: "Haircut — Anna", start: "12:00", end: "12:45" },
-        { date: todayISO, title: "Nails — Kate", start: "15:30", end: "16:30" },
-        { date: todayISO, title: "Brows — Lina", start: "17:30", end: "18:15" },
-        { date: todayISO, title: "Balayage — Mia", start: "18:15", end: "19:30" },
-        { date: tomorrowISO, title: "Coloring — Maria", start: "11:00", end: "12:00" },
-        { date: tomorrowISO, title: "Massage — Leo", start: "16:00", end: "17:00" },
+        { date: todayISO, title: "Haircut — Anna", start: "12:00", end: "12:45", master: "Alsu" },
+        { date: todayISO, title: "Nails — Kate", start: "15:30", end: "16:30", master: "Julia" },
+        { date: todayISO, title: "Brows — Lina", start: "17:30", end: "18:15", master: "Mia" },
+        { date: todayISO, title: "Balayage — Mia", start: "18:15", end: "19:30", master: "Aigul" },
+        { date: tomorrowISO, title: "Coloring — Maria", start: "11:00", end: "12:00", master: "Alsu" },
+        { date: tomorrowISO, title: "Massage — Leo", start: "16:00", end: "17:00", master: "Mia" },
     ];
 
     const open = (s: string) => alert(s);
@@ -63,6 +60,7 @@ export default function Dashboard() {
     return (
         <ThemeProvider>
             <Header
+                breadcrumb="Dashboard"
                 onOpenAdmin={() => open("Admin")}
                 onOpenSettings={() => open("Settings")}
                 onOpenProfile={() => open("Profile")}
@@ -72,26 +70,43 @@ export default function Dashboard() {
             <main className="fx-page">
                 <section className="fx-row fx-top">
                     <div className="fx-quarter">
-                        <Widget title="Today (Salon)" footer="Overview" minH={176}>
+                        <Widget
+                            title="Today (Salon)"
+                            footer="Overview"
+                            minH={160}
+                            onClick={() => open("Today overview")}
+                        >
                             {renderLimitedList(salonOverview)}
                         </Widget>
                     </div>
-
                     <div className="fx-quarter">
-                        <Widget title="Next 2 hours" footer="Upcoming" minH={176}>
+                        <Widget
+                            title="Next 2 hours"
+                            footer="Upcoming"
+                            minH={160}
+                            onClick={() => open("Next 2 hours")}
+                        >
                             {renderLimitedList(upcomingHours)}
                         </Widget>
                     </div>
-
                     <div className="fx-quarter">
-                        <Widget title="Revenue" footer="This month" minH={176}>
+                        <Widget
+                            title="Revenue"
+                            footer="This month"
+                            minH={160}
+                            onClick={() => open("Revenue")}
+                        >
                             <div className="nx-number">$ 18,240</div>
                             <span className="nx-subtle">↑ 12% vs August</span>
                         </Widget>
                     </div>
-
                     <div className="fx-quarter">
-                        <Widget title="Staff" footer="Status" minH={176}>
+                        <Widget
+                            title="Staff"
+                            footer="Status"
+                            minH={160}
+                            href="/workers"
+                        >
                             {renderLimitedList(staffStatus)}
                         </Widget>
                     </div>
@@ -99,29 +114,41 @@ export default function Dashboard() {
 
                 <section className="fx-row fx-main">
                     <div className="fx-left">
-                        <Widget title="Calendar" minH={420}>
-                            <MonthCalendar events={events} />
+                        <Widget minH={360}>
+                            <MonthCalendar title="Calendar" events={events} />
                         </Widget>
                     </div>
-
                     <div className="fx-right">
-                        <Widget title="Tasks" footer="Today" minH={140}>
+                        <Widget
+                            title="Tasks"
+                            footer="Today"
+                            minH={120}
+                            onClick={() => open("Tasks")}
+                        >
                             <ul className="nx-todos">
                                 <li><input type="checkbox" defaultChecked /> Order hair dye</li>
                                 <li><input type="checkbox" /> Call supplier</li>
                                 <li><input type="checkbox" /> IG promo post</li>
                             </ul>
                         </Widget>
-
-                        <Widget title="Inventory" footer="Low stock" minH={140}>
+                        <Widget
+                            title="Inventory"
+                            footer="Low stock"
+                            minH={120}
+                            onClick={() => open("Inventory")}
+                        >
                             <ul className="nx-list">
                                 <li>Shampoo #4 — 6 left</li>
                                 <li>Nail base — 3 left</li>
                                 <li>Serum — 5 left</li>
                             </ul>
                         </Widget>
-
-                        <Widget title="Reviews" footer="This week" minH={140}>
+                        <Widget
+                            title="Reviews"
+                            footer="This week"
+                            minH={120}
+                            onClick={() => open("Reviews")}
+                        >
                             <div className="nx-number">4.8 ★</div>
                             <span className="nx-subtle">+32 new responses</span>
                         </Widget>
@@ -131,3 +158,4 @@ export default function Dashboard() {
         </ThemeProvider>
     );
 }
+

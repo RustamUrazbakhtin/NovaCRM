@@ -6,6 +6,7 @@
 
     .fx-page {
         height: auto;
+        max-height: none;
     }
 
     .fx-top {

@@ -1,4 +1,4 @@
-.nx-header {
+﻿.nx-header {
     position: sticky;
     top: 0;
     z-index: 20;
@@ -12,32 +12,44 @@
 }
 
 .dark .nx-header {
-    --bg: #0b1220;
+    --bg: #161926;
     border-bottom-color: color-mix(in oklab, #fff 10%, transparent);
 }
 
 .nx-left {
     display: flex;
-    gap: 10px;
-    align-items: center;
+    align-items: center; /* ← вертикальное выравнивание всех элементов */
+    gap: 12px;
+    min-width: 0;
 }
 
 .nx-logo {
-    display: flex;
+    display: inline-flex;
+    align-items: center; /* ← логотип и название по одной линии */
     gap: 8px;
-    align-items: center;
-    font-weight: 700;
+    min-width: 0;
 }
 
 .nx-mark {
-    display: grid;
-    place-items: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 6px;
-    background: linear-gradient(180deg,#4f46e5,#3b82f6);
-    color: #fff;
-    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+}
+
+    .nx-mark img {
+        display: block; /* ← убирает «прыжок» по baseline у <img> */
+        height: 28px; /* или 22–28px под макет */
+        width: auto;
+        /* при необходимости микро-нудж:
+     transform: translateY(-1px); */
+    }
+
+.brand__name {
+    font-weight: 800;
+    font-size: 18px;
+    line-height: 1; /* без лишних отступов по вертикали */
+    white-space: nowrap;
 }
 
 .nx-divider {
@@ -99,10 +111,13 @@
     border-radius: 14px;
     padding: 8px;
     box-shadow: 0 8px 30px rgba(0,0,0,.12);
+    color: color-mix(in oklab, var(--ink) 88%, transparent);
 }
 
 .dark .nx-menu {
+    --bg: #11131a;
     border-color: color-mix(in oklab,#fff 12%,transparent);
+    color: #f6f7fb;
 }
 
 .nx-menu button {
@@ -114,6 +129,7 @@
     border-radius: 10px;
     font-weight: 600;
     cursor: pointer;
+    color: inherit;
 }
 
     .nx-menu button:hover {
@@ -121,26 +137,173 @@
     }
 
 .dark .nx-menu button:hover {
-    background: color-mix(in oklab,#fff 10%,transparent);
+    background: color-mix(in oklab,#fff 14%,transparent);
 }
 
-.nx-sub {
+.nx-theme-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 13px;
-    opacity: .8;
-    padding: 6px 10px;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: color-mix(in oklab,#000 4%,transparent);
+    margin-top: 4px;
 }
 
-    .nx-sub select {
-        border-radius: 8px;
-        border: 1px solid #cbd5e1;
-        padding: 6px;
-        background: transparent;
-        color: inherit;
-    }
+.dark .nx-theme-row {
+    background: color-mix(in oklab,#fff 12%,transparent);
+}
 
-.dark .nx-sub select {
-    border-color: #334155;
+.nx-theme-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nx-theme-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    opacity: 0.7;
+}
+
+.nx-theme-status {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.nx-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 56px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab,#000 16%,transparent);
+    background: color-mix(in oklab,#000 8%,transparent);
+    padding: 2px;
+    cursor: pointer;
+    transition: background .25s ease, border-color .25s ease;
+    user-select: none;
+}
+
+.nx-switch input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.nx-switch-track {
+    position: relative;
+    flex: 1;
+    height: 100%;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    background: color-mix(in oklab,#fff 92%, transparent);
+}
+
+.nx-switch-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,.18);
+    transition: transform .25s ease, background .25s ease;
+    z-index: 1;
+}
+
+.nx-switch-icon {
+    font-size: 13px;
+    opacity: .5;
+    transition: opacity .25s ease;
+    position: relative;
+    z-index: 0;
+}
+
+.dark .nx-switch-icon {
+    opacity: .65;
+}
+
+.nx-switch.is-on {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-color: transparent;
+}
+
+.nx-switch.is-on .nx-switch-thumb {
+    transform: translateX(28px);
+}
+
+.nx-switch.is-on .nx-switch-track {
+    background: transparent;
+}
+
+.nx-switch.is-on .nx-switch-icon.nx-switch-moon {
+    opacity: .95;
+}
+
+.nx-switch:not(.is-on) .nx-switch-icon.nx-switch-sun {
+    opacity: .95;
+}
+
+.nx-switch.is-on .nx-switch-icon.nx-switch-sun {
+    opacity: .35;
+}
+
+.nx-switch:not(.is-on) .nx-switch-icon.nx-switch-moon {
+    opacity: .35;
+}
+
+.dark .nx-switch {
+    border-color: color-mix(in oklab,#fff 18%,transparent);
+    background: color-mix(in oklab,#fff 12%,transparent);
+}
+
+.dark .nx-switch-thumb {
+    background: #f7f8ff;
+}
+
+.dark .nx-switch-track {
+    background: color-mix(in oklab,#000 35%, transparent);
+}
+
+.nx-theme-system {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid color-mix(in oklab,#000 10%,transparent);
+    background: transparent;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: inherit;
+}
+
+.nx-theme-system:hover {
+    background: color-mix(in oklab,#000 5%,transparent);
+}
+
+.dark .nx-theme-system {
+    border-color: color-mix(in oklab,#fff 14%,transparent);
+}
+
+.dark .nx-theme-system:hover {
+    background: color-mix(in oklab,#fff 14%,transparent);
+}
+
+.nx-theme-system.is-active {
+    background: color-mix(in oklab,#000 6%,transparent);
+}
+
+.dark .nx-theme-system.is-active {
+    background: color-mix(in oklab,#fff 18%,transparent);
+    color: #11131a;
 }
