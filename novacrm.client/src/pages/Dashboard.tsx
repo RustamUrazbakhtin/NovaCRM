@@ -60,6 +60,7 @@ export default function Dashboard() {
     return (
         <ThemeProvider>
             <Header
+                breadcrumb="Dashboard"
                 onOpenAdmin={() => open("Admin")}
                 onOpenSettings={() => open("Settings")}
                 onOpenProfile={() => open("Profile")}
@@ -104,7 +105,7 @@ export default function Dashboard() {
                             title="Staff"
                             footer="Status"
                             minH={160}
-                            onClick={() => open("Staff status")}
+                            href="/workers"
                         >
                             {renderLimitedList(staffStatus)}
                         </Widget>

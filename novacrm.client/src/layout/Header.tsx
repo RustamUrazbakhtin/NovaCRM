@@ -1,15 +1,17 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "../providers/ThemeProvider";
 import "./header.css";
 
 type MenuItem = { label: string; onClick: () => void };
 
 export default function Header({
+    breadcrumb = "Dashboard",
     onOpenAdmin,
     onOpenSettings,
     onOpenProfile,
     onLogout,
 }: {
+    breadcrumb?: string;
     onOpenAdmin: () => void;
     onOpenSettings: () => void;
     onOpenProfile: () => void;
@@ -61,7 +63,7 @@ export default function Header({
                     <span className="brand__name">NovaCRM</span>
                 </div>
                 <div className="nx-divider" />
-                <div className="nx-breadcrumb">Dashboard</div>
+                <div className="nx-breadcrumb">{breadcrumb}</div>
             </div>
 
             <div className="nx-right" ref={box}>

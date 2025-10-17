@@ -22,7 +22,6 @@ type CalendarView = "month" | "week" | "year";
 const DEFAULT_STAFF = ["Alsu", "Mia", "Julia", "Aigul"];
 
 /** === Constants === */
-const MAX_EVENTS_PER_DAY = 3; // (не используется для month-бейджа, но оставлен для week)
 const WEEK_START_HOUR = 8;
 const WEEK_END_HOUR = 20;
 const MIN_EVENT_DURATION_MIN = 45;
@@ -291,19 +290,13 @@ export default function MonthCalendar({
     const handlePrev = () => setCursor((prev) => shiftCursor(prev, view, -1));
     const handleNext = () => setCursor((prev) => shiftCursor(prev, view, 1));
     const handleToday = () => {
-        setCursor(prev => normalizeCursor(new Date(), view));
+        setCursor(() => normalizeCursor(new Date(), view));
     };
     const handleViewChange = (next: CalendarView) => {
         setView(next);
         setCursor((prev) => normalizeCursor(prev, next));
     };
     const handleAdd = () => alert("Add new event");
-
-    const getMonthEventLabel = (event: CalendarEvent) => {
-        const start = event.start ?? event.time;
-        const master = event.master ? `${event.master} — ` : "";
-        return start ? `${start} · ${master}${event.title}` : `${master}${event.title}`;
-    };
 
     return (
         <div className="mc">
@@ -357,10 +350,6 @@ export default function MonthCalendar({
 
                     <div className="mc-month-body" role="rowgroup">
                         {data.cells.map((cell) => {
-                            const showEvents = cell.isCurrentMonth;
-                            const visibleEvents = showEvents ? cell.events.slice(0, MAX_EVENTS_PER_DAY) : [];
-                            const remaining = showEvents ? cell.events.length - visibleEvents.length : 0;
-
                             const dayLabel = new Date(cell.iso).toLocaleDateString(undefined, {
                                 weekday: "long", month: "long", day: "numeric", year: "numeric",
                             });
@@ -376,7 +365,7 @@ export default function MonthCalendar({
                                     {/* Бейдж "N events" в центре ячейки с окраской */}
                                     <div className="mc-events">
                                         {(() => {
-                                            const list = cell.events ?? [];
+                                            const list = cell.isCurrentMonth ? cell.events ?? [] : [];
                                             const total = list.length;
                                             if (total <= 0) return null;
 
