@@ -42,14 +42,6 @@ type Client = {
     tasks: Task[];
 };
 
-type SummaryMetric = {
-    id: string;
-    label: string;
-    value: string;
-    delta: string;
-    positive?: boolean;
-};
-
 const formatCurrency = (value: number) =>
     new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 }).format(value);
 
@@ -158,266 +150,265 @@ export default function Clients() {
                 id: "cl-05",
                 name: "Леонид Волков",
                 avatar: "/avatars/client-05.png",
-                phone: "+7 (911) 340-21-18",
-                email: "leon.volk@example.com",
-                segment: "Корпоративные",
+                phone: "+7 (926) 904-33-80",
+                email: "leo.volk@example.com",
+                segment: "Постоянные",
                 status: "Лояльный",
-                tags: ["Массаж", "Корп"],
-                lastVisit: "18 мая",
-                lifetimeValue: 54000,
-                totalVisits: 6,
-                satisfaction: 4.2,
-                city: "Санкт-Петербург",
-                master: "Мия Р.",
-                notes: "Клиент корпоративной программы. Любит утренние часы.",
+                tags: ["Massage", "Gift"],
+                lastVisit: "2 октября",
+                lifetimeValue: 72000,
+                totalVisits: 8,
+                satisfaction: 4.8,
+                city: "Красногорск",
+                master: "Мия Т.",
+                notes: "Любит вечерние сеансы, часто покупает подарочные сертификаты.",
                 communications: [
-                    { id: "c-10", type: "call", channel: "Телефон", summary: "Статус корпоративного пакета", time: "1 июн, 12:40" },
-                    { id: "c-11", type: "note", channel: "Администратор", summary: "Отправлен счёт за продление", time: "25 май, 09:20" },
+                    { id: "c-10", type: "visit", channel: "Spa", summary: "Детокс-массаж", time: "2 окт, 20:00" },
+                    { id: "c-11", type: "message", channel: "Email", summary: "Подбор ухода домой", time: "30 сен, 09:15" },
                 ],
-                tasks: [{ id: "t-07", title: "Запросить обратную связь", due: "На этой неделе", completed: false }],
+                tasks: [{ id: "t-07", title: "Отправить подборку масел", due: "Сегодня", completed: false }],
             },
         ],
-        [],
+        []
     );
 
-    const segments = useMemo(() => ["Все", "VIP", "Постоянные", "Новые", "Риск", "Корпоративные"], []);
+    const segments = useMemo(() => {
+        const unique = Array.from(new Set(clients.map((client) => client.segment)));
+        return ["Все", ...unique];
+    }, [clients]);
 
-    const summaryMetrics = useMemo<SummaryMetric[]>(
-        () => [
-            { id: "mrr", label: "LTV клиентов", value: "₽1.2M", delta: "+12%", positive: true },
-            { id: "visits", label: "Записи в октябре", value: "86", delta: "+8%", positive: true },
-            { id: "retention", label: "Удержание", value: "78%", delta: "-3%" },
-            { id: "nps", label: "NPS", value: "64", delta: "+5", positive: true },
-        ],
-        [],
-    );
+    const [segment, setSegment] = useState<string>("Все");
+    const [search, setSearch] = useState<string>("");
+    const [selectedId, setSelectedId] = useState<string | null>(clients[0]?.id ?? null);
 
-    const [activeSegment, setActiveSegment] = useState<string>(segments[0]);
-    const [query, setQuery] = useState("");
+    const filteredClients = useMemo(() => {
+        const normalized = search.trim().toLowerCase();
 
-    const filtered = useMemo(() => {
-        const normalized = query.trim().toLowerCase();
-        return clients.filter(client => {
-            const matchesSegment = activeSegment === "Все" || client.segment === activeSegment;
-            if (!matchesSegment) return false;
-            if (!normalized) return true;
-            return [client.name, client.phone, client.email, client.tags.join(" ")]
-                .join(" ")
-                .toLowerCase()
-                .includes(normalized);
+        return clients.filter((client) => {
+            const matchesSegment = segment === "Все" || client.segment === segment;
+            const matchesSearch =
+                normalized.length === 0 ||
+                [client.name, client.phone, client.email].some((field) => field.toLowerCase().includes(normalized));
+
+            return matchesSegment && matchesSearch;
         });
-    }, [activeSegment, clients, query]);
-
-    const [selectedId, setSelectedId] = useState<string>(clients[0]?.id ?? "");
+    }, [clients, search, segment]);
 
     useEffect(() => {
-        if (!filtered.length) {
-            setSelectedId("");
+        if (!filteredClients.length) {
+            if (selectedId !== null) {
+                setSelectedId(null);
+            }
             return;
         }
 
-        if (!filtered.some(client => client.id === selectedId)) {
-            setSelectedId(filtered[0].id);
-        }
-    }, [filtered, selectedId]);
+        const exists = selectedId ? filteredClients.some((client) => client.id === selectedId) : false;
 
-    const selectedClient = filtered.find(client => client.id === selectedId) ?? filtered[0] ?? null;
+        if (!exists) {
+            setSelectedId(filteredClients[0].id);
+        }
+    }, [filteredClients, selectedId]);
+
+    const selectedClient = filteredClients.find((client) => client.id === selectedId) ?? null;
+
+    const summary = useMemo(() => {
+        const total = clients.length;
+        const returning = clients.filter((client) => client.totalVisits > 1).length;
+        const averageLTV =
+            total > 0 ? Math.round(clients.reduce((acc, client) => acc + client.lifetimeValue, 0) / total) : 0;
+        const satisfaction = total > 0 ? (clients.reduce((acc, client) => acc + client.satisfaction, 0) / total).toFixed(1) : "0";
+
+        return { total, returning, averageLTV, satisfaction };
+    }, [clients]);
+
+    const open = (label: string) => alert(label);
 
     return (
         <ThemeProvider>
-            <div className="clients-screen">
-                <Header
-                    breadcrumb="Клиенты"
-                    onOpenAdmin={() => undefined}
-                    onOpenProfile={() => undefined}
-                    onOpenSettings={() => undefined}
-                    onLogout={() => undefined}
-                />
+            <Header
+                breadcrumb="Клиенты"
+                onOpenAdmin={() => open("Admin")}
+                onOpenSettings={() => open("Settings")}
+                onOpenProfile={() => open("Profile")}
+                onLogout={() => open("Sign out")}
+            />
 
-                <main className="clients-shell">
-                    <section className="clients-hero">
-                        <div className="hero-copy">
-                            <h1>Клиенты</h1>
-                            <p>Все данные клиентов, активности и задачи в одном месте. Управляйте качеством сервиса и удержанием.</p>
-                        </div>
-                        <div className="hero-metrics">
-                            {summaryMetrics.map(metric => (
-                                <article key={metric.id} className="metric-card">
-                                    <span className="metric-label">{metric.label}</span>
-                                    <span className="metric-value">{metric.value}</span>
-                                    <span className={`metric-delta ${metric.positive ? "is-positive" : "is-negative"}`}>{metric.delta}</span>
-                                </article>
-                            ))}
-                        </div>
-                    </section>
+            <main className="clients-page">
+                <section className="clients-toolbar">
+                    <div className="clients-heading">
+                        <h1>Клиенты</h1>
+                        <p>Все данные о гостях в одном месте: история посещений, задачи и активность.</p>
+                    </div>
+                    <button type="button" className="clients-add" onClick={() => open("Add client")}>Добавить клиента</button>
+                </section>
 
-                    <section className="clients-toolbar">
-                        <div className="segment-chips" role="tablist" aria-label="Сегменты клиентов">
-                            {segments.map(segment => (
-                                <button
-                                    key={segment}
-                                    type="button"
-                                    className={`segment-chip ${segment === activeSegment ? "is-active" : ""}`}
-                                    onClick={() => setActiveSegment(segment)}
-                                    role="tab"
-                                    aria-selected={segment === activeSegment}
-                                >
-                                    {segment}
-                                </button>
-                            ))}
-                        </div>
+                <section className="clients-metrics" aria-label="Сводка по клиентам">
+                    <article className="clients-metric-card">
+                        <span className="clients-metric-label">Всего</span>
+                        <strong className="clients-metric-value">{summary.total}</strong>
+                        <span className="clients-metric-hint">Клиентов в базе</span>
+                    </article>
+                    <article className="clients-metric-card">
+                        <span className="clients-metric-label">Повторные</span>
+                        <strong className="clients-metric-value">{summary.returning}</strong>
+                        <span className="clients-metric-hint">Ходят чаще одного раза</span>
+                    </article>
+                    <article className="clients-metric-card">
+                        <span className="clients-metric-label">Средний LTV</span>
+                        <strong className="clients-metric-value">{formatCurrency(summary.averageLTV)}</strong>
+                        <span className="clients-metric-hint">Средний доход с клиента</span>
+                    </article>
+                    <article className="clients-metric-card">
+                        <span className="clients-metric-label">Удовлетворённость</span>
+                        <strong className="clients-metric-value">{summary.satisfaction}</strong>
+                        <span className="clients-metric-hint">Средняя оценка сервиса</span>
+                    </article>
+                </section>
 
-                        <div className="toolbar-actions">
-                            <label className="search-field">
-                                <span className="icon" aria-hidden="true">🔍</span>
-                                <input
-                                    type="search"
-                                    placeholder="Поиск по имени, телефону или тегам"
-                                    value={query}
-                                    onChange={event => setQuery(event.target.value)}
-                                />
-                            </label>
-                            <button type="button" className="toolbar-btn ghost">Фильтры</button>
-                            <button type="button" className="toolbar-btn primary">Добавить клиента</button>
-                        </div>
-                    </section>
-
-                    <section className="clients-content">
-                        <div className="clients-list">
-                            <header className="list-head">
-                                <span>Клиент</span>
-                                <span>Последний визит</span>
-                                <span>Статус</span>
-                                <span>Город</span>
-                            </header>
-                            <div className="list-scroll" role="list">
-                                {filtered.length ? (
-                                    filtered.map(client => {
-                                        const isActive = client.id === selectedClient?.id;
-                                        const statusClass = `status-${client.status.toLowerCase().replace(/\s+/g, "-")}`;
-                                        return (
-                                            <button
-                                                key={client.id}
-                                                type="button"
-                                                className={`client-row ${isActive ? "is-active" : ""}`}
-                                                onClick={() => setSelectedId(client.id)}
-                                                role="listitem"
-                                            >
-                                                <div className="client-main">
-                                                    <div className="client-avatar" aria-hidden="true">
-                                                        <span>{client.name[0]}</span>
-                                                    </div>
-                                                    <div>
-                                                        <p className="client-name">{client.name}</p>
-                                                        <p className="client-tags">{client.tags.join(" • ")}</p>
-                                                    </div>
-                                                </div>
-                                                <span className="client-last">{client.lastVisit}</span>
-                                                <span className={`client-status ${statusClass}`}>{client.status}</span>
-                                                <span className="client-city">{client.city}</span>
-                                            </button>
-                                        );
-                                    })
-                                ) : (
-                                    <div className="empty-state">
-                                        <h3>Нет клиентов в сегменте</h3>
-                                        <p>Попробуйте изменить фильтры или добавить нового клиента.</p>
-                                    </div>
-                                )}
+                <section className="clients-content">
+                    <aside className="clients-list-panel" aria-label="Список клиентов">
+                        <div className="clients-filters">
+                            <input
+                                type="search"
+                                className="clients-search"
+                                placeholder="Поиск по имени, телефону или email"
+                                value={search}
+                                onChange={(event) => setSearch(event.target.value)}
+                            />
+                            <div className="clients-segments" role="tablist" aria-label="Сегменты клиентов">
+                                {segments.map((item) => (
+                                    <button
+                                        key={item}
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={segment === item}
+                                        className={`clients-segment${segment === item ? " is-active" : ""}`}
+                                        onClick={() => setSegment(item)}
+                                    >
+                                        {item}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
-                        {selectedClient && (
-                            <div className="client-details">
-                                <section className="details-header">
-                                    <div className="details-id">
-                                        <div className="details-avatar" aria-hidden="true">
-                                            <span>{selectedClient.name[0]}</span>
+                        <ul className="clients-list">
+                            {filteredClients.map((client) => (
+                                <li key={client.id}>
+                                    <button
+                                        type="button"
+                                        className={`clients-client${selectedId === client.id ? " is-active" : ""}`}
+                                        onClick={() => setSelectedId(client.id)}
+                                    >
+                                        <div className="clients-client-heading">
+                                            <span className="clients-client-name">{client.name}</span>
+                                            <span className={`clients-status clients-status--${client.status.toLowerCase()}`}>{client.status}</span>
                                         </div>
-                                        <div>
-                                            <h2>{selectedClient.name}</h2>
-                                            <p>{selectedClient.phone}</p>
-                                            <p>{selectedClient.email}</p>
+                                        <div className="clients-client-meta">
+                                            <span>{client.phone}</span>
+                                            <span>{client.email}</span>
                                         </div>
-                                    </div>
-                                    <div className="details-chips">
-                                        <span className={`status-pill status-${selectedClient.status
-                                            .toLowerCase()
-                                            .replace(/\s+/g, "-")}`}
-                                        >
+                                        {client.tags.length > 0 && (
+                                            <div className="clients-client-tags">
+                                                {client.tags.map((tag) => (
+                                                    <span key={tag}>{tag}</span>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <div className="clients-client-foot">
+                                            <span>Последний визит: {client.lastVisit}</span>
+                                            {client.nextVisit && <span>Следующий: {client.nextVisit}</span>}
+                                        </div>
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+
+                        {filteredClients.length === 0 && (
+                            <div className="clients-empty" role="status">
+                                <p>Ничего не найдено. Попробуйте другой запрос.</p>
+                            </div>
+                        )}
+                    </aside>
+
+                    <section className="clients-detail-panel" aria-live="polite">
+                        {selectedClient ? (
+                            <article className="clients-detail-card">
+                                <header className="clients-detail-header">
+                                    <div className="clients-detail-title">
+                                        <h2>{selectedClient.name}</h2>
+                                        <span className={`clients-status clients-status--${selectedClient.status.toLowerCase()}`}>
                                             {selectedClient.status}
                                         </span>
-                                        <span className="status-pill secondary">{selectedClient.segment}</span>
+                                    </div>
+                                    <p>{selectedClient.city} · Персональный мастер: {selectedClient.master}</p>
+                                </header>
+
+                                <div className="clients-detail-grid">
+                                    <div>
+                                        <span className="clients-detail-label">LTV</span>
+                                        <strong>{formatCurrency(selectedClient.lifetimeValue)}</strong>
+                                    </div>
+                                    <div>
+                                        <span className="clients-detail-label">Визитов</span>
+                                        <strong>{selectedClient.totalVisits}</strong>
+                                    </div>
+                                    <div>
+                                        <span className="clients-detail-label">Оценка</span>
+                                        <strong>{selectedClient.satisfaction.toFixed(1)}</strong>
+                                    </div>
+                                </div>
+
+                                <section className="clients-detail-section">
+                                    <h3>Контакты</h3>
+                                    <div className="clients-detail-contacts">
+                                        <span>{selectedClient.phone}</span>
+                                        <span>{selectedClient.email}</span>
                                     </div>
                                 </section>
 
-                                <section className="details-grid">
-                                    <article className="detail-card">
-                                        <h3>Следующий визит</h3>
-                                        <p className="detail-value">{selectedClient.nextVisit ?? "—"}</p>
-                                        <p className="detail-sub">Мастер: {selectedClient.master}</p>
-                                    </article>
-                                    <article className="detail-card">
-                                        <h3>LTV</h3>
-                                        <p className="detail-value">{formatCurrency(selectedClient.lifetimeValue)}</p>
-                                        <p className="detail-sub">Всего визитов: {selectedClient.totalVisits}</p>
-                                    </article>
-                                    <article className="detail-card">
-                                        <h3>Удовлетворённость</h3>
-                                        <p className="detail-value">{selectedClient.satisfaction.toFixed(1)}</p>
-                                        <p className="detail-sub">Последний опрос NPS 2 недели назад</p>
-                                    </article>
-                                    <article className="detail-card notes">
-                                        <h3>Заметки</h3>
-                                        <p>{selectedClient.notes}</p>
-                                    </article>
+                                <section className="clients-detail-section">
+                                    <h3>Активность</h3>
+                                    <ul className="clients-timeline">
+                                        {selectedClient.communications.map((item) => (
+                                            <li key={item.id}>
+                                                <span className="clients-timeline-time">{item.time}</span>
+                                                <div>
+                                                    <strong>{item.channel}</strong>
+                                                    <p>{item.summary}</p>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </section>
 
-                                <section className="details-split">
-                                    <article className="timeline">
-                                        <header>
-                                            <h3>Активность</h3>
-                                            <span>{selectedClient.communications.length} события</span>
-                                        </header>
-                                        <ol>
-                                            {selectedClient.communications.map(item => (
-                                                <li key={item.id} className={`timeline-item type-${item.type}`}>
-                                                    <div className="timeline-marker" aria-hidden="true" />
-                                                    <div className="timeline-content">
-                                                        <span className="timeline-time">{item.time}</span>
-                                                        <p className="timeline-summary">{item.summary}</p>
-                                                        <span className="timeline-channel">{item.channel}</span>
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ol>
-                                    </article>
-
-                                    <article className="tasks">
-                                        <header>
-                                            <h3>Задачи</h3>
-                                            <button type="button" className="link-btn">
-                                                Новая задача
-                                            </button>
-                                        </header>
-                                        <ul>
-                                            {selectedClient.tasks.map(task => (
-                                                <li key={task.id} className={task.completed ? "is-done" : ""}>
-                                                    <div className="task-check" aria-hidden="true">{task.completed ? "✓" : ""}</div>
-                                                    <div>
-                                                        <p>{task.title}</p>
-                                                        <span>{task.due}</span>
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </article>
+                                <section className="clients-detail-section">
+                                    <h3>Задачи</h3>
+                                    <ul className="clients-tasks">
+                                        {selectedClient.tasks.map((task) => (
+                                            <li key={task.id}>
+                                                <input type="checkbox" checked={task.completed} readOnly />
+                                                <div>
+                                                    <span>{task.title}</span>
+                                                    <small>{task.due}</small>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </section>
+
+                                <section className="clients-detail-section">
+                                    <h3>Заметки</h3>
+                                    <p className="clients-detail-notes">{selectedClient.notes}</p>
+                                </section>
+                            </article>
+                        ) : (
+                            <div className="clients-empty" role="status">
+                                <p>Выберите клиента, чтобы увидеть детали.</p>
                             </div>
                         )}
                     </section>
-                </main>
-            </div>
+                </section>
+            </main>
         </ThemeProvider>
     );
 }
