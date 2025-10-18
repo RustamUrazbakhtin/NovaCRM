@@ -81,27 +81,64 @@
     color: color-mix(in oklab, var(--ink) 50%, transparent);
 }
 
+
 .clients-content {
     display: grid;
-    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 1fr);
     gap: calc(var(--gap) * 2);
     align-items: start;
 }
 
-.clients-list-panel {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap);
+.clients-table-panel {
+    min-width: 0;
 }
 
-.clients-filters {
+.clients-table-wrapper {
+    border-radius: 22px;
+    border: 1px solid var(--card-bd);
+    background: var(--card-bg);
+    overflow: hidden;
+    box-shadow: 0 18px 48px -32px color-mix(in oklab, var(--ink) 18%, transparent);
+}
+
+.clients-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 640px;
+}
+
+.clients-table thead th {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: color-mix(in oklab, var(--ink) 55%, transparent);
+}
+
+.clients-table th,
+.clients-table td {
+    padding: 16px 20px;
+    text-align: left;
+    border-bottom: 1px solid color-mix(in oklab, var(--card-bd) 75%, transparent);
+}
+
+.clients-table-controls th {
+    padding: 18px 20px 12px;
+    border-bottom: none;
+}
+
+.clients-table-head th {
+    background: color-mix(in oklab, var(--ink) 4%, transparent);
+}
+
+.clients-table-tools {
     display: flex;
-    flex-direction: column;
-    gap: var(--gap);
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
 }
 
 .clients-search {
-    width: 100%;
+    flex: 1 1 240px;
     border-radius: 14px;
     border: 1px solid var(--card-bd);
     background: var(--card-bg);
@@ -119,6 +156,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    margin-left: auto;
 }
 
 .clients-segment {
@@ -142,36 +180,29 @@
     color: var(--ink);
 }
 
-.clients-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.clients-client {
-    width: 100%;
-    text-align: left;
-    border: 1px solid var(--card-bd);
-    background: var(--card-bg);
-    border-radius: 16px;
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+.clients-table-row {
     cursor: pointer;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
-.clients-client:hover {
-    border-color: color-mix(in oklab, var(--accent) 40%, transparent);
+.clients-table-row:hover {
+    background: color-mix(in oklab, var(--accent) 6%, transparent);
 }
 
-.clients-client.is-active {
-    border-color: color-mix(in oklab, var(--accent-2) 60%, transparent);
-    box-shadow: 0 10px 28px -20px var(--accent-2);
+.clients-table-row.is-active {
+    background: color-mix(in oklab, var(--accent) 12%, transparent);
+    box-shadow: inset 3px 0 0 color-mix(in oklab, var(--accent-2) 60%, transparent);
+}
+
+.clients-table-row:focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--accent-2) 55%, transparent);
+    outline-offset: -2px;
+}
+
+.clients-table-primary {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .clients-client-heading {
@@ -235,14 +266,6 @@
     padding: 3px 10px;
     font-size: 12px;
     color: color-mix(in oklab, var(--ink) 70%, transparent);
-}
-
-.clients-client-foot {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 13px;
-    color: color-mix(in oklab, var(--ink) 55%, transparent);
 }
 
 .clients-empty {
@@ -371,6 +394,14 @@
         grid-template-columns: 1fr;
     }
 
+    .clients-table {
+        min-width: 100%;
+    }
+
+    .clients-table-wrapper {
+        border-radius: 18px;
+    }
+
     .clients-detail-panel {
         order: -1;
     }
@@ -381,12 +412,22 @@
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
 
-    .clients-client {
-        padding: 12px;
-    }
-
     .clients-timeline li {
         grid-template-columns: 1fr;
+    }
+
+    .clients-table-tools {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .clients-segments {
+        justify-content: flex-start;
+        margin-left: 0;
+    }
+
+    .clients-table {
+        min-width: 520px;
     }
 }
 
