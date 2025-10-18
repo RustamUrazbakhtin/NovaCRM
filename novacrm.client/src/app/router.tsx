@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AuthPage from "../pages/AuthPage";
 import Dashboard from "../pages/Dashboard";
+import ClientsPage from "../pages/Clients";
 import WorkersPage from "../pages/Workers";
 import { isAuthenticated } from "./auth";
 
@@ -15,6 +16,7 @@ export default function Router() {
             <Routes>
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/" element={<Private><Dashboard /></Private>} />
+                <Route path="/clients" element={<Private><ClientsPage /></Private>} />
                 <Route path="/workers" element={<Private><WorkersPage /></Private>} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
