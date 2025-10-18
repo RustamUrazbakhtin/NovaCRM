@@ -3,8 +3,8 @@
     flex-direction: column;
     gap: calc(var(--gap) * 2);
     padding: calc(var(--pad-x) * 2) clamp(16px, 4vw, 48px);
-    max-width: 1280px;
-    margin: 0 auto;
+    margin-top: var(--header-h);
+    width: 100%;
 }
 
 .clients-toolbar {
