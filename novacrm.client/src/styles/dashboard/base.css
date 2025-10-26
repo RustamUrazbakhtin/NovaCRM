@@ -9,6 +9,9 @@
     --ink: #0b1220;
     --card-bg: color-mix(in oklab, #fff 92%, transparent);
     --card-bd: color-mix(in oklab, #000 10%, transparent);
+    --surface: color-mix(in oklab, #ffffff 94%, transparent);
+    --on-surface: color-mix(in oklab, #0b1220 94%, transparent);
+    --muted: color-mix(in oklab, #0b1220 60%, transparent);
 }
 
 @media (max-width: 575.98px) {
@@ -21,6 +24,9 @@
     --ink: #eaf1ff;
     --card-bg: color-mix(in oklab, #0b1220 86%, transparent);
     --card-bd: color-mix(in oklab, #fff 12%, transparent);
+    --surface: color-mix(in oklab, #10131f 94%, transparent);
+    --on-surface: #eef1ff;
+    --muted: color-mix(in oklab, #eef1ff 68%, transparent);
 }
 
 html,
