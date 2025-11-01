@@ -68,6 +68,10 @@
 
 .nx-right {
     position: relative;
+    flex-wrap: nowrap;
+    display: flex;
+    align-items: center; /* ← вертикальное выравнивание всех элементов */
+    gap: 12px;
 }
 
 .nx-user {
