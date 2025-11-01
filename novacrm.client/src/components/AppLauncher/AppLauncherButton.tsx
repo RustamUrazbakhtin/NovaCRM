@@ -28,15 +28,15 @@ const AppLauncherButton = forwardRef<HTMLButtonElement, Props>(function AppLaunc
             >
                 <span className={styles.srOnly}>Open app launcher</span>
                 <svg viewBox="0 0 24 24" role="img" aria-hidden>
-                    <rect x="3" y="3" width="4" height="4" rx="1.2" />
-                    <rect x="10" y="3" width="4" height="4" rx="1.2" />
-                    <rect x="17" y="3" width="4" height="4" rx="1.2" />
-                    <rect x="3" y="10" width="4" height="4" rx="1.2" />
-                    <rect x="10" y="10" width="4" height="4" rx="1.2" />
-                    <rect x="17" y="10" width="4" height="4" rx="1.2" />
-                    <rect x="3" y="17" width="4" height="4" rx="1.2" />
-                    <rect x="10" y="17" width="4" height="4" rx="1.2" />
-                    <rect x="17" y="17" width="4" height="4" rx="1.2" />
+                    <circle cx="5.5" cy="5.5" r="1.9" fill="currentColor" />
+                    <circle cx="12" cy="5.5" r="1.9" fill="currentColor" />
+                    <circle cx="18.5" cy="5.5" r="1.9" fill="currentColor" />
+                    <circle cx="5.5" cy="12" r="1.9" fill="currentColor" />
+                    <circle cx="12" cy="12" r="1.9" fill="currentColor" />
+                    <circle cx="18.5" cy="12" r="1.9" fill="currentColor" />
+                    <circle cx="5.5" cy="18.5" r="1.9" fill="currentColor" />
+                    <circle cx="12" cy="18.5" r="1.9" fill="currentColor" />
+                    <circle cx="18.5" cy="18.5" r="1.9" fill="currentColor" />
                 </svg>
             </button>
         </div>
