@@ -27,7 +27,7 @@ const AppLauncherButton = forwardRef<HTMLButtonElement, Props>(function AppLaunc
                 onClick={onToggle}
             >
                 <span className={styles.srOnly}>Open app launcher</span>
-                <svg viewBox="0 0 24 24" role="img" aria-hidden>
+                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
                     <circle cx="5.5" cy="5.5" r="1.9" fill="currentColor" />
                     <circle cx="12" cy="5.5" r="1.9" fill="currentColor" />
                     <circle cx="18.5" cy="5.5" r="1.9" fill="currentColor" />
