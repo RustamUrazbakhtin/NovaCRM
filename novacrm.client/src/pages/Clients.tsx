@@ -1,8 +1,10 @@
 import { type KeyboardEvent, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../layout/Header";
 import ThemeProvider from "../providers/ThemeProvider";
 import "../styles/dashboard/index.css";
 import "../styles/clients/index.css";
+import { authApi } from "../app/auth";
 
 type CommunicationType = "visit" | "call" | "message" | "note";
 
@@ -46,6 +48,7 @@ const formatCurrency = (value: number) =>
     new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 }).format(value);
 
 export default function Clients() {
+    const navigate = useNavigate();
     const clients = useMemo<Client[]>(
         () => [
             {
@@ -223,6 +226,11 @@ export default function Clients() {
 
     const open = (label: string) => alert(label);
 
+    const handleLogout = () => {
+        authApi.logout();
+        navigate("/auth", { replace: true });
+    };
+
     return (
         <ThemeProvider>
             <Header
@@ -230,7 +238,7 @@ export default function Clients() {
                 onOpenAdmin={() => open("Admin")}
                 onOpenSettings={() => open("Settings")}
                 onOpenProfile={() => open("Profile")}
-                onLogout={() => open("Sign out")}
+                onLogout={handleLogout}
             />
 
             <main className="clients-page">

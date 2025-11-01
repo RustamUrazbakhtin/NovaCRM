@@ -1,7 +1,9 @@
+import { useNavigate } from "react-router-dom";
 import Header from "../layout/Header";
 import ThemeProvider from "../providers/ThemeProvider";
 import Widget from "../components/Widget";
 import MonthCalendar from "../components/MonthCalendar";
+import { authApi } from "../app/auth";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "../styles/dashboard/index.css"; // базовая тема, сетка и виджеты дашборда
 
@@ -21,6 +23,7 @@ const renderLimitedList = (items: string[]) => {
 };
 
 export default function Dashboard() {
+    const navigate = useNavigate();
     const today = new Date();
     const todayISO = today.toISOString().slice(0, 10);
     const tomorrowISO = new Date(today.getTime() + 86400000).toISOString().slice(0, 10);
@@ -35,6 +38,11 @@ export default function Dashboard() {
     ];
 
     const open = (s: string) => alert(s);
+
+    const handleLogout = () => {
+        authApi.logout();
+        navigate("/auth", { replace: true });
+    };
 
     const salonOverview = [
         "Appointments: 18",
@@ -64,7 +72,7 @@ export default function Dashboard() {
                 onOpenAdmin={() => open("Admin")}
                 onOpenSettings={() => open("Settings")}
                 onOpenProfile={() => open("Profile")}
-                onLogout={() => open("Sign out")}
+                onLogout={handleLogout}
             />
 
             <main className="fx-page">
