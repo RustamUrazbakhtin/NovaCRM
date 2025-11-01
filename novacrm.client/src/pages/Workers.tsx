@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../layout/Header";
 import ThemeProvider from "../providers/ThemeProvider";
 import Widget from "../components/Widget";
 import "../styles/dashboard/index.css";
 import "../styles/dashboard/workers.css";
+import { authApi } from "../app/auth";
 
 type Status = "in-service" | "available" | "break" | "offline";
 
@@ -139,6 +141,7 @@ const STATUS_FILTERS: { id: "all" | Status; label: string }[] = [
 ];
 
 export default function WorkersPage() {
+    const navigate = useNavigate();
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTERS)[number]["id"]>("all");
     const [roleFilter, setRoleFilter] = useState("all");
@@ -168,6 +171,11 @@ export default function WorkersPage() {
         100
     );
 
+    const handleLogout = () => {
+        authApi.logout();
+        navigate("/auth", { replace: true });
+    };
+
     return (
         <ThemeProvider>
             <Header
@@ -175,7 +183,7 @@ export default function WorkersPage() {
                 onOpenAdmin={() => alert("Open admin")}
                 onOpenSettings={() => alert("Open settings")}
                 onOpenProfile={() => alert("Open profile")}
-                onLogout={() => alert("Sign out")}
+                onLogout={handleLogout}
             />
             <main className="fx-page workers-page">
                 <section className="workers-hero">
