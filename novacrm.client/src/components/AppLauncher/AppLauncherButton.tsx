@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+﻿import { forwardRef } from "react";
 import styles from "./AppLauncher.module.css";
 
 type Props = {
@@ -6,6 +6,7 @@ type Props = {
     isOpen: boolean;
     onToggle: () => void;
     controls: string;
+    icon?: React.ReactNode;
 };
 
 const AppLauncherButton = forwardRef<HTMLButtonElement, Props>(function AppLauncherButton({

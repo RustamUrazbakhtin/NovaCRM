@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AppLauncherButton from "./AppLauncherButton";
 import AppLauncherPanel from "./AppLauncherPanel";
@@ -10,6 +10,8 @@ type Props = {
     items: AppLauncherItemConfig[];
     onOpenChange?: (open: boolean) => void;
     idPrefix?: string;
+    triggerIcon?: React.ReactNode; 
+
 };
 
 export default function AppLauncher({ items, onOpenChange, idPrefix }: Props) {
