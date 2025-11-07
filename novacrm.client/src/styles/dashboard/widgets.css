@@ -93,3 +93,106 @@
     background-clip: text;
     color: transparent;
 }
+
+.ios26-combo {
+    display: flex;
+    gap: 18px;
+    padding: 16px;
+    border-radius: 22px;
+    background: linear-gradient(145deg, color-mix(in oklab, var(--card-bg) 70%, transparent) 0%, color-mix(in oklab, var(--accent) 12%, transparent) 100%);
+    border: 1px solid color-mix(in oklab, var(--card-bd) 60%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    align-items: stretch;
+}
+
+.dark .ios26-combo {
+    background: linear-gradient(150deg, color-mix(in oklab, #111 78%, transparent) 0%, color-mix(in oklab, var(--accent) 18%, transparent) 100%);
+    border-color: color-mix(in oklab, var(--card-bd) 40%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.ios26-panel {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.ios26-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.ios26-panel-head h5 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+.ios26-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--ink) 6%, transparent);
+    color: color-mix(in oklab, var(--ink) 70%, transparent);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.ios26-chip.is-accent {
+    background: color-mix(in oklab, var(--accent) 32%, transparent);
+    color: color-mix(in oklab, var(--accent) 96%, black 10%);
+}
+
+.dark .ios26-chip {
+    background: color-mix(in oklab, #fff 6%, transparent);
+    color: color-mix(in oklab, #fff 90%, transparent);
+}
+
+.dark .ios26-chip.is-accent {
+    background: color-mix(in oklab, var(--accent) 46%, transparent);
+    color: #0b1220;
+}
+
+.ios26-divider {
+    width: 1px;
+    background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--ink) 12%, transparent), transparent);
+}
+
+.ios26-clients {
+    display: grid;
+    gap: 12px;
+}
+
+.ios26-clients div {
+    display: grid;
+    gap: 4px;
+    padding: 12px;
+    border-radius: 18px;
+    background: linear-gradient(140deg, color-mix(in oklab, var(--card-bg) 88%, transparent), color-mix(in oklab, var(--accent-2) 14%, transparent));
+    border: 1px solid color-mix(in oklab, var(--card-bd) 55%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.28);
+}
+
+.dark .ios26-clients div {
+    background: linear-gradient(150deg, color-mix(in oklab, #0b1220 80%, transparent), color-mix(in oklab, var(--accent-2) 26%, transparent));
+    border-color: color-mix(in oklab, var(--card-bd) 35%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.ios26-clients strong {
+    font-size: 15px;
+}
+
+.ios26-sub {
+    font-size: 12px;
+    opacity: 0.65;
+}
