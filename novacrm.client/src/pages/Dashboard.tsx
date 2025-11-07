@@ -77,24 +77,56 @@ export default function Dashboard() {
 
             <main className="fx-page">
                 <section className="fx-row fx-top">
-                    <div className="fx-quarter">
+                    <div className="fx-half">
                         <Widget
-                            title="Today (Salon)"
-                            footer="Overview"
+                            title="Today"
+                            footer="Salon pulse & next 2 hours"
                             minH={160}
                             onClick={() => open("Today overview")}
                         >
-                            {renderLimitedList(salonOverview)}
+                            <div className="ios26-combo">
+                                <div className="ios26-panel">
+                                    <div className="ios26-panel-head">
+                                        <span className="ios26-chip">Salon</span>
+                                        <h5>Snapshot</h5>
+                                    </div>
+                                    {renderLimitedList(salonOverview)}
+                                </div>
+                                <div className="ios26-divider" aria-hidden />
+                                <div className="ios26-panel">
+                                    <div className="ios26-panel-head">
+                                        <span className="ios26-chip is-accent">Next</span>
+                                        <h5>2 hours</h5>
+                                    </div>
+                                    {renderLimitedList(upcomingHours)}
+                                </div>
+                            </div>
                         </Widget>
                     </div>
                     <div className="fx-quarter">
                         <Widget
-                            title="Next 2 hours"
-                            footer="Upcoming"
+                            title="Clients"
+                            footer="Loyal & new"
                             minH={160}
-                            onClick={() => open("Next 2 hours")}
+                            onClick={() => open("Clients")}
                         >
-                            {renderLimitedList(upcomingHours)}
+                            <div className="ios26-clients">
+                                <div>
+                                    <span className="ios26-chip">VIP</span>
+                                    <strong>Anna Petrova</strong>
+                                    <span className="ios26-sub">Last visit: 4 days ago</span>
+                                </div>
+                                <div>
+                                    <span className="ios26-chip is-accent">New</span>
+                                    <strong>Yulia Gromova</strong>
+                                    <span className="ios26-sub">First booking tomorrow</span>
+                                </div>
+                                <div>
+                                    <span className="ios26-chip">Returning</span>
+                                    <strong>Leo Martins</strong>
+                                    <span className="ios26-sub">Booked color touch-up</span>
+                                </div>
+                            </div>
                         </Widget>
                     </div>
                     <div className="fx-quarter">
