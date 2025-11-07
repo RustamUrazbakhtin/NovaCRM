@@ -51,11 +51,11 @@ export default function Dashboard() {
         "Walk-ins: 2",
     ];
 
-    const upcomingHours = [
-        "12:00 — Haircut / Anna",
-        "12:45 — Manicure / Julia",
-        "13:30 — Brows / Lina",
-        "14:15 — Color fix / Sofia",
+    const topClients = [
+        "Anna Petrova — 12 visits",
+        "Julia Sokolova — 9 visits",
+        "Lina Karimova — 8 visits",
+        "Sofia Volkova — 7 visits",
     ];
 
     const staffStatus = [
@@ -89,12 +89,12 @@ export default function Dashboard() {
                     </div>
                     <div className="fx-quarter">
                         <Widget
-                            title="Next 2 hours"
-                            footer="Upcoming"
+                            title="Clients"
+                            footer="Top visitors"
                             minH={160}
-                            onClick={() => open("Next 2 hours")}
+                            onClick={() => open("Clients")}
                         >
-                            {renderLimitedList(upcomingHours)}
+                            {renderLimitedList(topClients)}
                         </Widget>
                     </div>
                     <div className="fx-quarter">
