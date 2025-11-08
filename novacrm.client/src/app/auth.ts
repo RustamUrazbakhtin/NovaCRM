@@ -20,17 +20,13 @@ if (saved) setToken(saved);
 
 export interface RegistrationPayload {
     companyName: string;
-    industry?: string;
     country: string;
     timezone: string;
-    businessEmail: string;
-    companyPhone?: string;
-    branchName?: string;
-    branchAddress?: string;
-    branchCity?: string;
-    ownerFullName: string;
+    companyPhone: string;
     ownerEmail: string;
     ownerPassword: string;
+    ownerPasswordRepeat: string;
+    businessId?: string;
 }
 
 export const authApi = {

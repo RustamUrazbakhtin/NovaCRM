@@ -13,6 +13,7 @@ public class Organization
     public string Currency { get; set; } = "USD";
     public string? Phone { get; set; }
     public string? Email { get; set; }
+    public string? BusinessId { get; set; }
     public string PlanType { get; set; } = "free";
     public string SubscriptionStatus { get; set; } = "active";
 

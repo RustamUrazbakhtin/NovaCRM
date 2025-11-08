@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-using NovaCRM.Server.Auth;                 // тут лежат ApplicationUser и ApplicationDbContext
+using NovaCRM.Server.Auth;
 using NovaCRM.Server.Services;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
 

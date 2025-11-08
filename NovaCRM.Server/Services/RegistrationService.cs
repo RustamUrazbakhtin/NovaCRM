@@ -15,31 +15,51 @@ public class RegistrationService : IRegistrationService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
 
-    public RegistrationService(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager)
+    public RegistrationService(
+        ApplicationDbContext dbContext,
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager)
     {
         _dbContext = dbContext;
         _userManager = userManager;
+        _roleManager = roleManager;
     }
 
     public async Task<(bool Success, RegistrationResponse? Response, IEnumerable<string> Errors)> RegisterOrganizationAsync(
         RegistrationRequest request,
         CancellationToken cancellationToken = default)
     {
+        var validationErrors = Validate(request);
+        if (validationErrors.Any())
+        {
+            return (false, null, validationErrors);
+        }
+
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         try
         {
+            var companyName = request.CompanyName.Trim();
+            var country = request.Country.Trim();
+            var timezone = request.Timezone.Trim();
+            var companyPhone = request.CompanyPhone.Trim();
+            var ownerEmail = request.OwnerEmail.Trim();
+            var businessId = string.IsNullOrWhiteSpace(request.BusinessId)
+                ? null
+                : request.BusinessId.Trim();
+
             var organization = new Organization
             {
                 Id = Guid.NewGuid(),
-                Name = request.CompanyName,
-                Industry = request.Industry,
-                Country = request.Country,
-                Timezone = request.Timezone,
+                Name = companyName,
+                Country = country,
+                Timezone = timezone,
                 Currency = "USD",
-                Phone = request.CompanyPhone,
-                Email = request.BusinessEmail,
+                Phone = companyPhone,
+                Email = ownerEmail,
+                BusinessId = businessId,
                 PlanType = "free",
                 SubscriptionStatus = "active"
             };
@@ -50,12 +70,12 @@ public class RegistrationService : IRegistrationService
             {
                 Id = Guid.NewGuid(),
                 OrganizationId = organization.Id,
-                Name = string.IsNullOrWhiteSpace(request.BranchName) ? "Main location" : request.BranchName!,
-                Address = request.BranchAddress,
-                City = request.BranchCity,
-                Country = request.Country,
-                Timezone = request.Timezone,
-                Phone = request.CompanyPhone,
+                Name = "Main location",
+                Address = null,
+                City = null,
+                Country = country,
+                Timezone = timezone,
+                Phone = companyPhone,
                 IsDefault = true
             };
 
@@ -65,8 +85,8 @@ public class RegistrationService : IRegistrationService
 
             var user = new ApplicationUser
             {
-                UserName = request.OwnerEmail,
-                Email = request.OwnerEmail
+                UserName = ownerEmail,
+                Email = ownerEmail
             };
 
             var identityResult = await _userManager.CreateAsync(user, request.OwnerPassword);
@@ -76,22 +96,36 @@ public class RegistrationService : IRegistrationService
                 return (false, null, identityResult.Errors.Select(e => e.Description));
             }
 
-            var (firstName, lastName) = SplitName(request.OwnerFullName);
-
             var staff = new Staff
             {
                 Id = Guid.NewGuid(),
                 OrganizationId = organization.Id,
                 BranchId = branch.Id,
                 UserId = user.Id,
-                FirstName = firstName,
-                LastName = lastName,
+                FirstName = "Owner",
+                LastName = companyName,
                 RoleTitle = "Owner",
                 IsActive = true
             };
 
             await _dbContext.StaffMembers.AddAsync(staff, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
+
+            var ownerRoles = new[] { "Owner", "Admin" };
+            foreach (var role in ownerRoles)
+            {
+                if (!await _roleManager.RoleExistsAsync(role))
+                {
+                    continue;
+                }
+
+                var addToRoleResult = await _userManager.AddToRoleAsync(user, role);
+                if (!addToRoleResult.Succeeded)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return (false, null, addToRoleResult.Errors.Select(e => e.Description));
+                }
+            }
 
             await transaction.CommitAsync(cancellationToken);
 
@@ -105,28 +139,31 @@ public class RegistrationService : IRegistrationService
         }
     }
 
-    private static (string FirstName, string LastName) SplitName(string fullName)
+    private static IEnumerable<string> Validate(RegistrationRequest request)
     {
-        if (string.IsNullOrWhiteSpace(fullName))
+        var errors = new List<string>();
+
+        void Require(string? value, string message)
         {
-            return ("", "");
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                errors.Add(message);
+            }
         }
 
-        var parts = fullName
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        Require(request.CompanyName, "Company name is required.");
+        Require(request.Country, "Country is required.");
+        Require(request.Timezone, "Timezone is required.");
+        Require(request.CompanyPhone, "Company phone is required.");
+        Require(request.OwnerEmail, "Owner email is required.");
+        Require(request.OwnerPassword, "Owner password is required.");
+        Require(request.OwnerPasswordRepeat, "Please confirm the owner password.");
 
-        if (parts.Length == 0)
+        if (!string.Equals(request.OwnerPassword, request.OwnerPasswordRepeat, StringComparison.Ordinal))
         {
-            return ("", "");
+            errors.Add("Passwords do not match.");
         }
 
-        if (parts.Length == 1)
-        {
-            return (parts[0], string.Empty);
-        }
-
-        var firstName = parts[0];
-        var lastName = string.Join(" ", parts.Skip(1));
-        return (firstName, lastName);
+        return errors;
     }
 }

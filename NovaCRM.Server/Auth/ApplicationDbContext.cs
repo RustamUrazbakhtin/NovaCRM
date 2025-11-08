@@ -21,6 +21,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.ToTable("Organizations");
             entity.Property(o => o.Name).IsRequired();
             entity.Property(o => o.Timezone).IsRequired();
+            entity.Property(o => o.Country).IsRequired();
+            entity.Property(o => o.BusinessId);
             entity.Property(o => o.Currency).HasDefaultValue("USD");
             entity.Property(o => o.PlanType).HasDefaultValue("free");
             entity.Property(o => o.SubscriptionStatus).HasDefaultValue("active");

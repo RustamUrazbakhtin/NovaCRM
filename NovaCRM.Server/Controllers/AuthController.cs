@@ -37,6 +37,11 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegistrationRequest request, CancellationToken cancellationToken)
     {
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
         var (success, response, errors) = await _registrationService.RegisterOrganizationAsync(request, cancellationToken);
 
         if (!success)
