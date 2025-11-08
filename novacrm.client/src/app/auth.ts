@@ -18,9 +18,20 @@ export function setToken(token?: string) {
 const saved = localStorage.getItem("token");
 if (saved) setToken(saved);
 
+export interface RegistrationPayload {
+    companyName: string;
+    country: string;
+    timezone: string;
+    companyPhone: string;
+    ownerEmail: string;
+    ownerPassword: string;
+    ownerPasswordRepeat: string;
+    businessId?: string;
+}
+
 export const authApi = {
-    async register(email: string, password: string) {
-        await api.post("/auth/register", { email, password });
+    async register(payload: RegistrationPayload) {
+        await api.post("/auth/register", payload);
     },
     async login(email: string, password: string) {
         const { data } = await api.post("/auth/login", { email, password });
