@@ -1,26 +1,21 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "../providers/ThemeProvider";
 import { AppLauncher, type AppLauncherItemConfig } from "../components/AppLauncher";
 import "./header.css";
 
-type MenuItem = { label: string; onClick: () => void };
-
 export default function Header({
     breadcrumb = "Dashboard",
-    onOpenAdmin,
-    onOpenSettings,
-    onOpenProfile,
     onLogout,
 }: {
     breadcrumb?: string;
-    onOpenAdmin: () => void;
-    onOpenSettings: () => void;
-    onOpenProfile: () => void;
     onLogout: () => void;
 }) {
+    const navigate = useNavigate();
     const { theme, setTheme, isDark } = useTheme();
     const [open, setOpen] = useState(false);
     const box = useRef<HTMLDivElement>(null);
+    const menuButtonRef = useRef<HTMLButtonElement>(null);
     const icon = (paths: ReactNode) => (
         <svg viewBox="0 0 24 24" width="32" height="32" role="img" aria-hidden>
             <g
@@ -35,8 +30,6 @@ export default function Header({
         </svg>
     );
 
-    const placeholder = (label: string) => () => alert(`${label} is coming soon`);
-
     const launcherItems: AppLauncherItemConfig[] = useMemo(
         () => [
             {
@@ -50,7 +43,7 @@ export default function Header({
                         <line x1="16" y1="3" x2="16" y2="7" />
                     </>
                 ),
-                href: "/",
+                href: "/calendar",
             },
             {
                 id: "clients",
@@ -74,7 +67,7 @@ export default function Header({
                         <path d="M5 21a7 7 0 0 1 14 0" />
                     </>
                 ),
-                href: "/workers",
+                href: "/staff",
             },
             {
                 id: "inventory",
@@ -86,7 +79,7 @@ export default function Header({
                         <path d="M10 4v6" />
                     </>
                 ),
-                onSelect: placeholder("Inventory"),
+                href: "/inventory",
             },
             {
                 id: "analytics",
@@ -99,7 +92,7 @@ export default function Header({
                         <rect x="15.5" y="12" width="3" height="4.5" rx="1.2" />
                     </>
                 ),
-                onSelect: placeholder("Analytics"),
+                href: "/analytics",
             },
             {
                 id: "tasks",
@@ -111,7 +104,7 @@ export default function Header({
                         <path d="m9 11 2 2 4-4" />
                     </>
                 ),
-                onSelect: placeholder("Tasks"),
+                href: "/tasks",
             },
             {
                 id: "reviews",
@@ -123,7 +116,7 @@ export default function Header({
                         <path d="M9 12h4" />
                     </>
                 ),
-                onSelect: placeholder("Reviews"),
+                href: "/reviews",
             },
             {
                 id: "settings",
@@ -134,23 +127,10 @@ export default function Header({
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
                     </>
                 ),
-                onSelect: onOpenSettings,
-            },
-            {
-                id: "logout",
-                label: "Log out",
-                icon: icon(
-                    <>
-                        <path d="M15 3h-6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6" />
-                        <path d="m10 12 4-4" />
-                        <path d="m10 12 4 4" />
-                        <path d="M14 12H3" />
-                    </>
-                ),
-                onSelect: onLogout,
+                href: "/settings",
             },
         ],
-        [onOpenSettings, onLogout],
+        [icon],
     );
 
     useEffect(() => {
@@ -160,6 +140,29 @@ export default function Header({
         document.addEventListener("click", onDoc);
         return () => document.removeEventListener("click", onDoc);
     }, []);
+
+    useEffect(() => {
+        if (!open) return undefined;
+
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                event.preventDefault();
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener("keydown", onKeyDown);
+        return () => document.removeEventListener("keydown", onKeyDown);
+    }, [open]);
+
+    const wasOpen = useRef(false);
+
+    useEffect(() => {
+        if (wasOpen.current && !open) {
+            menuButtonRef.current?.focus();
+        }
+        wasOpen.current = open;
+    }, [open]);
 
     const isSwitchOn = theme === "dark" || (theme === "system" && isDark);
     const themeStatusLabel =
@@ -178,12 +181,19 @@ export default function Header({
         setTheme(isSwitchOn ? "light" : "dark");
     };
 
-    const items: MenuItem[] = [
-        { label: "Profile", onClick: onOpenProfile },
-        { label: "Settings", onClick: onOpenSettings },
-        { label: "Admin Panel", onClick: onOpenAdmin },
-        { label: "Sign out", onClick: onLogout },
-    ];
+    const accountActions = useMemo(
+        () => [
+            { label: "My profile", to: "/settings/profile" },
+            { label: "Company profile", to: "/settings/company" },
+            { label: "Subscription & billing", to: "/settings/billing" },
+        ],
+        []
+    );
+
+    const handleNavigate = (to: string) => {
+        navigate(to);
+        setOpen(false);
+    };
 
     return (
         <header className="nx-header">
@@ -205,19 +215,36 @@ export default function Header({
                         if (next) setOpen(false);
                     }}
                 />
-                <button className="nx-user" onClick={() => setOpen(v => !v)} aria-haspopup="menu" aria-expanded={open}>
+                <button
+                    ref={menuButtonRef}
+                    className="nx-user"
+                    onClick={() => setOpen(v => !v)}
+                    aria-haspopup="menu"
+                    aria-expanded={open}
+                    aria-controls={open ? "nx-user-menu" : undefined}
+                >
                     <img src="/user.svg" alt="user avatar" />
                     <span className="nx-user-name">User</span>
                 </button>
 
                 {open && (
-                    <div className="nx-menu" role="menu">
-                        {items.map((it, i) => (
-                            <button key={i} role="menuitem" onClick={() => { it.onClick(); setOpen(false); }}>
-                                {it.label}
-                            </button>
-                        ))}
-                        <div className="nx-theme-row">
+                    <div className="nx-menu" role="menu" id="nx-user-menu" aria-label="User menu">
+                        <div className="nx-menu-section" role="none">
+                            {accountActions.map(action => (
+                                <button
+                                    key={action.to}
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => handleNavigate(action.to)}
+                                >
+                                    {action.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="nx-menu-divider" role="separator" aria-hidden="true" />
+
+                        <div className="nx-theme-row" role="group" aria-label="Theme preferences">
                             <div className="nx-theme-info">
                                 <span className="nx-theme-label">Theme</span>
                                 <span className="nx-theme-status">{themeStatusLabel}</span>
@@ -245,6 +272,20 @@ export default function Header({
                             }}
                         >
                             Follow system settings
+                        </button>
+
+                        <div className="nx-menu-divider" role="separator" aria-hidden="true" />
+
+                        <button
+                            type="button"
+                            className="nx-menu-signout"
+                            role="menuitem"
+                            onClick={() => {
+                                setOpen(false);
+                                onLogout();
+                            }}
+                        >
+                            Sign out
                         </button>
                     </div>
                 )}
