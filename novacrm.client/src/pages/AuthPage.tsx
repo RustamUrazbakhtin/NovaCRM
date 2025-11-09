@@ -177,7 +177,10 @@ export default function AuthPage() {
 
     return (
         <div className="centered">
-            <div className="panel overflow-y-auto max-h-[90vh]">
+            <div
+                className="panel"
+                style={{ maxHeight: "90vh", overflowY: "auto" }}
+            >
                 <div className="stack" style={{ gap: 16 }}>
                     <div className="tabs">
                         <button
@@ -219,7 +222,10 @@ export default function AuthPage() {
                         ) : (
                             <div className="stack" style={{ gap: 20 }}>
                                 <div className="stack" style={{ gap: 12 }}>
-                                    <div className="helper" style={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
+                                    <div
+                                        className="helper"
+                                        style={{ textTransform: "uppercase", letterSpacing: 0.5 }}
+                                    >
                                         Account info
                                     </div>
                                     <TextInput
@@ -243,7 +249,10 @@ export default function AuthPage() {
                                 </div>
 
                                 <div className="stack" style={{ gap: 12 }}>
-                                    <div className="helper" style={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
+                                    <div
+                                        className="helper"
+                                        style={{ textTransform: "uppercase", letterSpacing: 0.5 }}
+                                    >
                                         Company info
                                     </div>
                                     <TextInput
@@ -256,14 +265,16 @@ export default function AuthPage() {
                                             className="input"
                                             {...signUpForm.register("country")}
                                         >
-                                            {countries.map(country => (
+                                            {countries.map((country) => (
                                                 <option key={country} value={country}>
                                                     {country}
                                                 </option>
                                             ))}
                                         </select>
                                         {signUpForm.formState.errors.country?.message && (
-                                            <div className="helper">{signUpForm.formState.errors.country.message}</div>
+                                            <div className="helper">
+                                                {signUpForm.formState.errors.country.message}
+                                            </div>
                                         )}
                                     </div>
                                     <div className="stack">
@@ -271,18 +282,23 @@ export default function AuthPage() {
                                             className="input"
                                             {...signUpForm.register("timezone")}
                                         >
-                                            {timezones.map(tz => (
+                                            {timezones.map((tz) => (
                                                 <option key={tz} value={tz}>
                                                     {tz}
                                                 </option>
                                             ))}
                                         </select>
                                         {signUpForm.formState.errors.timezone?.message && (
-                                            <div className="helper">{signUpForm.formState.errors.timezone.message}</div>
+                                            <div className="helper">
+                                                {signUpForm.formState.errors.timezone.message}
+                                            </div>
                                         )}
                                     </div>
                                     <div className="stack">
-                                        <label className="helper" style={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
+                                        <label
+                                            className="helper"
+                                            style={{ textTransform: "uppercase", letterSpacing: 0.5 }}
+                                        >
                                             Company phone
                                         </label>
                                         <div className="flex gap-2">
@@ -290,8 +306,11 @@ export default function AuthPage() {
                                                 className="input w-28"
                                                 {...signUpForm.register("phoneCountryCode")}
                                             >
-                                                {phoneCodes.map(code => (
-                                                    <option key={`${code.label}-${code.value}`} value={code.value}>
+                                                {phoneCodes.map((code) => (
+                                                    <option
+                                                        key={`${code.label}-${code.value}`}
+                                                        value={code.value}
+                                                    >
                                                         {code.label}
                                                     </option>
                                                 ))}
@@ -311,27 +330,37 @@ export default function AuthPage() {
                                 </div>
 
                                 <div className="stack" style={{ gap: 12 }}>
-                                    <div className="helper" style={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
+                                    <div
+                                        className="helper"
+                                        style={{ textTransform: "uppercase", letterSpacing: 0.5 }}
+                                    >
                                         Subscription plan
                                     </div>
                                     <div className="stack" style={{ gap: 8 }}>
-                                        {plans.map(plan => (
+                                        {plans.map((plan) => (
                                             <label
                                                 key={plan.value}
-                                                className={`flex cursor-pointer items-start gap-3 rounded border px-3 py-2 ${
-                                                    planType === plan.value ? "border-sky-500" : "border-slate-200"
-                                                }`}
+                                                className={`flex cursor-pointer items-start gap-3 rounded border px-3 py-2 ${planType === plan.value
+                                                        ? "border-sky-500"
+                                                        : "border-slate-200"
+                                                    }`}
                                             >
                                                 <input
                                                     type="radio"
                                                     name="plan"
                                                     value={plan.value}
                                                     checked={planType === plan.value}
-                                                    onChange={(event) => setPlanType(event.target.value as PlanType)}
+                                                    onChange={(event) =>
+                                                        setPlanType(event.target.value as PlanType)
+                                                    }
                                                 />
                                                 <div className="stack" style={{ gap: 2 }}>
-                                                    <span className="text-sm font-medium">{plan.title}</span>
-                                                    <span className="text-xs text-slate-500">{plan.price} – {plan.description}</span>
+                                                    <span className="text-sm font-medium">
+                                                        {plan.title}
+                                                    </span>
+                                                    <span className="text-xs text-slate-500">
+                                                        {plan.price} – {plan.description}
+                                                    </span>
                                                 </div>
                                             </label>
                                         ))}
@@ -339,14 +368,25 @@ export default function AuthPage() {
                                 </div>
                             </div>
                         )}
-                        <Button disabled={tab === "sign-in" ? signInForm.formState.isSubmitting : signUpForm.formState.isSubmitting}>
+                        <Button
+                            disabled={
+                                tab === "sign-in"
+                                    ? signInForm.formState.isSubmitting
+                                    : signUpForm.formState.isSubmitting
+                            }
+                        >
                             {tab === "sign-in" ? "Sign In" : "Create Account"}
                         </Button>
-                        {tab === "sign-up" && signUpForm.formState.errors.root?.message && (
-                            <div className="helper" role="alert">{signUpForm.formState.errors.root.message}</div>
-                        )}
+                        {tab === "sign-up" &&
+                            signUpForm.formState.errors.root?.message && (
+                                <div className="helper" role="alert">
+                                    {signUpForm.formState.errors.root.message}
+                                </div>
+                            )}
                         <div className="helper" style={{ textAlign: "center" }}>
-                            {tab === "sign-in" ? "Forgot password? (add later)" : "By continuing you agree to the Terms"}
+                            {tab === "sign-in"
+                                ? "Forgot password? (add later)"
+                                : "By continuing you agree to the Terms"}
                         </div>
                     </form>
                 </div>
