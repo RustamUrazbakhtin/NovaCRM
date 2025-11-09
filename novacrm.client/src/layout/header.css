@@ -127,6 +127,79 @@
     color: #f6f7fb;
 }
 
+.nx-account-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    background: color-mix(in oklab,#000 6%,transparent);
+    transition: background .2s ease;
+}
+
+.nx-account-card:hover {
+    background: color-mix(in oklab,#000 10%,transparent);
+}
+
+.dark .nx-account-card {
+    background: color-mix(in oklab,#fff 14%,transparent);
+}
+
+.dark .nx-account-card:hover {
+    background: color-mix(in oklab,#fff 18%,transparent);
+}
+
+.nx-account-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    letter-spacing: .5px;
+    background: linear-gradient(135deg, color-mix(in oklab,var(--accent,#5b67f1) 80%,transparent), color-mix(in oklab,#5b67f1 20%,transparent));
+    color: #fff;
+    text-transform: uppercase;
+}
+
+.nx-account-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.nx-account-name {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.nx-account-email {
+    font-size: 13px;
+    opacity: .75;
+}
+
+.nx-account-caption {
+    font-size: 12px;
+    opacity: .6;
+}
+
+.nx-menu-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nx-menu-section-title {
+    padding: 0 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    opacity: .6;
+}
+
 .nx-menu-section {
     display: flex;
     flex-direction: column;

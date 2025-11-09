@@ -7,9 +7,13 @@ import "./header.css";
 export default function Header({
     breadcrumb = "Dashboard",
     onLogout,
+    userName = "User",
+    userEmail = "user@example.com",
 }: {
     breadcrumb?: string;
     onLogout: () => void;
+    userName?: string;
+    userEmail?: string;
 }) {
     const navigate = useNavigate();
     const { theme, setTheme, isDark } = useTheme();
@@ -190,6 +194,20 @@ export default function Header({
         []
     );
 
+    const userInitials = useMemo(() => {
+        const letters = userName
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+            .map(part => part.charAt(0).toUpperCase());
+
+        if (letters.length === 0) {
+            return "U";
+        }
+
+        return letters.slice(0, 2).join("");
+    }, [userName]);
+
     const handleNavigate = (to: string) => {
         navigate(to);
         setOpen(false);
@@ -229,49 +247,88 @@ export default function Header({
 
                 {open && (
                     <div className="nx-menu" role="menu" id="nx-user-menu" aria-label="User menu">
-                        <div className="nx-menu-section" role="none">
-                            {accountActions.map(action => (
-                                <button
-                                    key={action.to}
-                                    type="button"
-                                    role="menuitem"
-                                    onClick={() => handleNavigate(action.to)}
-                                >
-                                    {action.label}
-                                </button>
-                            ))}
+                        <button
+                            type="button"
+                            className="nx-account-card"
+                            role="menuitem"
+                            onClick={() => handleNavigate("/settings/profile")}
+                        >
+                            <span className="nx-account-avatar" aria-hidden="true">
+                                {userInitials}
+                            </span>
+                            <span className="nx-account-meta">
+                                <span className="nx-account-name">{userName || "User"}</span>
+                                <span className="nx-account-email">{userEmail || "user@example.com"}</span>
+                                <span className="nx-account-caption">Manage your account</span>
+                            </span>
+                        </button>
+
+                        <div className="nx-menu-group" role="none">
+                            <span className="nx-menu-section-title" aria-hidden="true">
+                                Account
+                            </span>
+                            <div className="nx-menu-section" role="none">
+                                {accountActions.map(action => (
+                                    <button
+                                        key={action.to}
+                                        type="button"
+                                        role="menuitem"
+                                        onClick={() => handleNavigate(action.to)}
+                                    >
+                                        {action.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
-                        <div className="nx-menu-divider" role="separator" aria-hidden="true" />
+                        <div className="nx-menu-group" role="group" aria-label="Theme preferences">
+                            <span className="nx-menu-section-title" aria-hidden="true">
+                                Appearance
+                            </span>
 
-                        <div className="nx-theme-row" role="group" aria-label="Theme preferences">
-                            <div className="nx-theme-info">
-                                <span className="nx-theme-label">Theme</span>
-                                <span className="nx-theme-status">{themeStatusLabel}</span>
+                            <div className="nx-theme-row">
+                                <div className="nx-theme-info">
+                                    <span className="nx-theme-label">Theme</span>
+                                    <span className="nx-theme-status">{themeStatusLabel}</span>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className={`nx-switch ${isSwitchOn ? "is-on" : ""}`}
+                                    role="switch"
+                                    aria-checked={isSwitchOn}
+                                    aria-label={isSwitchOn ? "Switch to light theme" : "Switch to dark theme"}
+                                    onClick={handleThemeToggle}
+                                >
+                                    <span className="nx-switch-thumb" />
+                                </button>
                             </div>
 
                             <button
                                 type="button"
-                                className={`nx-switch ${isSwitchOn ? "is-on" : ""}`}
-                                role="switch"
-                                aria-checked={isSwitchOn}
-                                aria-label={isSwitchOn ? "Switch to light theme" : "Switch to dark theme"}
-                                onClick={handleThemeToggle}
+                                className={`nx-theme-system ${theme === "system" ? "is-active" : ""}`}
+                                aria-pressed={theme === "system"}
+                                onClick={() => {
+                                    setTheme("system");
+                                    setOpen(false);
+                                }}
                             >
-                                <span className="nx-switch-thumb" />
+                                Follow system settings
                             </button>
                         </div>
 
+                        <div className="nx-menu-divider" role="separator" aria-hidden="true" />
+
                         <button
                             type="button"
-                            className={`nx-theme-system ${theme === "system" ? "is-active" : ""}`}
-                            aria-pressed={theme === "system"}
+                            className="nx-menu-signout"
+                            role="menuitem"
                             onClick={() => {
-                                setTheme("system");
                                 setOpen(false);
+                                onLogout();
                             }}
                         >
-                            Follow system settings
+                            Sign out
                         </button>
 
                         <div className="nx-menu-divider" role="separator" aria-hidden="true" />
