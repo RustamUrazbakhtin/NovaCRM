@@ -18,14 +18,14 @@
 
 .nx-left {
     display: flex;
-    align-items: center; /* ← вертикальное выравнивание всех элементов */
+    align-items: center;
     gap: 12px;
     min-width: 0;
 }
 
 .nx-logo {
     display: inline-flex;
-    align-items: center; /* ← логотип и название по одной линии */
+    align-items: center;
     gap: 8px;
     min-width: 0;
 }
@@ -38,17 +38,15 @@
 }
 
     .nx-mark img {
-        display: block; /* ← убирает «прыжок» по baseline у <img> */
-        height: 28px; /* или 22–28px под макет */
+        display: block;
+        height: 28px;
         width: auto;
-        /* при необходимости микро-нудж:
-     transform: translateY(-1px); */
     }
 
 .brand__name {
     font-weight: 800;
     font-size: 18px;
-    line-height: 1; /* без лишних отступов по вертикали */
+    line-height: 1;
     white-space: nowrap;
 }
 
@@ -70,7 +68,7 @@
     position: relative;
     flex-wrap: nowrap;
     display: flex;
-    align-items: center; /* ← вертикальное выравнивание всех элементов */
+    align-items: center;
     gap: 12px;
 }
 
@@ -107,8 +105,11 @@
 .nx-menu {
     position: absolute;
     right: 0;
-    margin-top: 8px;
+    top: 100%; /* меню начинается под кнопкой User */
+    margin-top: 8px; /* небольшой отступ вниз */
     min-width: 220px;
+    max-height: 80vh; /* чтобы ничего не обрезалось по высоте */
+    overflow-y: auto; /* если пунктов много — скролл внутри меню */
     background: color-mix(in oklab, var(--bg,#fff) 92%, transparent);
     backdrop-filter: blur(18px);
     border: 1px solid color-mix(in oklab,#000 10%,transparent);
@@ -137,17 +138,17 @@
     transition: background .2s ease;
 }
 
-.nx-account-card:hover {
-    background: color-mix(in oklab,#000 10%,transparent);
-}
+    .nx-account-card:hover {
+        background: color-mix(in oklab,#000 10%,transparent);
+    }
 
 .dark .nx-account-card {
     background: color-mix(in oklab,#fff 14%,transparent);
 }
 
-.dark .nx-account-card:hover {
-    background: color-mix(in oklab,#fff 18%,transparent);
-}
+    .dark .nx-account-card:hover {
+        background: color-mix(in oklab,#fff 18%,transparent);
+    }
 
 .nx-account-avatar {
     width: 40px;
@@ -233,9 +234,9 @@
     gap: 8px;
 }
 
-    .nx-menu button:hover {
-        background: color-mix(in oklab,#000 6%,transparent);
-    }
+.nx-menu button:hover {
+    background: color-mix(in oklab,#000 6%,transparent);
+}
 
 .dark .nx-menu button:hover {
     background: color-mix(in oklab,#fff 14%,transparent);
@@ -277,7 +278,7 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    width: 56px;
+    width: 30%;
     height: 28px;
     border-radius: 999px;
     border: 1px solid color-mix(in oklab,#000 16%,transparent);
@@ -288,12 +289,12 @@
     user-select: none;
 }
 
-.nx-switch input {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    pointer-events: none;
-}
+    .nx-switch input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+    }
 
 .nx-switch-track {
     position: relative;
@@ -337,17 +338,17 @@
     border-color: transparent;
 }
 
-.nx-switch.is-on .nx-switch-thumb {
-    transform: translateX(28px);
-}
+    .nx-switch.is-on .nx-switch-thumb {
+        transform: translateX(28px);
+    }
 
-.nx-switch.is-on .nx-switch-track {
-    background: transparent;
-}
+    .nx-switch.is-on .nx-switch-track {
+        background: transparent;
+    }
 
-.nx-switch.is-on .nx-switch-icon.nx-switch-moon {
-    opacity: .95;
-}
+    .nx-switch.is-on .nx-switch-icon.nx-switch-moon {
+        opacity: .95;
+    }
 
 .nx-switch:not(.is-on) .nx-switch-icon.nx-switch-sun {
     opacity: .95;
@@ -387,17 +388,17 @@
     color: inherit;
 }
 
-.nx-theme-system:hover {
-    background: color-mix(in oklab,#000 5%,transparent);
-}
+    .nx-theme-system:hover {
+        background: color-mix(in oklab,#000 5%,transparent);
+    }
 
 .dark .nx-theme-system {
     border-color: color-mix(in oklab,#fff 14%,transparent);
 }
 
-.dark .nx-theme-system:hover {
-    background: color-mix(in oklab,#fff 14%,transparent);
-}
+    .dark .nx-theme-system:hover {
+        background: color-mix(in oklab,#fff 14%,transparent);
+    }
 
 .nx-theme-system.is-active {
     background: color-mix(in oklab,#000 6%,transparent);
@@ -416,16 +417,16 @@
     border-radius: 10px;
 }
 
-.nx-menu-signout:hover {
-    background: color-mix(in oklab,#dc2626 18%, transparent);
-    color: #7f1d1d;
-}
+    .nx-menu-signout:hover {
+        background: color-mix(in oklab,#dc2626 18%, transparent);
+        color: #7f1d1d;
+    }
 
 .dark .nx-menu-signout {
     color: #f87171;
 }
 
-.dark .nx-menu-signout:hover {
-    background: color-mix(in oklab,#f87171 28%, transparent);
-    color: #11131a;
-}
+    .dark .nx-menu-signout:hover {
+        background: color-mix(in oklab,#f87171 28%, transparent);
+        color: #11131a;
+    }

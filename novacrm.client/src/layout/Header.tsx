@@ -180,7 +180,6 @@ export default function Header({
 
     const accountActions = useMemo(
         () => [
-            { label: "My account", to: "/settings/profile" },
             { label: "Company profile", to: "/settings/company" },
             { label: "Subscription & billing", to: "/settings/billing" },
         ],
@@ -278,10 +277,6 @@ export default function Header({
                         </div>
 
                         <div className="nx-menu-section" role="group" aria-label="Theme preferences">
-                            <span className="nx-menu-section-title" aria-hidden="true">
-                                Appearance
-                            </span>
-
                             <div className="nx-theme-row">
                                 <div className="nx-theme-info">
                                     <span className="nx-theme-title">
@@ -291,7 +286,7 @@ export default function Header({
                                                 ? "Dark mode"
                                                 : "System theme"}
                                     </span>
-                                    <span className="nx-theme-subtitle">Choose light or dark theme</span>
+                                    <span className="nx-theme-subtitle">Theme</span>
                                 </div>
 
                                 <button
