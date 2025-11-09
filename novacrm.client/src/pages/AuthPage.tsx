@@ -177,7 +177,7 @@ export default function AuthPage() {
 
     return (
         <div className="centered">
-            <div className="panel">
+            <div className="panel overflow-y-auto max-h-[90vh]">
                 <div className="stack" style={{ gap: 16 }}>
                     <div className="tabs">
                         <button
@@ -197,7 +197,7 @@ export default function AuthPage() {
                     </div>
 
                     <form
-                        className="stack overflow-y-auto max-h-[90vh]"
+                        className="stack"
                         style={{ gap: 16 }}
                         onSubmit={tab === "sign-in" ? handleSignIn : handleSignUp}
                     >
