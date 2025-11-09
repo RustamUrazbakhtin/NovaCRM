@@ -1,5 +1,7 @@
+/// <reference types="vitest" />
 ﻿import { fileURLToPath, URL } from 'node:url';
-import { defineConfig } from 'vite';
+import { defineConfig, type UserConfig } from 'vite';
+import type { UserConfig as VitestUserConfig } from 'vitest/config';
 import plugin from '@vitejs/plugin-react';
 import fs from 'fs';
 import path from 'path';
@@ -34,7 +36,7 @@ const target =
         ? `https://localhost:${env.ASPNETCORE_HTTPS_PORT}`
         : (env.ASPNETCORE_URLS ? env.ASPNETCORE_URLS.split(';')[0] : 'https://localhost:7226');
 
-export default defineConfig({
+const config: UserConfig & { test: VitestUserConfig['test'] } = {
     plugins: [plugin()],
     resolve: {
         alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) }
@@ -61,4 +63,6 @@ export default defineConfig({
             // '^/weatherforecast': { target, secure: false }
         }
     }
-});
+};
+
+export default defineConfig(config);

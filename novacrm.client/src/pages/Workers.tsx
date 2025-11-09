@@ -178,13 +178,7 @@ export default function WorkersPage() {
 
     return (
         <ThemeProvider>
-            <Header
-                breadcrumb="Team"
-                onOpenAdmin={() => alert("Open admin")}
-                onOpenSettings={() => alert("Open settings")}
-                onOpenProfile={() => alert("Open profile")}
-                onLogout={handleLogout}
-            />
+            <Header breadcrumb="Team" onLogout={handleLogout} />
             <main className="fx-page workers-page">
                 <section className="workers-hero">
                     <div className="hero-intro">

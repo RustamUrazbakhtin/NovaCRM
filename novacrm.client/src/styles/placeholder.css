@@ -1,0 +1,49 @@
+.fx-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(48px, 12vw, 120px) clamp(20px, 6vw, 80px);
+}
+
+.fx-placeholder-panel {
+    width: min(560px, 100%);
+    padding: clamp(28px, 6vw, 48px);
+    text-align: center;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    backdrop-filter: blur(24px);
+    box-shadow: 0 28px 60px rgba(15, 23, 42, 0.16);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.fx-placeholder-panel h1 {
+    font-size: clamp(28px, 5vw, 36px);
+    font-weight: 800;
+    margin: 0;
+    color: color-mix(in oklab, var(--on-surface, #101828) 92%, transparent);
+}
+
+.fx-placeholder-panel p {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: color-mix(in oklab, var(--on-surface, #101828) 72%, transparent);
+}
+
+.dark .fx-placeholder-panel {
+    background: rgba(17, 19, 26, 0.82);
+    border-color: rgba(148, 163, 184, 0.35);
+    box-shadow: 0 32px 70px rgba(2, 6, 23, 0.65);
+}
+
+.dark .fx-placeholder-panel h1,
+.dark .fx-placeholder-panel p {
+    color: #f8fafc;
+}
+
+.dark .fx-placeholder-panel p {
+    color: rgba(226, 232, 240, 0.85);
+}

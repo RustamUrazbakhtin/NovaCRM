@@ -233,13 +233,7 @@ export default function Clients() {
 
     return (
         <ThemeProvider>
-            <Header
-                breadcrumb="Клиенты"
-                onOpenAdmin={() => open("Admin")}
-                onOpenSettings={() => open("Settings")}
-                onOpenProfile={() => open("Profile")}
-                onLogout={handleLogout}
-            />
+            <Header breadcrumb="Клиенты" onLogout={handleLogout} />
 
             <main className="clients-page">
                 <section className="clients-toolbar">
