@@ -169,13 +169,6 @@ export default function Header({
     }, [open]);
 
     const isSwitchOn = theme === "dark" || (theme === "system" && isDark);
-    const themeStatusLabel =
-        theme === "system"
-            ? `System · ${isDark ? "Dark" : "Light"}`
-            : isSwitchOn
-                ? "Dark mode"
-                : "Light mode";
-
     const handleThemeToggle = () => {
         if (theme === "system") {
             setTheme(isSwitchOn ? "light" : "dark");
@@ -187,7 +180,7 @@ export default function Header({
 
     const accountActions = useMemo(
         () => [
-            { label: "My profile", to: "/settings/profile" },
+            { label: "My account", to: "/settings/profile" },
             { label: "Company profile", to: "/settings/company" },
             { label: "Subscription & billing", to: "/settings/billing" },
         ],
@@ -291,8 +284,14 @@ export default function Header({
 
                             <div className="nx-theme-row">
                                 <div className="nx-theme-info">
-                                    <span className="nx-theme-label">Theme</span>
-                                    <span className="nx-theme-status">{themeStatusLabel}</span>
+                                    <span className="nx-theme-title">
+                                        {theme === "light"
+                                            ? "Light mode"
+                                            : theme === "dark"
+                                                ? "Dark mode"
+                                                : "System theme"}
+                                    </span>
+                                    <span className="nx-theme-subtitle">Choose light or dark theme</span>
                                 </div>
 
                                 <button

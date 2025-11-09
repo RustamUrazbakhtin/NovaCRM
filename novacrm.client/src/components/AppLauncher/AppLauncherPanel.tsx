@@ -11,7 +11,7 @@ type Props = {
     isOpen: boolean;
     onClose: () => void;
     triggerId: string;
-    triggerRef: React.RefObject<HTMLButtonElement>;
+    triggerRef: React.RefObject<HTMLButtonElement | null>;
     items: AppLauncherItemConfig[];
 };
 
