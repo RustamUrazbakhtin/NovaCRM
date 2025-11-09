@@ -67,13 +67,7 @@ export default function Dashboard() {
 
     return (
         <ThemeProvider>
-            <Header
-                breadcrumb="Dashboard"
-                onOpenAdmin={() => open("Admin")}
-                onOpenSettings={() => open("Settings")}
-                onOpenProfile={() => open("Profile")}
-                onLogout={handleLogout}
-            />
+            <Header breadcrumb="Dashboard" onLogout={handleLogout} />
 
             <main className="fx-page">
                 <section className="fx-row fx-top">
