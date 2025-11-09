@@ -116,12 +116,30 @@
     padding: 8px;
     box-shadow: 0 8px 30px rgba(0,0,0,.12);
     color: color-mix(in oklab, var(--ink) 88%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .dark .nx-menu {
     --bg: #11131a;
     border-color: color-mix(in oklab,#fff 12%,transparent);
     color: #f6f7fb;
+}
+
+.nx-menu-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nx-menu-divider {
+    height: 1px;
+    background: color-mix(in oklab,#000 10%,transparent);
+}
+
+.dark .nx-menu-divider {
+    background: color-mix(in oklab,#fff 16%,transparent);
 }
 
 .nx-menu button {
@@ -152,7 +170,6 @@
     padding: 10px 12px;
     border-radius: 12px;
     background: color-mix(in oklab,#000 4%,transparent);
-    margin-top: 4px;
 }
 
 .dark .nx-theme-row {
@@ -280,7 +297,7 @@
 
 .nx-theme-system {
     width: 100%;
-    margin-top: 8px;
+    margin-top: 0;
     padding: 8px 12px;
     border-radius: 10px;
     border: 1px solid color-mix(in oklab,#000 10%,transparent);
@@ -309,5 +326,27 @@
 
 .dark .nx-theme-system.is-active {
     background: color-mix(in oklab,#fff 18%,transparent);
+    color: #11131a;
+}
+
+.nx-menu-signout {
+    font-weight: 700;
+    color: #dc2626;
+    border: 1px solid transparent;
+    padding: 10px 12px;
+    border-radius: 10px;
+}
+
+.nx-menu-signout:hover {
+    background: color-mix(in oklab,#dc2626 18%, transparent);
+    color: #7f1d1d;
+}
+
+.dark .nx-menu-signout {
+    color: #f87171;
+}
+
+.dark .nx-menu-signout:hover {
+    background: color-mix(in oklab,#f87171 28%, transparent);
     color: #11131a;
 }
