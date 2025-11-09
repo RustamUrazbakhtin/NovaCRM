@@ -1,4 +1,4 @@
-﻿import { forwardRef } from "react";
+import { forwardRef, type ReactNode } from "react";
 import styles from "./AppLauncher.module.css";
 
 type Props = {
@@ -6,14 +6,29 @@ type Props = {
     isOpen: boolean;
     onToggle: () => void;
     controls: string;
-    icon?: React.ReactNode;
+    icon?: ReactNode;
 };
+
+const defaultIcon = (
+    <svg viewBox="0 0 20 20" role="img" aria-hidden="true">
+        <circle cx="4" cy="4" r="1.4" fill="currentColor" />
+        <circle cx="10" cy="4" r="1.4" fill="currentColor" />
+        <circle cx="16" cy="4" r="1.4" fill="currentColor" />
+        <circle cx="4" cy="10" r="1.4" fill="currentColor" />
+        <circle cx="10" cy="10" r="1.4" fill="currentColor" />
+        <circle cx="16" cy="10" r="1.4" fill="currentColor" />
+        <circle cx="4" cy="16" r="1.4" fill="currentColor" />
+        <circle cx="10" cy="16" r="1.4" fill="currentColor" />
+        <circle cx="16" cy="16" r="1.4" fill="currentColor" />
+    </svg>
+);
 
 const AppLauncherButton = forwardRef<HTMLButtonElement, Props>(function AppLauncherButton({
     id,
     isOpen,
     onToggle,
     controls,
+    icon,
 }, ref) {
     return (
         <div className={styles.buttonShell}>
@@ -25,20 +40,11 @@ const AppLauncherButton = forwardRef<HTMLButtonElement, Props>(function AppLaunc
                 aria-haspopup="dialog"
                 aria-expanded={isOpen}
                 aria-controls={controls}
+                aria-label="Open app launcher"
                 onClick={onToggle}
             >
                 <span className={styles.srOnly}>Open app launcher</span>
-                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                    <circle cx="5.5" cy="5.5" r="1.9" fill="currentColor" />
-                    <circle cx="12" cy="5.5" r="1.9" fill="currentColor" />
-                    <circle cx="18.5" cy="5.5" r="1.9" fill="currentColor" />
-                    <circle cx="5.5" cy="12" r="1.9" fill="currentColor" />
-                    <circle cx="12" cy="12" r="1.9" fill="currentColor" />
-                    <circle cx="18.5" cy="12" r="1.9" fill="currentColor" />
-                    <circle cx="5.5" cy="18.5" r="1.9" fill="currentColor" />
-                    <circle cx="12" cy="18.5" r="1.9" fill="currentColor" />
-                    <circle cx="18.5" cy="18.5" r="1.9" fill="currentColor" />
-                </svg>
+                {icon ?? defaultIcon}
             </button>
         </div>
     );
