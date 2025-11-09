@@ -247,31 +247,34 @@ export default function Header({
 
                 {open && (
                     <div className="nx-menu" role="menu" id="nx-user-menu" aria-label="User menu">
-                        <button
-                            type="button"
-                            className="nx-account-card"
-                            role="menuitem"
-                            onClick={() => handleNavigate("/settings/profile")}
-                        >
-                            <span className="nx-account-avatar" aria-hidden="true">
-                                {userInitials}
-                            </span>
-                            <span className="nx-account-meta">
-                                <span className="nx-account-name">{userName || "User"}</span>
-                                <span className="nx-account-email">{userEmail || "user@example.com"}</span>
-                                <span className="nx-account-caption">Manage your account</span>
-                            </span>
-                        </button>
+                        <div className="nx-menu-section" role="none">
+                            <button
+                                type="button"
+                                className="nx-account-card"
+                                role="menuitem"
+                                onClick={() => handleNavigate("/settings/profile")}
+                            >
+                                <span className="nx-account-avatar" aria-hidden="true">
+                                    {userInitials}
+                                </span>
+                                <span className="nx-account-meta">
+                                    <span className="nx-account-name">{userName || "User"}</span>
+                                    <span className="nx-account-email">{userEmail || "user@example.com"}</span>
+                                    <span className="nx-account-caption">Manage your account</span>
+                                </span>
+                            </button>
+                        </div>
 
-                        <div className="nx-menu-group" role="none">
+                        <div className="nx-menu-section" role="none">
                             <span className="nx-menu-section-title" aria-hidden="true">
                                 Account
                             </span>
-                            <div className="nx-menu-section" role="none">
+                            <div className="nx-menu-group" role="none">
                                 {accountActions.map(action => (
                                     <button
                                         key={action.to}
                                         type="button"
+                                        className="nx-menu-item"
                                         role="menuitem"
                                         onClick={() => handleNavigate(action.to)}
                                     >
@@ -281,7 +284,7 @@ export default function Header({
                             </div>
                         </div>
 
-                        <div className="nx-menu-group" role="group" aria-label="Theme preferences">
+                        <div className="nx-menu-section" role="group" aria-label="Theme preferences">
                             <span className="nx-menu-section-title" aria-hidden="true">
                                 Appearance
                             </span>
@@ -319,31 +322,19 @@ export default function Header({
 
                         <div className="nx-menu-divider" role="separator" aria-hidden="true" />
 
-                        <button
-                            type="button"
-                            className="nx-menu-signout"
-                            role="menuitem"
-                            onClick={() => {
-                                setOpen(false);
-                                onLogout();
-                            }}
-                        >
-                            Sign out
-                        </button>
-
-                        <div className="nx-menu-divider" role="separator" aria-hidden="true" />
-
-                        <button
-                            type="button"
-                            className="nx-menu-signout"
-                            role="menuitem"
-                            onClick={() => {
-                                setOpen(false);
-                                onLogout();
-                            }}
-                        >
-                            Sign out
-                        </button>
+                        <div className="nx-menu-section" role="none">
+                            <button
+                                type="button"
+                                className="nx-menu-signout"
+                                role="menuitem"
+                                onClick={() => {
+                                    setOpen(false);
+                                    onLogout();
+                                }}
+                            >
+                                Sign out
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

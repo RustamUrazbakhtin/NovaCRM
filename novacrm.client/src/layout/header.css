@@ -227,6 +227,12 @@
     color: inherit;
 }
 
+.nx-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
     .nx-menu button:hover {
         background: color-mix(in oklab,#000 6%,transparent);
     }
