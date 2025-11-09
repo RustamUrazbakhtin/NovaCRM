@@ -330,6 +330,20 @@ export default function Header({
                         >
                             Sign out
                         </button>
+
+                        <div className="nx-menu-divider" role="separator" aria-hidden="true" />
+
+                        <button
+                            type="button"
+                            className="nx-menu-signout"
+                            role="menuitem"
+                            onClick={() => {
+                                setOpen(false);
+                                onLogout();
+                            }}
+                        >
+                            Sign out
+                        </button>
                     </div>
                 )}
             </div>
