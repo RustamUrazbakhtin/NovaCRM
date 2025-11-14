@@ -105,7 +105,12 @@ public class RegistrationService : IRegistrationService
                 FirstName = "Owner",
                 LastName = companyName,
                 RoleTitle = "Owner",
-                IsActive = true
+                IsActive = true,
+                Phone = companyPhone,
+                Company = companyName,
+                Timezone = timezone,
+                Locale = "en-US",
+                UpdatedAt = DateTime.UtcNow
             };
 
             await _dbContext.StaffMembers.AddAsync(staff, cancellationToken);

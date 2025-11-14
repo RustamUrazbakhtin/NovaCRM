@@ -46,6 +46,17 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(s => s.FirstName).IsRequired();
             entity.Property(s => s.LastName).IsRequired();
             entity.Property(s => s.IsActive).HasDefaultValue(true);
+            entity.Property(s => s.RoleTitle).HasMaxLength(128);
+            entity.Property(s => s.Phone).HasMaxLength(64);
+            entity.Property(s => s.Company).HasMaxLength(256);
+            entity.Property(s => s.Timezone).HasMaxLength(64);
+            entity.Property(s => s.Locale).HasMaxLength(32);
+            entity.Property(s => s.Address).HasMaxLength(512);
+            entity.Property(s => s.Notes).HasMaxLength(1024);
+            entity.Property(s => s.AvatarUrl).HasMaxLength(512);
+            entity.Property(s => s.UpdatedAt)
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                  .ValueGeneratedOnAddOrUpdate();
 
             entity.HasOne(s => s.Organization)
                   .WithMany(o => o.StaffMembers)
