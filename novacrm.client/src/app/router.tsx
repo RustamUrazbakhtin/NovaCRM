@@ -11,9 +11,9 @@ import AnalyticsPage from "../pages/Analytics";
 import TasksPage from "../pages/Tasks";
 import ReviewsPage from "../pages/Reviews";
 import SettingsPage from "../pages/Settings";
-import SettingsProfilePage from "../pages/SettingsProfile";
 import SettingsCompanyPage from "../pages/SettingsCompany";
 import SettingsBillingPage from "../pages/SettingsBilling";
+import ProfilePage from "../pages/ProfilePage";
 import { isAuthenticated } from "./auth";
 
 function Private({ children }: { children: ReactElement }) {
@@ -34,8 +34,9 @@ export default function Router() {
                 <Route path="/analytics" element={<Private><AnalyticsPage /></Private>} />
                 <Route path="/tasks" element={<Private><TasksPage /></Private>} />
                 <Route path="/reviews" element={<Private><ReviewsPage /></Private>} />
+                <Route path="/profile" element={<Private><ProfilePage /></Private>} />
                 <Route path="/settings" element={<Private><SettingsPage /></Private>} />
-                <Route path="/settings/profile" element={<Private><SettingsProfilePage /></Private>} />
+                <Route path="/settings/profile" element={<Private><Navigate to="/profile" replace /></Private>} />
                 <Route path="/settings/company" element={<Private><SettingsCompanyPage /></Private>} />
                 <Route path="/settings/billing" element={<Private><SettingsBillingPage /></Private>} />
                 <Route path="*" element={<Navigate to="/" replace />} />
