@@ -109,9 +109,10 @@ public class ProfileController : ControllerBase
     }
 
     [HttpPost("me/avatar")]
+    [Consumes("multipart/form-data")]
     [RequestFormLimits(MultipartBodyLengthLimit = MaxAvatarSizeBytes + 1024)]
     [RequestSizeLimit(MaxAvatarSizeBytes + 1024)]
-    public async Task<ActionResult<UserProfileDto>> UploadAvatarAsync([FromForm] IFormFile file, CancellationToken cancellationToken)
+    public async Task<ActionResult<UserProfileDto>> UploadAvatarAsync(IFormFile file, CancellationToken cancellationToken)
     {
         if (file is null || file.Length == 0)
         {
