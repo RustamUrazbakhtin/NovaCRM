@@ -4,14 +4,14 @@ using System.ComponentModel.DataAnnotations;
 namespace NovaCRM.Server.Contracts;
 
 public record UserProfileDto(
-    string Id,
+    Guid Id,
     string FirstName,
     string LastName,
     string Email,
     string? Phone,
-    string? RoleId,
+    Guid? RoleId,
     string? RoleName,
-    string? CompanyId,
+    Guid? CompanyId,
     string? CompanyName,
     string? Timezone,
     string? Locale,
@@ -41,7 +41,7 @@ public class UpdateUserProfileRequest
     public string? Phone { get; set; }
 
     [StringLength(64)]
-    public string? RoleId { get; set; }
+    public Guid? RoleId { get; set; }
 
     [StringLength(64)]
     public string? Timezone { get; set; }
