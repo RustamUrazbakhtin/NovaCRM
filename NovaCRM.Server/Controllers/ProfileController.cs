@@ -211,19 +211,21 @@ public class ProfileController : ControllerBase
     [Consumes("multipart/form-data")]
     [RequestFormLimits(MultipartBodyLengthLimit = MaxAvatarSizeBytes + 1024)]
     [RequestSizeLimit(MaxAvatarSizeBytes + 1024)]
-    public async Task<ActionResult<UserProfileDto>> UploadAvatarAsync([FromForm] IFormFile file, CancellationToken cancellationToken)
+    public async Task<ActionResult<UserProfileDto>> UploadAvatarAsync(
+        [FromForm] UploadAvatarForm form,
+        CancellationToken cancellationToken)
     {
-        if (file is null || file.Length == 0)
+        if (form.File is null || form.File.Length == 0)
         {
             return BadRequest(new { message = "Please choose an image file." });
         }
 
-        if (file.Length > MaxAvatarSizeBytes)
+        if (form.File.Length > MaxAvatarSizeBytes)
         {
             return BadRequest(new { message = "Avatar must be 2 MB or smaller." });
         }
 
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var extension = Path.GetExtension(form.File.FileName).ToLowerInvariant();
         if (!AllowedAvatarExtensions.Contains(extension))
         {
             return BadRequest(new { message = "Only JPG and PNG images are supported." });
@@ -241,7 +243,7 @@ public class ProfileController : ControllerBase
 
         await using (var stream = System.IO.File.Create(fullPath))
         {
-            await file.CopyToAsync(stream, cancellationToken);
+            await form.File.CopyToAsync(stream, cancellationToken);
         }
 
         RemoveAvatarFileIfExists(staff.AvatarUrl);
