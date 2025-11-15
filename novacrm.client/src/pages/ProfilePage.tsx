@@ -7,9 +7,11 @@ import { authApi } from "../app/auth";
 import {
     deleteAvatar,
     getProfile,
+    getProfileRoles,
     isAxiosValidationError,
     updateProfile,
     uploadAvatar,
+    type ProfileRole,
     type UpdateProfilePayload,
     type UserProfile,
 } from "../api/profile";
@@ -45,8 +47,7 @@ type ProfileFieldKey =
     | "lastName"
     | "email"
     | "phone"
-    | "role"
-    | "company"
+    | "roleId"
     | "timezone"
     | "locale"
     | "address"
@@ -67,8 +68,7 @@ function buildUpdatePayload(profile: UserProfile): UpdateProfilePayload {
 
     const optionalFields: Array<[keyof UpdateProfilePayload, string | null | undefined]> = [
         ["phone", profile.phone ?? null],
-        ["role", profile.role ?? null],
-        ["company", profile.company ?? null],
+        ["roleId", profile.roleId ?? null],
         ["timezone", profile.timezone ?? null],
         ["locale", profile.locale ?? null],
         ["address", profile.address ?? null],
@@ -85,34 +85,54 @@ function buildUpdatePayload(profile: UserProfile): UpdateProfilePayload {
 
 export default function ProfilePage() {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const [avatarUploading, setAvatarUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [toast, setToast] = useState<string | null>(null);
     const [avatarError, setAvatarError] = useState<string | null>(null);
     const [apiFieldErrors, setApiFieldErrors] = useState<FieldErrors>({});
-    const [originalProfile, setOriginalProfile] = useState<UserProfile | null>(null);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
     const [editedProfile, setEditedProfile] = useState<UserProfile | null>(null);
+    const [roles, setRoles] = useState<ProfileRole[]>([]);
+    const [areRolesLoading, setAreRolesLoading] = useState(true);
     const [localAvatarPreview, setLocalAvatarPreview] = useState<string | null>(null);
     const avatarInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        const controller = new AbortController();
-        setLoading(true);
-        getProfile(controller.signal)
-            .then(profile => {
-                setOriginalProfile(profile);
-                setEditedProfile({ ...profile });
+        const profileController = new AbortController();
+        const rolesController = new AbortController();
+
+        setIsLoading(true);
+        getProfile(profileController.signal)
+            .then(result => {
+                setProfile(result);
+                setEditedProfile({ ...result });
                 setError(null);
             })
             .catch(err => {
                 if (axios.isCancel(err)) return;
+                setProfile(null);
+                setEditedProfile(null);
                 setError("Unable to load profile. Please try again later.");
             })
-            .finally(() => setLoading(false));
+            .finally(() => setIsLoading(false));
 
-        return () => controller.abort();
+        setAreRolesLoading(true);
+        getProfileRoles(rolesController.signal)
+            .then(result => {
+                setRoles(result);
+            })
+            .catch(err => {
+                if (axios.isCancel(err)) return;
+                setRoles([]);
+            })
+            .finally(() => setAreRolesLoading(false));
+
+        return () => {
+            profileController.abort();
+            rolesController.abort();
+        };
     }, []);
 
     useEffect(() => {
@@ -157,14 +177,13 @@ export default function ProfilePage() {
     const hasErrors = useMemo(() => Object.values(combinedErrors).some(Boolean), [combinedErrors]);
 
     const isDirty = useMemo(() => {
-        if (!originalProfile || !editedProfile) return false;
+        if (!profile || !editedProfile) return false;
         const keys: ProfileFieldKey[] = [
             "firstName",
             "lastName",
             "email",
             "phone",
-            "role",
-            "company",
+            "roleId",
             "timezone",
             "locale",
             "address",
@@ -173,15 +192,43 @@ export default function ProfilePage() {
 
         return keys.some(key => {
             const typedKey = key as keyof UserProfile;
-            return normalize(originalProfile[typedKey]) !== normalize(editedProfile[typedKey]);
+            return normalize(profile[typedKey]) !== normalize(editedProfile[typedKey]);
         });
-    }, [originalProfile, editedProfile]);
+    }, [profile, editedProfile]);
 
     const displayName = useMemo(() => {
         if (!editedProfile) return "";
         const parts = [editedProfile.firstName, editedProfile.lastName].map(part => part?.trim()).filter(Boolean);
         return parts.length ? parts.join(" ") : "Your profile";
     }, [editedProfile]);
+
+    const resolvedRoleName = useMemo(() => {
+        if (!editedProfile) return "";
+        if (editedProfile.roleName?.trim()) {
+            return editedProfile.roleName.trim();
+        }
+        if (editedProfile.roleId) {
+            const match = roles.find(role => role.id === editedProfile.roleId);
+            return match?.name ?? "";
+        }
+        return "";
+    }, [editedProfile, roles]);
+
+    const fallbackRoleOption = useMemo(() => {
+        if (!editedProfile?.roleId) {
+            return null;
+        }
+
+        const existsInList = roles.some(role => role.id === editedProfile.roleId);
+        if (existsInList) {
+            return null;
+        }
+
+        return {
+            id: editedProfile.roleId,
+            name: editedProfile.roleName ?? "Current role",
+        };
+    }, [editedProfile, roles]);
 
     const avatarUrl = localAvatarPreview ?? editedProfile?.avatarUrl ?? null;
 
@@ -191,18 +238,42 @@ export default function ProfilePage() {
     }, [navigate]);
 
     const handleFieldChange = useCallback(
-        (field: ProfileFieldKey) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-            if (!editedProfile) return;
-            const value = event.target.value;
-            setEditedProfile(prev => (prev ? { ...prev, [field]: value } : prev));
-            setApiFieldErrors(prev => ({ ...prev, [field]: undefined }));
+        (field: Exclude<ProfileFieldKey, "roleId">) =>
+            (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+                const value = event.target.value;
+                setEditedProfile(prev => {
+                    if (!prev) return prev;
+                    return { ...prev, [field]: value };
+                });
+                setApiFieldErrors(prev => ({ ...prev, [field]: undefined }));
+            },
+        []
+    );
+
+    const handleRoleChange = useCallback(
+        (event: ChangeEvent<HTMLSelectElement>) => {
+            const value = event.target.value.trim();
+            setEditedProfile(prev => {
+                if (!prev) return prev;
+                if (!value) {
+                    return { ...prev, roleId: undefined, roleName: undefined };
+                }
+
+                const match = roles.find(role => role.id === value);
+                return {
+                    ...prev,
+                    roleId: value,
+                    roleName: match?.name ?? prev.roleName,
+                };
+            });
+            setApiFieldErrors(prev => ({ ...prev, roleId: undefined }));
         },
-        [editedProfile]
+        [roles]
     );
 
     const handleCancel = useCallback(() => {
-        if (!originalProfile) return;
-        setEditedProfile({ ...originalProfile });
+        if (!profile) return;
+        setEditedProfile({ ...profile });
         setApiFieldErrors({});
         setError(null);
         setAvatarError(null);
@@ -210,7 +281,7 @@ export default function ProfilePage() {
             URL.revokeObjectURL(localAvatarPreview);
             setLocalAvatarPreview(null);
         }
-    }, [originalProfile, localAvatarPreview]);
+    }, [profile, localAvatarPreview]);
 
     const handleSubmit = useCallback(
         async (event: FormEvent<HTMLFormElement>) => {
@@ -221,13 +292,13 @@ export default function ProfilePage() {
                 return;
             }
 
-            setSaving(true);
+            setIsSaving(true);
             setError(null);
             setApiFieldErrors({});
 
             try {
                 const updated = await updateProfile(buildUpdatePayload(editedProfile));
-                setOriginalProfile(updated);
+                setProfile(updated);
                 setEditedProfile({ ...updated });
                 setToast("Profile saved");
             } catch (err) {
@@ -248,7 +319,7 @@ export default function ProfilePage() {
                     setError("Unable to save profile. Please try again.");
                 }
             } finally {
-                setSaving(false);
+                setIsSaving(false);
             }
         },
         [editedProfile, validationErrors]
@@ -287,7 +358,7 @@ export default function ProfilePage() {
 
             try {
                 const updated = await uploadAvatar(file);
-                setOriginalProfile(updated);
+                setProfile(updated);
                 setEditedProfile({ ...updated });
                 setToast("Avatar updated");
                 setLocalAvatarPreview(null);
@@ -312,7 +383,7 @@ export default function ProfilePage() {
         setAvatarUploading(true);
         try {
             const updated = await deleteAvatar();
-            setOriginalProfile(updated);
+            setProfile(updated);
             setEditedProfile({ ...updated });
             setLocalAvatarPreview(null);
             setToast("Avatar removed");
@@ -329,15 +400,16 @@ export default function ProfilePage() {
 
     return (
         <ThemeProvider>
-            <Header
-                breadcrumb="Profile"
-                onLogout={handleLogout}
-                userName={displayName || "Your profile"}
-                userEmail={editedProfile?.email || ""}
-            />
-            <main className="profile-page" aria-labelledby="profile-title">
-                <section className="profile-sheet">
-                    <form className="profile-form" onSubmit={handleSubmit} noValidate>
+            <div className="profile-shell">
+                <Header
+                    breadcrumb="Profile"
+                    onLogout={handleLogout}
+                    userName={displayName || "Your profile"}
+                    userEmail={editedProfile?.email || ""}
+                />
+                <main className="profile-page" aria-labelledby="profile-title">
+                    <section className="profile-sheet">
+                        <form className="profile-form" onSubmit={handleSubmit} noValidate>
                         <div className="profile-content">
                             <header className="profile-header">
                                 <div className="profile-avatar">
@@ -392,12 +464,12 @@ export default function ProfilePage() {
                                         {displayName || "Your profile"}
                                     </h1>
                                     <p className="profile-subtitle">
-                                        {editedProfile?.role?.trim() || editedProfile?.email || "Update your personal details"}
+                                        {resolvedRoleName || editedProfile?.email || "Update your personal details"}
                                     </p>
                                 </div>
                             </header>
 
-                            {loading ? (
+                            {isLoading ? (
                                 <div className="profile-loading" aria-live="polite">
                                     Loading profile…
                                 </div>
@@ -453,16 +525,37 @@ export default function ProfilePage() {
                                                 <label className="profile-label" htmlFor="role">
                                                     Role
                                                 </label>
-                                                <input
+                                                <select
                                                     id="role"
                                                     name="role"
-                                                    className="profile-input"
-                                                    value={editedProfile?.role ?? ""}
-                                                    onChange={handleFieldChange("role")}
-                                                    aria-invalid={Boolean(combinedErrors.role)}
-                                                    autoComplete="organization-title"
-                                                />
-                                                {combinedErrors.role && <div className="profile-error">{combinedErrors.role}</div>}
+                                                    className="profile-select"
+                                                    value={editedProfile?.roleId ?? ""}
+                                                    onChange={handleRoleChange}
+                                                    aria-invalid={Boolean(combinedErrors.roleId)}
+                                                    disabled={areRolesLoading && roles.length === 0}
+                                                >
+                                                    {areRolesLoading && roles.length === 0 && (
+                                                        <option value="" disabled>
+                                                            Loading roles...
+                                                        </option>
+                                                    )}
+                                                    {!areRolesLoading && (
+                                                        <option value="">Select a role</option>
+                                                    )}
+                                                    {fallbackRoleOption && (
+                                                        <option value={fallbackRoleOption.id}>
+                                                            {fallbackRoleOption.name}
+                                                        </option>
+                                                    )}
+                                                    {roles.map(role => (
+                                                        <option key={role.id} value={role.id}>
+                                                            {role.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {combinedErrors.roleId && (
+                                                    <div className="profile-error">{combinedErrors.roleId}</div>
+                                                )}
                                             </div>
                                             <div className="profile-field">
                                                 <label className="profile-label" htmlFor="company">
@@ -472,14 +565,12 @@ export default function ProfilePage() {
                                                     id="company"
                                                     name="company"
                                                     className="profile-input"
-                                                    value={editedProfile?.company ?? ""}
-                                                    onChange={handleFieldChange("company")}
-                                                    aria-invalid={Boolean(combinedErrors.company)}
+                                                    value={editedProfile?.companyName ?? ""}
+                                                    readOnly
+                                                    aria-readonly="true"
                                                     autoComplete="organization"
                                                 />
-                                                {combinedErrors.company && (
-                                                    <div className="profile-error">{combinedErrors.company}</div>
-                                                )}
+                                                <p className="profile-helper">Company can be edited in Organization settings.</p>
                                             </div>
                                         </div>
                                     </section>
@@ -643,33 +734,32 @@ export default function ProfilePage() {
                                         {toast}
                                     </div>
                                 )}
+                                {isDirty && !error && !toast && (
+                                    <span className="profile-unsaved">Unsaved changes</span>
+                                )}
                             </div>
                             <div className="profile-buttons">
                                 <button
                                     type="button"
                                     className="profile-button secondary"
                                     onClick={handleCancel}
-                                    disabled={saving || avatarUploading || !isDirty}
+                                    disabled={isSaving || avatarUploading || !isDirty}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     className="profile-button primary"
-                                    disabled={saving || avatarUploading || hasErrors || !isDirty}
+                                    disabled={isSaving || avatarUploading || hasErrors || !isDirty}
                                 >
-                                    {saving ? "Saving…" : "Save"}
+                                    {isSaving ? "Saving…" : "Save"}
                                 </button>
                             </div>
-                            {isDirty && !error && !toast && (
-                                <span className="profile-unsaved" aria-live="polite">
-                                    Unsaved changes
-                                </span>
-                            )}
                         </div>
                     </form>
                 </section>
             </main>
-        </ThemeProvider>
+        </div>
+    </ThemeProvider>
     );
 }

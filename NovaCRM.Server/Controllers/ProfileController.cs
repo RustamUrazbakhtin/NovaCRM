@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -23,6 +24,27 @@ namespace NovaCRM.Server.Controllers;
 public class ProfileController : ControllerBase
 {
     private static readonly string[] AllowedAvatarExtensions = new[] { ".jpg", ".jpeg", ".png" };
+    private static readonly string[] BeautyRoleNames = new[]
+    {
+        "Lash Master",
+        "Brow Master",
+        "Lash & Brow Artist",
+        "Nail Master",
+        "Hair Stylist",
+        "Colorist",
+        "Barber",
+        "Makeup Artist",
+        "PMU Master",
+        "Esthetician",
+        "Facial Specialist",
+        "Massage Therapist",
+        "SPA Master",
+        "Assistant",
+        "Trainee"
+    };
+
+    private static readonly HashSet<string> BeautyRoleNamesSet =
+        new(BeautyRoleNames, StringComparer.OrdinalIgnoreCase);
     private const long MaxAvatarSizeBytes = 2 * 1024 * 1024; // 2 MB
 
     private readonly ApplicationDbContext _dbContext;
@@ -45,13 +67,35 @@ public class ProfileController : ControllerBase
     [HttpGet("me")]
     public async Task<ActionResult<UserProfileDto>> GetCurrentAsync(CancellationToken cancellationToken)
     {
-        var (user, staff) = await FindCurrentUserAsync(cancellationToken);
-        if (user is null || staff is null)
+        try
         {
-            return NotFound();
-        }
+            var (user, staff) = await FindCurrentUserAsync(cancellationToken);
+            if (user is null || staff is null)
+            {
+                return NotFound();
+            }
 
-        return Ok(ToDto(staff, user));
+            var (roleId, roleName) = await GetPrimaryRoleAsync(user.Id, cancellationToken);
+
+            return Ok(ToDto(staff, user, roleId, roleName));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load profile for the current user {UserId}", _userManager.GetUserId(User));
+            return Problem("Unable to load profile. Please try again later.", statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    [HttpGet("roles")]
+    public async Task<ActionResult<IEnumerable<ProfileRoleOptionDto>>> GetRolesAsync(CancellationToken cancellationToken)
+    {
+        var roles = await _dbContext.Roles
+            .Where(role => BeautyRoleNamesSet.Contains(role.Name))
+            .OrderBy(role => role.Name)
+            .Select(role => new ProfileRoleOptionDto(role.Id, role.Name))
+            .ToListAsync(cancellationToken);
+
+        return Ok(roles);
     }
 
     [HttpPut("me")]
@@ -70,7 +114,22 @@ public class ProfileController : ControllerBase
             return NotFound();
         }
 
-        UpdateStaff(staff, request);
+        IdentityRole? selectedRole = null;
+        var requestedRoleId = request.RoleId?.Trim();
+        if (!string.IsNullOrWhiteSpace(requestedRoleId))
+        {
+            selectedRole = await _dbContext.Roles.FirstOrDefaultAsync(
+                role => role.Id == requestedRoleId,
+                cancellationToken);
+
+            if (selectedRole is null || !BeautyRoleNamesSet.Contains(selectedRole.Name))
+            {
+                ModelState.AddModelError(nameof(request.RoleId), "Selected role is not available.");
+                return ValidationProblem(ModelState);
+            }
+        }
+
+        UpdateStaff(staff, request, selectedRole?.Name);
         staff.UpdatedAt = DateTime.UtcNow;
 
         var email = request.Email.Trim();
@@ -95,6 +154,44 @@ public class ProfileController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
+        var existingRoles = await _userManager.GetRolesAsync(user);
+
+        var rolesToRemove = selectedRole is null
+            ? existingRoles.Where(name => BeautyRoleNamesSet.Contains(name)).ToArray()
+            : existingRoles
+                .Where(name => BeautyRoleNamesSet.Contains(name)
+                    && !string.Equals(name, selectedRole.Name, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+        if (rolesToRemove.Length > 0)
+        {
+            var removeResult = await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
+            if (!removeResult.Succeeded)
+            {
+                foreach (var error in removeResult.Errors)
+                {
+                    ModelState.AddModelError(error.Code, error.Description);
+                }
+
+                return ValidationProblem(ModelState);
+            }
+        }
+
+        if (selectedRole is not null
+            && !existingRoles.Any(name => string.Equals(name, selectedRole.Name, StringComparison.OrdinalIgnoreCase)))
+        {
+            var addResult = await _userManager.AddToRoleAsync(user, selectedRole.Name);
+            if (!addResult.Succeeded)
+            {
+                foreach (var error in addResult.Errors)
+                {
+                    ModelState.AddModelError(error.Code, error.Description);
+                }
+
+                return ValidationProblem(ModelState);
+            }
+        }
+
         try
         {
             await _dbContext.SaveChangesAsync(cancellationToken);
@@ -105,7 +202,9 @@ public class ProfileController : ControllerBase
             return Problem("Failed to save profile changes. Please try again.", statusCode: StatusCodes.Status500InternalServerError);
         }
 
-        return Ok(ToDto(staff, user));
+        var (roleId, roleName) = await GetPrimaryRoleAsync(user.Id, cancellationToken);
+
+        return Ok(ToDto(staff, user, roleId, roleName));
     }
 
     [HttpPost("me/avatar")]
@@ -161,7 +260,9 @@ public class ProfileController : ControllerBase
             return Problem("Failed to save profile changes. Please try again.", statusCode: StatusCodes.Status500InternalServerError);
         }
 
-        return Ok(ToDto(staff, user));
+        var (roleId, roleName) = await GetPrimaryRoleAsync(user.Id, cancellationToken);
+
+        return Ok(ToDto(staff, user, roleId, roleName));
     }
 
     [HttpDelete("me/avatar")]
@@ -187,7 +288,9 @@ public class ProfileController : ControllerBase
             return Problem("Failed to save profile changes. Please try again.", statusCode: StatusCodes.Status500InternalServerError);
         }
 
-        return Ok(ToDto(staff, user));
+        var (roleId, roleName) = await GetPrimaryRoleAsync(user.Id, cancellationToken);
+
+        return Ok(ToDto(staff, user, roleId, roleName));
     }
 
     private async Task<(ApplicationUser? User, Staff? Staff)> FindCurrentUserAsync(CancellationToken cancellationToken)
@@ -204,7 +307,9 @@ public class ProfileController : ControllerBase
             return (null, null);
         }
 
-        var staff = await _dbContext.StaffMembers.FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
+        var staff = await _dbContext.StaffMembers
+            .Include(s => s.Organization)
+            .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
         if (staff is null)
         {
             return (user, null);
@@ -213,12 +318,33 @@ public class ProfileController : ControllerBase
         return (user, staff);
     }
 
-    private static void UpdateStaff(Staff staff, UpdateUserProfileRequest request)
+    private async Task<(string? RoleId, string? RoleName)> GetPrimaryRoleAsync(string userId, CancellationToken cancellationToken)
+    {
+        var userRoles = await _dbContext.UserRoles
+            .Where(ur => ur.UserId == userId)
+            .Join(
+                _dbContext.Roles,
+                userRole => userRole.RoleId,
+                role => role.Id,
+                (userRole, role) => new { userRole.RoleId, role.Name })
+            .ToListAsync(cancellationToken);
+
+        if (userRoles.Count == 0)
+        {
+            return (null, null);
+        }
+
+        var beautyRole = userRoles.FirstOrDefault(role => BeautyRoleNamesSet.Contains(role.Name));
+        var primaryRole = beautyRole ?? userRoles.First();
+
+        return (primaryRole.RoleId, primaryRole.Name);
+    }
+
+    private static void UpdateStaff(Staff staff, UpdateUserProfileRequest request, string? resolvedRoleName)
     {
         staff.FirstName = request.FirstName.Trim();
         staff.LastName = request.LastName.Trim();
-        staff.RoleTitle = string.IsNullOrWhiteSpace(request.Role) ? null : request.Role.Trim();
-        staff.Company = string.IsNullOrWhiteSpace(request.Company) ? null : request.Company.Trim();
+        staff.RoleTitle = resolvedRoleName;
         staff.Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
         staff.Timezone = string.IsNullOrWhiteSpace(request.Timezone) ? null : request.Timezone.Trim();
         staff.Locale = string.IsNullOrWhiteSpace(request.Locale) ? null : request.Locale.Trim();
@@ -226,20 +352,28 @@ public class ProfileController : ControllerBase
         staff.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
     }
 
-    private UserProfileDto ToDto(Staff staff, ApplicationUser user)
+    private UserProfileDto ToDto(Staff staff, ApplicationUser user, string? roleId, string? roleName)
     {
         var updatedAt = staff.UpdatedAt == default
             ? DateTime.UtcNow
             : DateTime.SpecifyKind(staff.UpdatedAt, DateTimeKind.Utc);
 
+        var organization = staff.Organization;
+        var companyId = staff.OrganizationId != Guid.Empty
+            ? staff.OrganizationId.ToString()
+            : organization?.Id.ToString();
+        var companyName = organization?.Name ?? staff.Company;
+
         return new UserProfileDto(
-            staff.Id,
+            staff.Id.ToString(),
             staff.FirstName,
             staff.LastName,
             user.Email ?? string.Empty,
             staff.Phone,
-            staff.RoleTitle,
-            staff.Company,
+            roleId,
+            roleName ?? staff.RoleTitle,
+            companyId,
+            companyName,
             staff.Timezone,
             staff.Locale,
             staff.Address,

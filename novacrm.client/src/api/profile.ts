@@ -7,8 +7,10 @@ export interface UserProfile {
     lastName: string;
     email: string;
     phone?: string;
-    role?: string;
-    company?: string;
+    roleId?: string;
+    roleName?: string;
+    companyId?: string;
+    companyName?: string;
     timezone?: string;
     locale?: string;
     address?: string;
@@ -22,13 +24,17 @@ export type UpdateProfilePayload = {
     lastName: string;
     email: string;
     phone?: string | null;
-    role?: string | null;
-    company?: string | null;
+    roleId?: string | null;
     timezone?: string | null;
     locale?: string | null;
     address?: string | null;
     notes?: string | null;
 };
+
+export interface ProfileRole {
+    id: string;
+    name: string;
+}
 
 export async function getProfile(signal?: AbortSignal): Promise<UserProfile> {
     const { data } = await api.get<UserProfile>("/profile/me", { signal });
@@ -37,6 +43,11 @@ export async function getProfile(signal?: AbortSignal): Promise<UserProfile> {
 
 export async function updateProfile(payload: UpdateProfilePayload): Promise<UserProfile> {
     const { data } = await api.put<UserProfile>("/profile/me", payload);
+    return data;
+}
+
+export async function getProfileRoles(signal?: AbortSignal): Promise<ProfileRole[]> {
+    const { data } = await api.get<ProfileRole[]>("/profile/roles", { signal });
     return data;
 }
 

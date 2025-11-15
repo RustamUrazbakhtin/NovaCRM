@@ -9,8 +9,10 @@ public record UserProfileDto(
     string LastName,
     string Email,
     string? Phone,
-    string? Role,
-    string? Company,
+    Guid? RoleId,
+    string? RoleName,
+    Guid? CompanyId,
+    string? CompanyName,
     string? Timezone,
     string? Locale,
     string? Address,
@@ -38,11 +40,8 @@ public class UpdateUserProfileRequest
     [StringLength(64)]
     public string? Phone { get; set; }
 
-    [StringLength(128)]
-    public string? Role { get; set; }
-
-    [StringLength(256)]
-    public string? Company { get; set; }
+    [StringLength(64)]
+    public Guid? RoleId { get; set; }
 
     [StringLength(64)]
     public string? Timezone { get; set; }
@@ -56,3 +55,5 @@ public class UpdateUserProfileRequest
     [StringLength(1024)]
     public string? Notes { get; set; }
 }
+
+public record ProfileRoleOptionDto(string Id, string Name);

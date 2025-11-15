@@ -6,11 +6,34 @@
 }
 
 .profile-page {
-    min-height: calc(100vh - var(--header-h));
-    padding: 48px 16px 72px;
+    flex: 1;
+    padding: 0;
     display: flex;
     justify-content: center;
+    align-items: flex-start;
     background: transparent;
+}
+
+.profile-shell {
+    min-height: 100vh;
+    padding-top: calc(var(--header-h, 64px) + 24px);
+    padding-bottom: 32px;
+    padding-left: clamp(16px, 6vw, 56px);
+    padding-right: clamp(16px, 6vw, 56px);
+    background:
+        radial-gradient(circle at top left, rgba(157, 168, 255, 0.18), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(255, 168, 214, 0.18), transparent 55%),
+        var(--page-bg, linear-gradient(180deg, #f9faff 0%, #eef2ff 50%, #e6ebff 100%));
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.dark .profile-shell {
+    background:
+        radial-gradient(circle at top left, rgba(84, 96, 196, 0.28), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(196, 104, 160, 0.28), transparent 55%),
+        var(--page-bg-dark, linear-gradient(180deg, #151722 0%, #0e1019 60%, #080a12 100%));
 }
 
 .profile-sheet {
@@ -240,33 +263,25 @@
     font-weight: 500;
 }
 
+.profile-helper {
+    font-size: 13px;
+    color: var(--muted, rgba(11, 18, 32, 0.55));
+    margin: 0;
+}
+
 .profile-actions {
-    position: sticky;
-    bottom: 0;
-    padding: 20px clamp(20px, 4vw, 48px) 28px;
-    background: inherit;
-    border-top: 1px solid color-mix(in oklab, var(--ink, #0b1220) 12%, transparent);
     display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
+    justify-content: flex-end;
     align-items: center;
-    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 24px 24px;
+    border-top: 1px solid color-mix(in oklab, #000 4%, transparent);
+    background: inherit;
+    flex-wrap: wrap;
 }
 
 .dark .profile-actions {
-    border-top-color: color-mix(in oklab, var(--on-surface, #eef1ff) 20%, transparent);
-}
-
-.profile-actions::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 28px;
-    pointer-events: none;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.08), transparent 70%);
-    opacity: 0.2;
+    border-top-color: color-mix(in oklab, var(--on-surface, #eef1ff) 16%, transparent);
 }
 
 .profile-buttons {
@@ -329,6 +344,7 @@
     flex-direction: column;
     gap: 6px;
     min-height: 24px;
+    margin-right: auto;
 }
 
 .profile-message {
