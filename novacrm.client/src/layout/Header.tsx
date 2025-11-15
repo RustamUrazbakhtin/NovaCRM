@@ -37,6 +37,17 @@ export default function Header({
     const launcherItems: AppLauncherItemConfig[] = useMemo(
         () => [
             {
+                id: "profile",
+                label: "Profile",
+                icon: icon(
+                    <>
+                        <circle cx="12" cy="8" r="3.5" />
+                        <path d="M6.5 19.5c.8-3.4 3.3-5.5 5.5-5.5s4.7 2.1 5.5 5.5" />
+                    </>
+                ),
+                href: "/profile",
+            },
+            {
                 id: "calendar",
                 label: "Calendar",
                 icon: icon(
@@ -180,6 +191,7 @@ export default function Header({
 
     const accountActions = useMemo(
         () => [
+            { label: "My profile", to: "/profile" },
             { label: "Company profile", to: "/settings/company" },
             { label: "Subscription & billing", to: "/settings/billing" },
         ],
@@ -234,7 +246,7 @@ export default function Header({
                     aria-controls={open ? "nx-user-menu" : undefined}
                 >
                     <img src="/user.svg" alt="user avatar" />
-                    <span className="nx-user-name">User</span>
+                    <span className="nx-user-name">{userName || "User"}</span>
                 </button>
 
                 {open && (
@@ -244,7 +256,7 @@ export default function Header({
                                 type="button"
                                 className="nx-account-card"
                                 role="menuitem"
-                                onClick={() => handleNavigate("/settings/profile")}
+                                onClick={() => handleNavigate("/profile")}
                             >
                                 <span className="nx-account-avatar" aria-hidden="true">
                                     {userInitials}
