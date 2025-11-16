@@ -24,42 +24,24 @@ namespace NovaCRM.Server.Controllers;
 public class ProfileController : ControllerBase
 {
     private static readonly string[] AllowedAvatarExtensions = new[] { ".jpg", ".jpeg", ".png" };
-    private static readonly string[] BeautyRoleNames = new[]
-    {
-        "Lash Master",
-        "Brow Master",
-        "Lash & Brow Artist",
-        "Nail Master",
-        "Hair Stylist",
-        "Colorist",
-        "Barber",
-        "Makeup Artist",
-        "PMU Master",
-        "Esthetician",
-        "Facial Specialist",
-        "Massage Therapist",
-        "SPA Master",
-        "Assistant",
-        "Trainee"
-    };
-
-    private static readonly HashSet<string> BeautyRoleNamesSet =
-        new(BeautyRoleNames, StringComparer.OrdinalIgnoreCase);
     private const long MaxAvatarSizeBytes = 2 * 1024 * 1024; // 2 MB
 
     private readonly ApplicationDbContext _dbContext;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<ProfileController> _logger;
 
     public ProfileController(
         ApplicationDbContext dbContext,
         UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager,
         IWebHostEnvironment environment,
         ILogger<ProfileController> logger)
     {
         _dbContext = dbContext;
         _userManager = userManager;
+        _roleManager = roleManager;
         _environment = environment;
         _logger = logger;
     }
@@ -76,8 +58,9 @@ public class ProfileController : ControllerBase
             }
 
             var (roleId, roleName) = await GetPrimaryRoleAsync(user.Id, cancellationToken);
+            var dto = await ToDtoAsync(staff, user, roleId, roleName, cancellationToken);
 
-            return Ok(ToDto(staff, user, roleId, roleName));
+            return Ok(dto);
         }
         catch (Exception ex)
         {
@@ -89,10 +72,9 @@ public class ProfileController : ControllerBase
     [HttpGet("roles")]
     public async Task<ActionResult<IEnumerable<ProfileRoleOptionDto>>> GetRolesAsync(CancellationToken cancellationToken)
     {
-        var roles = await _dbContext.Roles
-            .Where(role => BeautyRoleNamesSet.Contains(role.Name))
+        var roles = await _roleManager.Roles
             .OrderBy(role => role.Name)
-            .Select(role => new ProfileRoleOptionDto(role.Id, role.Name))
+            .Select(role => new ProfileRoleOptionDto(role.Id, role.Name ?? string.Empty))
             .ToListAsync(cancellationToken);
 
         return Ok(roles);
@@ -122,7 +104,7 @@ public class ProfileController : ControllerBase
                 role => role.Id == requestedRoleId,
                 cancellationToken);
 
-            if (selectedRole is null || !BeautyRoleNamesSet.Contains(selectedRole.Name))
+            if (selectedRole is null || string.IsNullOrWhiteSpace(selectedRole.Name))
             {
                 ModelState.AddModelError(nameof(request.RoleId), "Selected role is not available.");
                 return ValidationProblem(ModelState);
@@ -157,10 +139,9 @@ public class ProfileController : ControllerBase
         var existingRoles = await _userManager.GetRolesAsync(user);
 
         var rolesToRemove = selectedRole is null
-            ? existingRoles.Where(name => BeautyRoleNamesSet.Contains(name)).ToArray()
+            ? existingRoles.ToArray()
             : existingRoles
-                .Where(name => BeautyRoleNamesSet.Contains(name)
-                    && !string.Equals(name, selectedRole.Name, StringComparison.OrdinalIgnoreCase))
+                .Where(name => !string.Equals(name, selectedRole.Name, StringComparison.OrdinalIgnoreCase))
                 .ToArray();
 
         if (rolesToRemove.Length > 0)
@@ -192,6 +173,21 @@ public class ProfileController : ControllerBase
             }
         }
 
+        var phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
+        if (!string.Equals(user.PhoneNumber, phone, StringComparison.Ordinal))
+        {
+            var phoneResult = await _userManager.SetPhoneNumberAsync(user, phone);
+            if (!phoneResult.Succeeded)
+            {
+                foreach (var error in phoneResult.Errors)
+                {
+                    ModelState.AddModelError(error.Code, error.Description);
+                }
+
+                return ValidationProblem(ModelState);
+            }
+        }
+
         try
         {
             await _dbContext.SaveChangesAsync(cancellationToken);
@@ -203,8 +199,9 @@ public class ProfileController : ControllerBase
         }
 
         var (roleId, roleName) = await GetPrimaryRoleAsync(user.Id, cancellationToken);
+        var dto = await ToDtoAsync(staff, user, roleId, roleName, cancellationToken);
 
-        return Ok(ToDto(staff, user, roleId, roleName));
+        return Ok(dto);
     }
 
     [HttpPost("me/avatar")]
@@ -263,8 +260,9 @@ public class ProfileController : ControllerBase
         }
 
         var (roleId, roleName) = await GetPrimaryRoleAsync(user.Id, cancellationToken);
+        var dto = await ToDtoAsync(staff, user, roleId, roleName, cancellationToken);
 
-        return Ok(ToDto(staff, user, roleId, roleName));
+        return Ok(dto);
     }
 
     [HttpDelete("me/avatar")]
@@ -291,8 +289,9 @@ public class ProfileController : ControllerBase
         }
 
         var (roleId, roleName) = await GetPrimaryRoleAsync(user.Id, cancellationToken);
+        var dto = await ToDtoAsync(staff, user, roleId, roleName, cancellationToken);
 
-        return Ok(ToDto(staff, user, roleId, roleName));
+        return Ok(dto);
     }
 
     private async Task<(ApplicationUser? User, Staff? Staff)> FindCurrentUserAsync(CancellationToken cancellationToken)
@@ -336,8 +335,7 @@ public class ProfileController : ControllerBase
             return (null, null);
         }
 
-        var beautyRole = userRoles.FirstOrDefault(role => BeautyRoleNamesSet.Contains(role.Name));
-        var primaryRole = beautyRole ?? userRoles.First();
+        var primaryRole = userRoles.First();
 
         return (primaryRole.RoleId, primaryRole.Name);
     }
@@ -354,35 +352,59 @@ public class ProfileController : ControllerBase
         staff.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
     }
 
-    private UserProfileDto ToDto(Staff staff, ApplicationUser user, string? roleId, string? roleName)
+    private async Task<UserProfileDto> ToDtoAsync(
+        Staff staff,
+        ApplicationUser user,
+        string? roleId,
+        string? roleName,
+        CancellationToken cancellationToken)
     {
+        var organization = staff.Organization;
+        if (organization is null && staff.OrganizationId != Guid.Empty)
+        {
+            organization = await _dbContext.Organizations
+                .FirstOrDefaultAsync(o => o.Id == staff.OrganizationId, cancellationToken);
+        }
+
         var updatedAt = staff.UpdatedAt == default
             ? DateTime.UtcNow
             : DateTime.SpecifyKind(staff.UpdatedAt, DateTimeKind.Utc);
 
-        var organization = staff.Organization;
-        var companyId = staff.OrganizationId != Guid.Empty
+        var companyIdValue = NormalizeString(staff.OrganizationId != Guid.Empty
             ? staff.OrganizationId.ToString()
-            : organization?.Id.ToString();
-        var companyName = organization?.Name ?? staff.Company;
+            : organization?.Id.ToString());
+        var companyName = NormalizeString(organization?.Name ?? staff.Company);
+        var resolvedRoleName = NormalizeString(roleName ?? staff.RoleTitle);
+        var resolvedRoleId = NormalizeString(roleId);
+        var phone = NormalizeString(staff.Phone ?? user.PhoneNumber);
+        var timezone = NormalizeString(staff.Timezone);
+        var locale = NormalizeString(staff.Locale);
+        var address = NormalizeString(staff.Address);
+        var notes = NormalizeString(staff.Notes);
+        var avatarUrl = NormalizeString(staff.AvatarUrl);
 
         return new UserProfileDto(
             staff.Id.ToString(),
-            staff.FirstName,
-            staff.LastName,
-            user.Email ?? string.Empty,
-            staff.Phone,
-            roleId,
-            roleName ?? staff.RoleTitle,
-            companyId,
+            NormalizeString(staff.FirstName),
+            NormalizeString(staff.LastName),
+            NormalizeString(user.Email),
+            phone,
+            resolvedRoleId,
+            resolvedRoleName,
+            companyIdValue,
             companyName,
-            staff.Timezone,
-            staff.Locale,
-            staff.Address,
-            staff.Notes,
-            staff.AvatarUrl,
+            timezone,
+            locale,
+            address,
+            notes,
+            avatarUrl,
             updatedAt.ToString("O", CultureInfo.InvariantCulture)
         );
+    }
+
+    private static string NormalizeString(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
     }
 
     private string EnsureAvatarUploadFolder()

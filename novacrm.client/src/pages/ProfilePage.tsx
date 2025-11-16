@@ -88,7 +88,7 @@ export default function ProfilePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [avatarUploading, setAvatarUploading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | false | null>(null);
     const [toast, setToast] = useState<string | null>(null);
     const [avatarError, setAvatarError] = useState<string | null>(null);
     const [apiFieldErrors, setApiFieldErrors] = useState<FieldErrors>({});
@@ -114,7 +114,7 @@ export default function ProfilePage() {
                 if (axios.isCancel(err)) return;
                 setProfile(null);
                 setEditedProfile(null);
-                setError("Unable to load profile. Please try again later.");
+                setError(false);
             })
             .finally(() => setIsLoading(false));
 
@@ -728,13 +728,15 @@ export default function ProfilePage() {
 
                         <div className="profile-actions">
                             <div className="profile-status" aria-live="polite">
-                                {error && <div className="profile-message">{error}</div>}
-                                {!error && toast && (
+                                {typeof error === "string" && error && (
+                                    <div className="profile-message">{error}</div>
+                                )}
+                                {(!error || typeof error !== "string") && toast && (
                                     <div className="profile-toast" role="status">
                                         {toast}
                                     </div>
                                 )}
-                                {isDirty && !error && !toast && (
+                                {isDirty && (typeof error !== "string" || !error) && !toast && (
                                     <span className="profile-unsaved">Unsaved changes</span>
                                 )}
                             </div>
