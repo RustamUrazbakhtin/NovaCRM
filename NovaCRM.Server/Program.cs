@@ -51,12 +51,14 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 
+var frontendOrigin = builder.Configuration["FrontendOrigin"] ?? "https://localhost:58876";
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173")
+            .WithOrigins(frontendOrigin, "http://localhost:5173")
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials();
