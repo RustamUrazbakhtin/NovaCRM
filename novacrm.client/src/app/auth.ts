@@ -1,21 +1,46 @@
 import axios from "axios";
 
+const baseURL = import.meta.env.VITE_API_URL ?? "/api";
+
 export const api = axios.create({
-    baseURL: "/api",
-    headers: { "Content-Type": "application/json" }
+    baseURL,
+    headers: { "Content-Type": "application/json" },
+    withCredentials: true,
 });
+
+const TOKEN_KEY = "token";
+
+api.interceptors.request.use(config => {
+    const token = localStorage.getItem(TOKEN_KEY);
+
+    if (token) {
+        config.headers = config.headers ?? {};
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+});
+
+api.interceptors.response.use(
+    response => response,
+    error => {
+        if (error.response?.status === 401) {
+            setToken(undefined);
+        }
+
+        return Promise.reject(error);
+    }
+);
 
 export function setToken(token?: string) {
     if (token) {
-        localStorage.setItem("token", token);
-        api.defaults.headers.common.Authorization = `Bearer ${token}`;
+        localStorage.setItem(TOKEN_KEY, token);
     } else {
-        localStorage.removeItem("token");
-        delete api.defaults.headers.common.Authorization;
+        localStorage.removeItem(TOKEN_KEY);
     }
 }
 
-const saved = localStorage.getItem("token");
+const saved = localStorage.getItem(TOKEN_KEY);
 if (saved) setToken(saved);
 
 export interface RegistrationPayload {
