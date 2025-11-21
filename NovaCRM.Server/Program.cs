@@ -51,6 +51,18 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
 // --- Middleware ---
@@ -64,6 +76,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("Frontend");
 
 // --- Auth ---
 app.UseAuthentication();
