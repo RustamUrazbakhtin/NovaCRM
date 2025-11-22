@@ -1,13 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
-#nullable disable
-
-namespace NovaCRM.Server.Migrations
+namespace NovaCRM.Data.Migrations
 {
-    /// <inheritdoc />
-    public partial class NovaCrmCore : Migration
+    public partial class AddNovaCrmCore : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
@@ -2044,7 +2041,6 @@ namespace NovaCRM.Server.Migrations
                 column: "OrganizationId");
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(

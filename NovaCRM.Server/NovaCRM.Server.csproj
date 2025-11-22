@@ -24,6 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NovaCRM.Domain\NovaCRM.Domain.csproj" />
+    <ProjectReference Include="..\NovaCRM.Data\NovaCRM.Data.csproj" />
     <ProjectReference Include="..\novacrm.client\novacrm.client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>

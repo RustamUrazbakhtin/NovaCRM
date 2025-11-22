@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-using NovaCRM.Server.Auth;
+using NovaCRM.Data;
+using NovaCRM.Data.Auth;
 using NovaCRM.Server.Services;
-using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 var builder = WebApplication.CreateBuilder(args);
 

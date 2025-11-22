@@ -4,12 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using NovaCRM.Server.Auth;
+using NovaCRM.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NovaCRM.Server.Migrations
+namespace NovaCRM.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20250919192753_InitAuth")]
@@ -157,7 +157,7 @@ namespace NovaCRM.Server.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("NovaCRM.Server.Auth.ApplicationUser", b =>
+            modelBuilder.Entity("NovaCRM.Data.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -232,7 +232,7 @@ namespace NovaCRM.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("NovaCRM.Server.Auth.ApplicationUser", null)
+                    b.HasOne("NovaCRM.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -241,7 +241,7 @@ namespace NovaCRM.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("NovaCRM.Server.Auth.ApplicationUser", null)
+                    b.HasOne("NovaCRM.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -256,7 +256,7 @@ namespace NovaCRM.Server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NovaCRM.Server.Auth.ApplicationUser", null)
+                    b.HasOne("NovaCRM.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -265,7 +265,7 @@ namespace NovaCRM.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("NovaCRM.Server.Auth.ApplicationUser", null)
+                    b.HasOne("NovaCRM.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)

@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using NovaCRM.Server.Domain;
+using NovaCRM.Data.Auth;
+using NovaCRM.Domain;
 
-namespace NovaCRM.Server.Auth;
+namespace NovaCRM.Data;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {

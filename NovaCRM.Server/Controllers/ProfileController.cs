@@ -12,9 +12,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using NovaCRM.Server.Auth;
+using NovaCRM.Data;
+using NovaCRM.Data.Auth;
 using NovaCRM.Server.Contracts;
-using NovaCRM.Server.Domain;
+using NovaCRM.Domain;
 
 namespace NovaCRM.Server.Controllers;
 

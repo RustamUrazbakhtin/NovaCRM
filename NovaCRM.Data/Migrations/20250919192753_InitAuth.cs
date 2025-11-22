@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NovaCRM.Server.Migrations
+namespace NovaCRM.Data.Migrations
 {
     /// <inheritdoc />
     public partial class InitAuth : Migration
