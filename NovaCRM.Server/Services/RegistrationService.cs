@@ -8,20 +8,20 @@ using Microsoft.EntityFrameworkCore;
 using NovaCRM.Server.Contracts;
 using NovaCRM.Data;
 using NovaCRM.Data.Auth;
-using NovaCRM.Domain;
+using NovaCRM.Data.Model;
 
 namespace NovaCRM.Server.Services;
 
 public class RegistrationService : IRegistrationService
 {
     private readonly ApplicationDbContext _dbContext;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly UserManager<AspNetUser> _userManager;
+    private readonly RoleManager<AspNetRole> _roleManager;
 
     public RegistrationService(
         ApplicationDbContext dbContext,
-        UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole> roleManager)
+        UserManager<AspNetUser> userManager,
+        RoleManager<AspNetRole> roleManager)
     {
         _dbContext = dbContext;
         _userManager = userManager;
@@ -55,12 +55,10 @@ public class RegistrationService : IRegistrationService
             {
                 Id = Guid.NewGuid(),
                 Name = companyName,
-                Country = country,
                 Timezone = timezone,
                 Currency = "USD",
                 Phone = companyPhone,
                 Email = ownerEmail,
-                BusinessId = businessId,
                 PlanType = "free",
                 SubscriptionStatus = "active"
             };
@@ -84,7 +82,7 @@ public class RegistrationService : IRegistrationService
 
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            var user = new ApplicationUser
+            var user = new AspNetUser
             {
                 UserName = ownerEmail,
                 Email = ownerEmail
@@ -103,18 +101,14 @@ public class RegistrationService : IRegistrationService
                 OrganizationId = organization.Id,
                 BranchId = branch.Id,
                 UserId = user.Id,
-                FirstName = "Owner",
-                LastName = companyName,
+                FirstName = user.UserName,
                 RoleTitle = "Owner",
                 IsActive = true,
                 Phone = companyPhone,
-                Company = companyName,
-                Timezone = timezone,
-                Locale = "en-US",
                 UpdatedAt = DateTime.UtcNow
             };
 
-            await _dbContext.StaffMembers.AddAsync(staff, cancellationToken);
+            await _dbContext.Staff.AddAsync(staff, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
 
             var ownerRoles = new[] { "Owner", "Admin" };

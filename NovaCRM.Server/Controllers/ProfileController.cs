@@ -14,8 +14,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NovaCRM.Data;
 using NovaCRM.Data.Auth;
+using NovaCRM.Data.Model;
 using NovaCRM.Server.Contracts;
-using NovaCRM.Domain;
 
 namespace NovaCRM.Server.Controllers;
 
@@ -28,15 +28,15 @@ public class ProfileController : ControllerBase
     private const long MaxAvatarSizeBytes = 2 * 1024 * 1024; // 2 MB
 
     private readonly ApplicationDbContext _dbContext;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly UserManager<AspNetUser> _userManager;
+    private readonly RoleManager<AspNetRole> _roleManager;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<ProfileController> _logger;
 
     public ProfileController(
         ApplicationDbContext dbContext,
-        UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole> roleManager,
+        UserManager<AspNetUser> userManager,
+        RoleManager<AspNetRole> roleManager,
         IWebHostEnvironment environment,
         ILogger<ProfileController> logger)
     {
@@ -97,11 +97,11 @@ public class ProfileController : ControllerBase
             return NotFound();
         }
 
-        IdentityRole? selectedRole = null;
+        AspNetRole? selectedRole = null;
         var requestedRoleId = request.RoleId?.Trim();
         if (!string.IsNullOrWhiteSpace(requestedRoleId))
         {
-            selectedRole = await _dbContext.Roles.FirstOrDefaultAsync(
+            selectedRole = await _dbContext.AspNetRoles.FirstOrDefaultAsync(
                 role => role.Id == requestedRoleId,
                 cancellationToken);
 
@@ -295,7 +295,7 @@ public class ProfileController : ControllerBase
         return Ok(dto);
     }
 
-    private async Task<(ApplicationUser? User, Staff? Staff)> FindCurrentUserAsync(CancellationToken cancellationToken)
+    private async Task<(AspNetUser? User, Staff? Staff)> FindCurrentUserAsync(CancellationToken cancellationToken)
     {
         var userId = _userManager.GetUserId(User);
         if (string.IsNullOrWhiteSpace(userId))
@@ -309,7 +309,7 @@ public class ProfileController : ControllerBase
             return (null, null);
         }
 
-        var staff = await _dbContext.StaffMembers
+        var staff = await _dbContext.Staff
             .Include(s => s.Organization)
             .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
         if (staff is null)
@@ -320,15 +320,15 @@ public class ProfileController : ControllerBase
         return (user, staff);
     }
 
-    private async Task<(string? RoleId, string? RoleName)> GetPrimaryRoleAsync(string userId, CancellationToken cancellationToken)
+    private async Task<(string? RoleId, string? RoleName)> GetPrimaryRoleAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var userRoles = await _dbContext.UserRoles
+        var userRoles = await _dbContext.AspNetUserRoles
             .Where(ur => ur.UserId == userId)
             .Join(
-                _dbContext.Roles,
+                _dbContext.AspNetRoles,
                 userRole => userRole.RoleId,
                 role => role.Id,
-                (userRole, role) => new { userRole.RoleId, role.Name })
+                (userRole, role) => new { userRole.RoleId, role.Name });
             .ToListAsync(cancellationToken);
 
         if (userRoles.Count == 0)
@@ -347,15 +347,15 @@ public class ProfileController : ControllerBase
         staff.LastName = request.LastName.Trim();
         staff.RoleTitle = resolvedRoleName;
         staff.Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
-        staff.Timezone = string.IsNullOrWhiteSpace(request.Timezone) ? null : request.Timezone.Trim();
-        staff.Locale = string.IsNullOrWhiteSpace(request.Locale) ? null : request.Locale.Trim();
-        staff.Address = string.IsNullOrWhiteSpace(request.Address) ? null : request.Address.Trim();
-        staff.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
+        //staff.Timezone = string.IsNullOrWhiteSpace(request.Timezone) ? null : request.Timezone.Trim();
+        //staff.Locale = string.IsNullOrWhiteSpace(request.Locale) ? null : request.Locale.Trim();
+        //staff.Address = string.IsNullOrWhiteSpace(request.Address) ? null : request.Address.Trim();
+        //staff.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
     }
 
     private async Task<UserProfileDto> ToDtoAsync(
         Staff staff,
-        ApplicationUser user,
+        AspNetUser user,
         string? roleId,
         string? roleName,
         CancellationToken cancellationToken)
