@@ -5,9 +5,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using NovaCRM.Server.Auth;
 using NovaCRM.Server.Contracts;
-using NovaCRM.Server.Domain;
+using NovaCRM.Data;
+using NovaCRM.Data.Auth;
+using NovaCRM.Domain;
 
 namespace NovaCRM.Server.Services;
 

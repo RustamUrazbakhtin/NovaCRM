@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace NovaCRM.Server.Migrations
+namespace NovaCRM.Data.Migrations
 {
     /// <inheritdoc />
     public partial class AddOrganizationBusinessId : Migration

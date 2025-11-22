@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using NovaCRM.Server.Auth;
+using NovaCRM.Data.Auth;
 using NovaCRM.Server.Contracts;
 using NovaCRM.Server.Services;
 

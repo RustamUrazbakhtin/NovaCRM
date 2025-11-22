@@ -1,6 +1,6 @@
 using System;
 
-namespace NovaCRM.Server.Domain;
+namespace NovaCRM.Domain;
 
 public class Staff
 {
