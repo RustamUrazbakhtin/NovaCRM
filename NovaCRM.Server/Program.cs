@@ -27,20 +27,27 @@ builder.Services
 
 // --- JWT ---
 var jwt = builder.Configuration.GetSection("Jwt");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
+        options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidIssuer = jwt["Issuer"],
-            ValidAudience = jwt["Audience"],
+            ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwt["Key"]!)
             ),
             ValidateIssuer = true,
+            ValidIssuer = jwt["Issuer"],
             ValidateAudience = true,
+            ValidAudience = jwt["Audience"],
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = true
+            ClockSkew = TimeSpan.Zero
         };
     });
 
