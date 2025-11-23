@@ -46,6 +46,9 @@ const signInSchema = z.object({
 
 const signUpSchema = z
     .object({
+        ownerFirstName: z.string().trim().min(1, "Required"),
+        ownerLastName: z.string().trim().min(1, "Required"),
+        ownerBirthday: z.string().trim().optional(),
         ownerEmail: z.string().trim().email("Enter a valid email"),
         ownerPassword: z.string().min(6, "Min 6 characters"),
         ownerPasswordRepeat: z.string().min(6, "Min 6 characters"),
@@ -72,6 +75,9 @@ const plans: Array<{ value: PlanType; title: string; price: string; description:
 ];
 
 const defaultSignUpValues: SignUpForm = {
+    ownerFirstName: "",
+    ownerLastName: "",
+    ownerBirthday: "",
     ownerEmail: "",
     ownerPassword: "",
     ownerPasswordRepeat: "",
@@ -108,6 +114,11 @@ export default function AuthPage() {
                 country: data.country,
                 timezone: data.timezone,
                 companyPhone,
+                ownerFirstName: data.ownerFirstName.trim(),
+                ownerLastName: data.ownerLastName.trim(),
+                ownerBirthday: data.ownerBirthday
+                    ? new Date(data.ownerBirthday).toISOString()
+                    : null,
                 ownerEmail: data.ownerEmail.trim(),
                 ownerPassword: data.ownerPassword,
                 ownerPasswordRepeat: data.ownerPasswordRepeat,
@@ -228,6 +239,22 @@ export default function AuthPage() {
                                     >
                                         Account info
                                     </div>
+                                    <TextInput
+                                        placeholder="First name"
+                                        {...signUpForm.register("ownerFirstName")}
+                                        error={signUpForm.formState.errors.ownerFirstName?.message}
+                                    />
+                                    <TextInput
+                                        placeholder="Last name"
+                                        {...signUpForm.register("ownerLastName")}
+                                        error={signUpForm.formState.errors.ownerLastName?.message}
+                                    />
+                                    <TextInput
+                                        type="date"
+                                        placeholder="Birthday"
+                                        {...signUpForm.register("ownerBirthday")}
+                                        error={signUpForm.formState.errors.ownerBirthday?.message}
+                                    />
                                     <TextInput
                                         type="email"
                                         placeholder="Email"

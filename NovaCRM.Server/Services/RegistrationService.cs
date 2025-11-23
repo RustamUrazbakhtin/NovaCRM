@@ -43,6 +43,9 @@ public class RegistrationService : IRegistrationService
             var timezone = request.Timezone.Trim();
             var companyPhone = request.CompanyPhone.Trim();
             var ownerEmail = request.OwnerEmail.Trim();
+            var ownerFirstName = request.OwnerFirstName.Trim();
+            var ownerLastName = request.OwnerLastName.Trim();
+            var ownerBirthday = request.OwnerBirthday;
             var businessId = string.IsNullOrWhiteSpace(request.BusinessId)
                 ? null
                 : request.BusinessId.Trim();
@@ -114,11 +117,15 @@ public class RegistrationService : IRegistrationService
                 OrganizationId = organization.Id,
                 BranchId = branch.Id,
                 UserId = user.Id,
-                FirstName = ownerEmail,
-                LastName = string.Empty,
+                FirstName = ownerFirstName,
+                LastName = ownerLastName,
                 RoleTitle = "Owner",
                 IsActive = true,
                 Phone = companyPhone,
+                Company = companyName,
+                Timezone = timezone,
+                Locale = "en-US",
+                Birthday = ownerBirthday,
                 UpdatedAt = DateTime.UtcNow
             };
 
@@ -163,6 +170,8 @@ public class RegistrationService : IRegistrationService
         Require(request.Country, "Country is required.");
         Require(request.Timezone, "Timezone is required.");
         Require(request.CompanyPhone, "Company phone is required.");
+        Require(request.OwnerFirstName, "Owner first name is required.");
+        Require(request.OwnerLastName, "Owner last name is required.");
         Require(request.OwnerEmail, "Owner email is required.");
         Require(request.OwnerPassword, "Owner password is required.");
         Require(request.OwnerPasswordRepeat, "Please confirm the owner password.");

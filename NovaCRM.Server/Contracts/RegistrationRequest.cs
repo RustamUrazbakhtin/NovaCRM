@@ -17,6 +17,14 @@ public class RegistrationRequest
     public string CompanyPhone { get; set; } = null!;
 
     [Required]
+    public string OwnerFirstName { get; set; } = null!;
+
+    [Required]
+    public string OwnerLastName { get; set; } = null!;
+
+    public DateTime? OwnerBirthday { get; set; }
+
+    [Required]
     [EmailAddress]
     public string OwnerEmail { get; set; } = null!;
 

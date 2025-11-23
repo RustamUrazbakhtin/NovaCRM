@@ -48,6 +48,9 @@ export interface RegistrationPayload {
     country: string;
     timezone: string;
     companyPhone: string;
+    ownerFirstName: string;
+    ownerLastName: string;
+    ownerBirthday: string | null;
     ownerEmail: string;
     ownerPassword: string;
     ownerPasswordRepeat: string;
