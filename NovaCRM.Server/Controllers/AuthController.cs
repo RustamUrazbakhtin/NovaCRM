@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using NovaCRM.Data.Auth;
+using Microsoft.EntityFrameworkCore;
+using NovaCRM.Data;
+using NovaCRM.Data.Model;
 using NovaCRM.Server.Contracts;
 using NovaCRM.Server.Services;
 
@@ -17,19 +19,19 @@ namespace NovaCRM.Server.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly UserManager<ApplicationUser> _users;
-    private readonly SignInManager<ApplicationUser> _signIn;
+    private readonly ApplicationDbContext _dbContext;
+    private readonly IPasswordHasher<AspNetUser> _passwordHasher;
     private readonly IConfiguration _cfg;
     private readonly IRegistrationService _registrationService;
 
     public AuthController(
-        UserManager<ApplicationUser> users,
-        SignInManager<ApplicationUser> signIn,
+        ApplicationDbContext dbContext,
+        IPasswordHasher<AspNetUser> passwordHasher,
         IConfiguration cfg,
         IRegistrationService registrationService)
     {
-        _users = users;
-        _signIn = signIn;
+        _dbContext = dbContext;
+        _passwordHasher = passwordHasher;
         _cfg = cfg;
         _registrationService = registrationService;
     }
@@ -60,11 +62,23 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginDto dto)
     {
-        var user = await _users.FindByEmailAsync(dto.Email);
+        var normalizedEmail = dto.Email.Trim().ToUpperInvariant();
+
+        var user = await _dbContext.AspNetUsers
+            .Include(u => u.Roles)
+            .FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
         if (user == null) return Unauthorized();
 
-        var check = await _signIn.CheckPasswordSignInAsync(user, dto.Password, false);
-        if (!check.Succeeded) return Unauthorized();
+        if (string.IsNullOrWhiteSpace(user.PasswordHash))
+        {
+            return Unauthorized();
+        }
+
+        var passwordResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
+        if (passwordResult == PasswordVerificationResult.Failed)
+        {
+            return Unauthorized();
+        }
 
         var token = CreateJwt(user);
         return Ok(new { token });
@@ -75,19 +89,27 @@ public class AuthController : ControllerBase
     {
         var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (id == null) return Unauthorized();
-        var user = await _users.FindByIdAsync(id);
+        var user = await _dbContext.AspNetUsers.FindAsync(id);
         return Ok(new { user!.Email });
     }
 
-    private string CreateJwt(ApplicationUser user)
+    private string CreateJwt(AspNetUser user)
     {
         var jwt = _cfg.GetSection("Jwt");
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email!),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
             new Claim(ClaimTypes.NameIdentifier, user.Id)
         };
+
+        foreach (var role in user.Roles)
+        {
+            if (!string.IsNullOrWhiteSpace(role.Name))
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role.Name));
+            }
+        }
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

@@ -3,17 +3,16 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NovaCRM.Data;
-using NovaCRM.Data.Auth;
 using NovaCRM.Data.Model;
 using NovaCRM.Server.Contracts;
 
@@ -28,21 +27,15 @@ public class ProfileController : ControllerBase
     private const long MaxAvatarSizeBytes = 2 * 1024 * 1024; // 2 MB
 
     private readonly ApplicationDbContext _dbContext;
-    private readonly UserManager<AspNetUser> _userManager;
-    private readonly RoleManager<AspNetRole> _roleManager;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<ProfileController> _logger;
 
     public ProfileController(
         ApplicationDbContext dbContext,
-        UserManager<AspNetUser> userManager,
-        RoleManager<AspNetRole> roleManager,
         IWebHostEnvironment environment,
         ILogger<ProfileController> logger)
     {
         _dbContext = dbContext;
-        _userManager = userManager;
-        _roleManager = roleManager;
         _environment = environment;
         _logger = logger;
     }
@@ -65,7 +58,7 @@ public class ProfileController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to load profile for the current user {UserId}", _userManager.GetUserId(User));
+            _logger.LogError(ex, "Failed to load profile for the current user {UserId}", GetCurrentUserId());
             return Problem("Unable to load profile. Please try again later.", statusCode: StatusCodes.Status500InternalServerError);
         }
     }
@@ -73,7 +66,7 @@ public class ProfileController : ControllerBase
     [HttpGet("roles")]
     public async Task<ActionResult<IEnumerable<ProfileRoleOptionDto>>> GetRolesAsync(CancellationToken cancellationToken)
     {
-        var roles = await _roleManager.Roles
+        var roles = await _dbContext.AspNetRoles
             .OrderBy(role => role.Name)
             .Select(role => new ProfileRoleOptionDto(role.Id, role.Name ?? string.Empty))
             .ToListAsync(cancellationToken);
@@ -116,78 +109,30 @@ public class ProfileController : ControllerBase
         staff.UpdatedAt = DateTime.UtcNow;
 
         var email = request.Email.Trim();
+        var normalizedEmail = email.ToUpperInvariant();
 
-        var emailResult = await _userManager.SetEmailAsync(user, email);
-        if (!emailResult.Succeeded)
+        var duplicateEmail = await _dbContext.AspNetUsers
+            .AnyAsync(u => (u.NormalizedEmail == normalizedEmail || u.NormalizedUserName == normalizedEmail)
+                           && u.Id != user.Id, cancellationToken);
+        if (duplicateEmail)
         {
-            foreach (var error in emailResult.Errors)
-            {
-                ModelState.AddModelError(error.Code, error.Description);
-            }
+            ModelState.AddModelError(nameof(request.Email), "A user with this email already exists.");
             return ValidationProblem(ModelState);
         }
 
-        var userNameResult = await _userManager.SetUserNameAsync(user, email);
-        if (!userNameResult.Succeeded)
+        user.Email = email;
+        user.NormalizedEmail = normalizedEmail;
+        user.UserName = email;
+        user.NormalizedUserName = normalizedEmail;
+
+        await _dbContext.Entry(user).Collection(u => u.Roles).LoadAsync(cancellationToken);
+        user.Roles.Clear();
+        if (selectedRole is not null)
         {
-            foreach (var error in userNameResult.Errors)
-            {
-                ModelState.AddModelError(error.Code, error.Description);
-            }
-            return ValidationProblem(ModelState);
+            user.Roles.Add(selectedRole);
         }
 
-        var existingRoles = await _userManager.GetRolesAsync(user);
-
-        var rolesToRemove = selectedRole is null
-            ? existingRoles.ToArray()
-            : existingRoles
-                .Where(name => !string.Equals(name, selectedRole.Name, StringComparison.OrdinalIgnoreCase))
-                .ToArray();
-
-        if (rolesToRemove.Length > 0)
-        {
-            var removeResult = await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
-            if (!removeResult.Succeeded)
-            {
-                foreach (var error in removeResult.Errors)
-                {
-                    ModelState.AddModelError(error.Code, error.Description);
-                }
-
-                return ValidationProblem(ModelState);
-            }
-        }
-
-        if (selectedRole is not null
-            && !existingRoles.Any(name => string.Equals(name, selectedRole.Name, StringComparison.OrdinalIgnoreCase)))
-        {
-            var addResult = await _userManager.AddToRoleAsync(user, selectedRole.Name);
-            if (!addResult.Succeeded)
-            {
-                foreach (var error in addResult.Errors)
-                {
-                    ModelState.AddModelError(error.Code, error.Description);
-                }
-
-                return ValidationProblem(ModelState);
-            }
-        }
-
-        var phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
-        if (!string.Equals(user.PhoneNumber, phone, StringComparison.Ordinal))
-        {
-            var phoneResult = await _userManager.SetPhoneNumberAsync(user, phone);
-            if (!phoneResult.Succeeded)
-            {
-                foreach (var error in phoneResult.Errors)
-                {
-                    ModelState.AddModelError(error.Code, error.Description);
-                }
-
-                return ValidationProblem(ModelState);
-            }
-        }
+        user.PhoneNumber = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
 
         try
         {
@@ -297,13 +242,15 @@ public class ProfileController : ControllerBase
 
     private async Task<(AspNetUser? User, Staff? Staff)> FindCurrentUserAsync(CancellationToken cancellationToken)
     {
-        var userId = _userManager.GetUserId(User);
+        var userId = GetCurrentUserId();
         if (string.IsNullOrWhiteSpace(userId))
         {
             return (null, null);
         }
 
-        var user = await _userManager.FindByIdAsync(userId);
+        var user = await _dbContext.AspNetUsers
+            .Include(u => u.Roles)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
         if (user is null)
         {
             return (null, null);
@@ -320,25 +267,20 @@ public class ProfileController : ControllerBase
         return (user, staff);
     }
 
-    private async Task<(string? RoleId, string? RoleName)> GetPrimaryRoleAsync(Guid userId, CancellationToken cancellationToken)
+    private async Task<(string? RoleId, string? RoleName)> GetPrimaryRoleAsync(string userId, CancellationToken cancellationToken)
     {
-        var userRoles = await _dbContext.AspNetUserRoles
-            .Where(ur => ur.UserId == userId)
-            .Join(
-                _dbContext.AspNetRoles,
-                userRole => userRole.RoleId,
-                role => role.Id,
-                (userRole, role) => new { userRole.RoleId, role.Name });
-            .ToListAsync(cancellationToken);
+        var primaryRole = await _dbContext.AspNetUsers
+            .Where(u => u.Id == userId)
+            .SelectMany(u => u.Roles)
+            .Select(role => new { role.Id, role.Name })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (userRoles.Count == 0)
+        if (primaryRole is null)
         {
             return (null, null);
         }
 
-        var primaryRole = userRoles.First();
-
-        return (primaryRole.RoleId, primaryRole.Name);
+        return (primaryRole.Id, primaryRole.Name);
     }
 
     private static void UpdateStaff(Staff staff, UpdateUserProfileRequest request, string? resolvedRoleName)
@@ -374,14 +316,14 @@ public class ProfileController : ControllerBase
         var companyIdValue = NormalizeString(staff.OrganizationId != Guid.Empty
             ? staff.OrganizationId.ToString()
             : organization?.Id.ToString());
-        var companyName = NormalizeString(organization?.Name ?? staff.Company);
+        var companyName = NormalizeString(organization?.Name);
         var resolvedRoleName = NormalizeString(roleName ?? staff.RoleTitle);
         var resolvedRoleId = NormalizeString(roleId);
         var phone = NormalizeString(staff.Phone ?? user.PhoneNumber);
-        var timezone = NormalizeString(staff.Timezone);
-        var locale = NormalizeString(staff.Locale);
-        var address = NormalizeString(staff.Address);
-        var notes = NormalizeString(staff.Notes);
+        var timezone = NormalizeString(organization?.Timezone);
+        var locale = string.Empty;
+        var address = NormalizeString(staff.Branch?.Address);
+        var notes = string.Empty;
         var avatarUrl = NormalizeString(staff.AvatarUrl);
 
         return new UserProfileDto(
@@ -406,6 +348,11 @@ public class ProfileController : ControllerBase
     private static string NormalizeString(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+    }
+
+    private string? GetCurrentUserId()
+    {
+        return User.FindFirstValue(ClaimTypes.NameIdentifier);
     }
 
     private string EnsureAvatarUploadFolder()
