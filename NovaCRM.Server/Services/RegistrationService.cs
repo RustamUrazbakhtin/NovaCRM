@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NovaCRM.Server.Contracts;
 using NovaCRM.Data;
-using NovaCRM.Data.Auth;
 using NovaCRM.Data.Model;
 
 namespace NovaCRM.Server.Services;
@@ -15,17 +14,14 @@ namespace NovaCRM.Server.Services;
 public class RegistrationService : IRegistrationService
 {
     private readonly ApplicationDbContext _dbContext;
-    private readonly UserManager<AspNetUser> _userManager;
-    private readonly RoleManager<AspNetRole> _roleManager;
+    private readonly IPasswordHasher<AspNetUser> _passwordHasher;
 
     public RegistrationService(
         ApplicationDbContext dbContext,
-        UserManager<AspNetUser> userManager,
-        RoleManager<AspNetRole> roleManager)
+        IPasswordHasher<AspNetUser> passwordHasher)
     {
         _dbContext = dbContext;
-        _userManager = userManager;
-        _roleManager = roleManager;
+        _passwordHasher = passwordHasher;
     }
 
     public async Task<(bool Success, RegistrationResponse? Response, IEnumerable<string> Errors)> RegisterOrganizationAsync(
@@ -82,18 +78,35 @@ public class RegistrationService : IRegistrationService
 
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            var user = new AspNetUser
-            {
-                UserName = ownerEmail,
-                Email = ownerEmail
-            };
+            var normalizedEmail = ownerEmail.ToUpperInvariant();
 
-            var identityResult = await _userManager.CreateAsync(user, request.OwnerPassword);
-            if (!identityResult.Succeeded)
+            var existingUser = await _dbContext.AspNetUsers
+                .AnyAsync(u => u.NormalizedEmail == normalizedEmail || u.NormalizedUserName == normalizedEmail, cancellationToken);
+            if (existingUser)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return (false, null, identityResult.Errors.Select(e => e.Description));
+                return (false, null, new[] { "A user with this email already exists." });
             }
+
+            var user = new AspNetUser
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserName = ownerEmail,
+                NormalizedUserName = normalizedEmail,
+                Email = ownerEmail,
+                NormalizedEmail = normalizedEmail,
+                EmailConfirmed = false,
+                PhoneNumber = companyPhone,
+                PhoneNumberConfirmed = false,
+                ConcurrencyStamp = Guid.NewGuid().ToString(),
+                SecurityStamp = Guid.NewGuid().ToString(),
+                LockoutEnabled = true,
+                AccessFailedCount = 0
+            };
+
+            user.PasswordHash = _passwordHasher.HashPassword(user, request.OwnerPassword);
+
+            await _dbContext.AspNetUsers.AddAsync(user, cancellationToken);
 
             var staff = new Staff
             {
@@ -101,7 +114,8 @@ public class RegistrationService : IRegistrationService
                 OrganizationId = organization.Id,
                 BranchId = branch.Id,
                 UserId = user.Id,
-                FirstName = user.UserName,
+                FirstName = ownerEmail,
+                LastName = string.Empty,
                 RoleTitle = "Owner",
                 IsActive = true,
                 Phone = companyPhone,
@@ -109,24 +123,18 @@ public class RegistrationService : IRegistrationService
             };
 
             await _dbContext.Staff.AddAsync(staff, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
 
             var ownerRoles = new[] { "Owner", "Admin" };
-            foreach (var role in ownerRoles)
-            {
-                if (!await _roleManager.RoleExistsAsync(role))
-                {
-                    continue;
-                }
+            var availableRoles = await _dbContext.AspNetRoles
+                .Where(role => ownerRoles.Contains(role.Name!))
+                .ToListAsync(cancellationToken);
 
-                var addToRoleResult = await _userManager.AddToRoleAsync(user, role);
-                if (!addToRoleResult.Succeeded)
-                {
-                    await transaction.RollbackAsync(cancellationToken);
-                    return (false, null, addToRoleResult.Errors.Select(e => e.Description));
-                }
+            foreach (var role in availableRoles)
+            {
+                user.Roles.Add(role);
             }
 
+            await _dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             var response = new RegistrationResponse(organization.Id, branch.Id, user.Id);

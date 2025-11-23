@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 using NovaCRM.Data;
-using NovaCRM.Data.Auth;
+using NovaCRM.Data.Model;
 using NovaCRM.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,16 +14,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
-// --- Identity ---
-builder.Services
-    .AddIdentity<ApplicationUser, IdentityRole>(options =>
-    {
-        options.Password.RequiredLength = 6;
-        options.Password.RequireNonAlphanumeric = false;
-        options.User.RequireUniqueEmail = true;
-    })
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
+// --- Identity helpers ---
+builder.Services.AddScoped<IPasswordHasher<AspNetUser>, PasswordHasher<AspNetUser>>();
 
 // --- JWT ---
 var jwt = builder.Configuration.GetSection("Jwt");
