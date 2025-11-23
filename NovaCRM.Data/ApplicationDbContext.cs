@@ -37,7 +37,7 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<AspNetUserLogin> AspNetUserLogins { get; set; }
 
     public virtual DbSet<AspNetUserToken> AspNetUserTokens { get; set; }
-    public virtual DbSet<AspNetUserRole> AspNetUserRoles { get; set; }
+    //public virtual DbSet<AspNetUserRole> AspNetUserRoles { get; set; }
 
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
 
