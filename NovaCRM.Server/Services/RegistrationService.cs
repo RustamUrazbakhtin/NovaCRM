@@ -122,9 +122,6 @@ public class RegistrationService : IRegistrationService
                 RoleTitle = "Owner",
                 IsActive = true,
                 Phone = companyPhone,
-                Company = companyName,
-                Timezone = timezone,
-                Locale = "en-US",
                 Birthday = ownerBirthday,
                 UpdatedAt = DateTime.UtcNow
             };
