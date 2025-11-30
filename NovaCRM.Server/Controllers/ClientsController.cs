@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NovaCRM.Domain.Clients;
 using NovaCRM.Server.Contracts.Clients;
+using NovaCRM.Server.Services;
 
 namespace NovaCRM.Server.Controllers;
 

@@ -37,7 +37,11 @@ public class ClientService : IClientService
         var normalizedQuery = (query ?? string.Empty).Trim().ToLowerInvariant();
 
         var filtered = clients
-            .Select(client => new { client, status = ResolveStatus(client) })
+            .Select(client => new
+            {
+                client,
+                status = ResolveStatus(client.Segment, client.LifetimeValue, client.LastVisitAt, client.TotalVisits)
+            })
             .Where(pair =>
                 MatchesFilter(pair.status, filter) &&
                 MatchesSearch(pair.client, normalizedQuery))
@@ -68,7 +72,7 @@ public class ClientService : IClientService
             return null;
         }
 
-        var status = ResolveStatus(record);
+        var status = ResolveStatus(record.Segment, record.LifetimeValue, record.LastVisitAt, record.TotalVisits);
 
         return new ClientDetails(
             record.Id,
@@ -116,19 +120,19 @@ public class ClientService : IClientService
         return _repository.AddClientAsync(organizationId, trimmed, cancellationToken);
     }
 
-    private static ClientStatus ResolveStatus(ClientRecord record)
+    private static ClientStatus ResolveStatus(string? segment, decimal lifetimeValue, DateTime? lastVisitAt, int totalVisits)
     {
-        if (IsVip(record))
+        if (IsVip(segment, lifetimeValue))
         {
             return ClientStatus.Vip;
         }
 
-        if (IsAtRisk(record))
+        if (IsAtRisk(lastVisitAt))
         {
             return ClientStatus.AtRisk;
         }
 
-        if (record.TotalVisits <= 1)
+        if (totalVisits <= 1)
         {
             return ClientStatus.New;
         }
@@ -159,20 +163,20 @@ public class ClientService : IClientService
             || (client.Email?.ToLowerInvariant().Contains(normalizedQuery) ?? false);
     }
 
-    private static bool IsVip(ClientRecord client)
+    private static bool IsVip(string? segment, decimal lifetimeValue)
     {
-        return string.Equals(client.Segment, "VIP", StringComparison.OrdinalIgnoreCase)
-            || client.LifetimeValue >= VipLtvThreshold;
+        return string.Equals(segment, "VIP", StringComparison.OrdinalIgnoreCase)
+            || lifetimeValue >= VipLtvThreshold;
     }
 
-    private static bool IsAtRisk(ClientRecord client)
+    private static bool IsAtRisk(DateTime? lastVisitAt)
     {
-        if (client.LastVisitAt is null)
+        if (lastVisitAt is null)
         {
             return true;
         }
 
-        return client.LastVisitAt.Value < DateTime.UtcNow.Subtract(AtRiskThreshold);
+        return lastVisitAt.Value < DateTime.UtcNow.Subtract(AtRiskThreshold);
     }
 
     private static string BuildName(string first, string last)

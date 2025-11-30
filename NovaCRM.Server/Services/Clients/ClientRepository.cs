@@ -34,8 +34,8 @@ public class ClientRepository : IClientRepository
                 Satisfaction = c.Reviews
                     .Where(r => r.DeletedAt == null)
                     .Select(r => (decimal?)r.Rating)
-                    .DefaultIfEmpty(0)
-                    .Average(),
+                    .DefaultIfEmpty(0m)
+                    .Average() ?? 0m,
                 Master = c.Appointments
                     .Where(a => a.DeletedAt == null)
                     .OrderByDescending(a => a.StartAt)
@@ -88,8 +88,8 @@ public class ClientRepository : IClientRepository
                 Satisfaction = c.Reviews
                     .Where(r => r.DeletedAt == null)
                     .Select(r => (decimal?)r.Rating)
-                    .DefaultIfEmpty(0)
-                    .Average(),
+                    .DefaultIfEmpty(0m)
+                    .Average() ?? 0m,
                 Activity = c.Appointments
                     .Where(a => a.DeletedAt == null)
                     .OrderByDescending(a => a.StartAt)
