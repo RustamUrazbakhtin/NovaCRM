@@ -7,6 +7,8 @@ using System.Text;
 using NovaCRM.Data;
 using NovaCRM.Data.Model;
 using NovaCRM.Server.Services;
+using NovaCRM.Server.Services.Clients;
+using NovaCRM.Domain.Clients;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +53,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
+builder.Services.AddScoped<IOrganizationContext, OrganizationContext>();
+builder.Services.AddScoped<IClientRepository, ClientRepository>();
+builder.Services.AddScoped<IClientService, ClientService>();
 
 var frontendOrigin = builder.Configuration["FrontendOrigin"] ?? "https://localhost:58876";
 
