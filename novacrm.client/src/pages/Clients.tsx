@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../layout/Header";
 import ThemeProvider from "../providers/ThemeProvider";
@@ -54,6 +55,9 @@ export default function Clients() {
         try {
             const data = await getClientsOverview();
             setOverview(data);
+        } catch (error: any) {
+            if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
+            console.error("Failed to load clients overview", error);
         } finally {
             setLoadingOverview(false);
         }
@@ -70,6 +74,9 @@ export default function Clients() {
             if (data.length === 0) {
                 setSelectedId(null);
             }
+        } catch (error: any) {
+            if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
+            console.error("Failed to load clients", error);
         } finally {
             setLoadingList(false);
         }
@@ -81,6 +88,9 @@ export default function Clients() {
         try {
             const data = await getClientDetails(id);
             setSelectedClient(data);
+        } catch (error: any) {
+            if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
+            console.error("Failed to load client details", error);
         } finally {
             setLoadingDetails(false);
         }
@@ -93,6 +103,8 @@ export default function Clients() {
     useEffect(() => {
         void loadClients(search, filter);
     }, [search, filter]);
+
+    useEffect(() => () => abortControllerRef.current?.abort(), []);
 
     useEffect(() => {
         if (!selectedId) {
