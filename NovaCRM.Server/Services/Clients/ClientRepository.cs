@@ -159,4 +159,16 @@ public class ClientRepository : IClientRepository
 
         return new ClientCreatedResult(client.Id);
     }
+
+    public async Task<IReadOnlyCollection<ClientTag>> GetTagsAsync(Guid organizationId, CancellationToken cancellationToken = default)
+    {
+        var tags = await _dbContext.ClientTags
+            .AsNoTracking()
+            .Where(t => t.OrganizationId == organizationId && t.DeletedAt == null)
+            .OrderBy(t => t.Name)
+            .Select(t => new ClientTag(t.Id, t.Name, t.Color))
+            .ToListAsync(cancellationToken);
+
+        return tags;
+    }
 }

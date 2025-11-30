@@ -53,6 +53,12 @@ export interface CreateClientPayload {
     segment?: string | null;
 }
 
+export interface ClientTag {
+    id: string;
+    name: string;
+    color?: string | null;
+}
+
 export async function getClientsOverview(signal?: AbortSignal): Promise<ClientOverview> {
     const { data } = await api.get<ClientOverview>("/clients/overview", { signal });
     return data;
@@ -80,5 +86,10 @@ export async function getClientDetails(id: string, signal?: AbortSignal): Promis
 
 export async function createClient(payload: CreateClientPayload): Promise<ClientDetails> {
     const { data } = await api.post<ClientDetails>("/clients", payload);
+    return data;
+}
+
+export async function getClientTags(signal?: AbortSignal): Promise<ClientTag[]> {
+    const { data } = await api.get<ClientTag[]>("/clients/tags", { signal });
     return data;
 }

@@ -78,3 +78,8 @@ public record CreateClientDto(string FirstName, string LastName, string Phone, s
 {
     public CreateClientRequest ToDomain() => new(FirstName, LastName, Phone, Email, Segment);
 }
+
+public record ClientTagDto(Guid Id, string Name, string? Color)
+{
+    public static ClientTagDto FromDomain(ClientTag tag) => new(tag.Id, tag.Name, tag.Color);
+}

@@ -54,6 +54,19 @@ public class ClientsController : ControllerBase
         return Ok(clients.Select(ClientListItemDto.FromDomain).ToList());
     }
 
+    [HttpGet("tags")]
+    public async Task<ActionResult<IReadOnlyCollection<ClientTagDto>>> GetTags(CancellationToken cancellationToken = default)
+    {
+        var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
+        if (organizationId is null)
+        {
+            return Unauthorized();
+        }
+
+        var tags = await _clientService.GetTagsAsync(organizationId.Value, cancellationToken);
+        return Ok(tags.Select(ClientTagDto.FromDomain).ToList());
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ClientDetailsDto>> GetClient(Guid id, CancellationToken cancellationToken)
     {

@@ -120,6 +120,11 @@ public class ClientService : IClientService
         return _repository.AddClientAsync(organizationId, trimmed, cancellationToken);
     }
 
+    public Task<IReadOnlyCollection<ClientTag>> GetTagsAsync(Guid organizationId, CancellationToken cancellationToken = default)
+    {
+        return _repository.GetTagsAsync(organizationId, cancellationToken);
+    }
+
     private static ClientStatus ResolveStatus(string? segment, decimal lifetimeValue, DateTime? lastVisitAt, int totalVisits)
     {
         if (IsVip(segment, lifetimeValue))
