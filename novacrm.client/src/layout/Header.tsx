@@ -220,12 +220,12 @@ export default function Header({
     return (
         <header className="nx-header">
             <div className="nx-left">
-                <div className="nx-logo">
+                <button type="button" className="nx-logo" onClick={() => navigate("/")}>
                     <span className="nx-mark">
                         <img src="/NovaCRM_Logo.png" alt="NovaCRM" height={28} />
                     </span>
                     <span className="brand__name">NovaCRM</span>
-                </div>
+                </button>
                 <div className="nx-divider" />
                 <div className="nx-breadcrumb">{breadcrumb}</div>
             </div>
