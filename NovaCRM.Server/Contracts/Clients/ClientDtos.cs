@@ -8,17 +8,13 @@ public record ClientOverviewDto(int TotalClients, int ReturningClients, decimal 
         new(overview.TotalClients, overview.ReturningClients, overview.AverageLtv, overview.Satisfaction);
 }
 
-public record ClientFilterDto(string Key, string Label)
-{
-    public static ClientFilterDto FromDomain(ClientFilterDefinition filter) => new(filter.Key, filter.Label);
-}
-
 public record ClientListItemDto(
     Guid Id,
     string Name,
     string Phone,
     string? Email,
     string Status,
+    string? StatusColor,
     decimal LifetimeValue,
     DateTime? LastVisitAt,
     decimal Satisfaction,
@@ -32,7 +28,8 @@ public record ClientListItemDto(
             item.Name,
             item.Phone,
             item.Email,
-            item.Status.ToString(),
+            item.Status,
+            item.StatusColor,
             item.LifetimeValue,
             item.LastVisitAt,
             item.Satisfaction,
@@ -49,6 +46,7 @@ public record ClientDetailsDto(
     string? City,
     string? Master,
     string Status,
+    string? StatusColor,
     decimal LifetimeValue,
     int Visits,
     decimal Satisfaction,
@@ -64,7 +62,8 @@ public record ClientDetailsDto(
             details.Email,
             details.City,
             details.Master,
-            details.Status.ToString(),
+            details.Status,
+            details.StatusColor,
             details.LifetimeValue,
             details.Visits,
             details.Satisfaction,
@@ -87,4 +86,9 @@ public record CreateClientDto(string FirstName, string LastName, string Phone, s
 public record ClientTagDto(Guid Id, string Name, string? Color)
 {
     public static ClientTagDto FromDomain(ClientTag tag) => new(tag.Id, tag.Name, tag.Color);
+}
+
+public record ClientStatusTagDto(Guid Id, string Name, string? Color)
+{
+    public static ClientStatusTagDto FromDomain(ClientStatusTag tag) => new(tag.Id, tag.Name, tag.Color);
 }

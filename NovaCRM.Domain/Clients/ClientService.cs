@@ -4,15 +4,14 @@ public class ClientService : IClientService
 {
     private readonly IClientRepository _repository;
 
-    private const decimal VipLtvThreshold = 100000m;
-    private static readonly TimeSpan AtRiskThreshold = TimeSpan.FromDays(90);
-    private static readonly IReadOnlyCollection<ClientFilterDefinition> DefaultFilters = new[]
+    private static readonly string[] StatusPriority =
     {
-        new ClientFilterDefinition(ClientFilter.All.ToString(), "All", 1),
-        new ClientFilterDefinition(ClientFilter.Vip.ToString(), "VIP", 2),
-        new ClientFilterDefinition(ClientFilter.Regular.ToString(), "Regular", 3),
-        new ClientFilterDefinition(ClientFilter.New.ToString(), "New", 4),
-        new ClientFilterDefinition(ClientFilter.AtRisk.ToString(), "At risk", 5)
+        "BLOCKED",
+        "PROBLEM",
+        "RISK",
+        "VIP",
+        "NEW",
+        "REGULAR",
     };
 
     public ClientService(IClientRepository repository)
@@ -38,35 +37,34 @@ public class ClientService : IClientService
     public async Task<IReadOnlyCollection<ClientListItem>> SearchClientsAsync(
         Guid organizationId,
         string? query,
-        ClientFilter filter,
+        Guid? statusTagId,
         CancellationToken cancellationToken = default)
     {
         var clients = await _repository.GetClientsAsync(organizationId, cancellationToken);
         var normalizedQuery = (query ?? string.Empty).Trim().ToLowerInvariant();
 
         var filtered = clients
-            .Select(client => new
+            .Where(client => MatchesSearch(client, normalizedQuery))
+            .Where(client => statusTagId is null || client.Tags.Any(tag => tag.Id == statusTagId))
+            .Select(client =>
             {
-                client,
-                status = ResolveStatus(client.Segment, client.LifetimeValue, client.LastVisitAt, client.TotalVisits)
+                var status = ResolveStatus(client.Tags);
+                return new ClientListItem(
+                    client.Id,
+                    BuildName(client.FirstName, client.LastName),
+                    client.Phone,
+                    client.Email,
+                    status.Name,
+                    status.Color,
+                    client.LifetimeValue,
+                    client.LastVisitAt,
+                    client.Satisfaction,
+                    client.TotalVisits,
+                    client.Tags.Select(t => t.Name).ToList(),
+                    client.City
+                );
             })
-            .Where(pair =>
-                MatchesFilter(pair.status, filter) &&
-                MatchesSearch(pair.client, normalizedQuery))
-            .OrderByDescending(x => x.client.LastVisitAt ?? DateTime.MinValue)
-            .Select(x => new ClientListItem(
-                x.client.Id,
-                BuildName(x.client.FirstName, x.client.LastName),
-                x.client.Phone,
-                x.client.Email,
-                x.status,
-                x.client.LifetimeValue,
-                x.client.LastVisitAt,
-                x.client.Satisfaction,
-                x.client.TotalVisits,
-                x.client.Tags,
-                x.client.City
-            ))
+            .OrderByDescending(x => x.LastVisitAt ?? DateTime.MinValue)
             .ToList();
 
         return filtered;
@@ -80,7 +78,7 @@ public class ClientService : IClientService
             return null;
         }
 
-        var status = ResolveStatus(record.Segment, record.LifetimeValue, record.LastVisitAt, record.TotalVisits);
+        var status = ResolveStatus(record.Tags);
 
         return new ClientDetails(
             record.Id,
@@ -89,11 +87,12 @@ public class ClientService : IClientService
             record.Email,
             record.City,
             record.MasterName,
-            status,
+            status.Name,
+            status.Color,
             record.LifetimeValue,
             record.TotalVisits,
             record.Satisfaction,
-            record.Tags,
+            record.Tags.Select(t => t.Name).ToList(),
             record.RecentActivity,
             record.Notes
         );
@@ -133,53 +132,10 @@ public class ClientService : IClientService
         return _repository.GetTagsAsync(organizationId, cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<ClientFilterDefinition>> GetFiltersAsync(
-        Guid organizationId,
-        CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<ClientStatusTag>> GetStatusTagsAsync(Guid organizationId, CancellationToken cancellationToken = default)
     {
-        var definitions = await _repository.GetFiltersAsync(organizationId, cancellationToken);
-
-        var parsed = definitions
-            .Select(definition => Enum.TryParse<ClientFilter>(definition.Key, true, out var parsedKey)
-                ? new ClientFilterDefinition(parsedKey.ToString(), definition.Label, definition.SortOrder)
-                : null)
-            .Where(definition => definition is not null)
-            .Select(definition => definition!)
-            .OrderBy(definition => definition.SortOrder)
-            .ToList();
-
-        return parsed.Count > 0 ? parsed : DefaultFilters.ToList();
+        return _repository.GetStatusTagsAsync(organizationId, cancellationToken);
     }
-
-    private static ClientStatus ResolveStatus(string? segment, decimal lifetimeValue, DateTime? lastVisitAt, int totalVisits)
-    {
-        if (IsVip(segment, lifetimeValue))
-        {
-            return ClientStatus.Vip;
-        }
-
-        if (IsAtRisk(lastVisitAt))
-        {
-            return ClientStatus.AtRisk;
-        }
-
-        if (totalVisits <= 1)
-        {
-            return ClientStatus.New;
-        }
-
-        return ClientStatus.Regular;
-    }
-
-    private static bool MatchesFilter(ClientStatus status, ClientFilter filter) => filter switch
-    {
-        ClientFilter.All => true,
-        ClientFilter.Vip => status == ClientStatus.Vip,
-        ClientFilter.Regular => status == ClientStatus.Regular,
-        ClientFilter.New => status == ClientStatus.New,
-        ClientFilter.AtRisk => status == ClientStatus.AtRisk,
-        _ => true
-    };
 
     private static bool MatchesSearch(ClientRecord client, string normalizedQuery)
     {
@@ -194,24 +150,23 @@ public class ClientService : IClientService
             || (client.Email?.ToLowerInvariant().Contains(normalizedQuery) ?? false);
     }
 
-    private static bool IsVip(string? segment, decimal lifetimeValue)
-    {
-        return string.Equals(segment, "VIP", StringComparison.OrdinalIgnoreCase)
-            || lifetimeValue >= VipLtvThreshold;
-    }
-
-    private static bool IsAtRisk(DateTime? lastVisitAt)
-    {
-        if (lastVisitAt is null)
-        {
-            return true;
-        }
-
-        return lastVisitAt.Value < DateTime.UtcNow.Subtract(AtRiskThreshold);
-    }
-
     private static string BuildName(string first, string last)
     {
         return string.IsNullOrWhiteSpace(last) ? first : $"{first} {last}";
+    }
+
+    private static ClientStatusTag ResolveStatus(IReadOnlyCollection<ClientTag> tags)
+    {
+        if (tags.Count == 0)
+        {
+            return new ClientStatusTag(Guid.Empty, "Regular", null);
+        }
+
+        var prioritized = StatusPriority
+            .Select(priority => tags.FirstOrDefault(tag => string.Equals(tag.Name, priority, StringComparison.OrdinalIgnoreCase)))
+            .FirstOrDefault(tag => tag is not null);
+
+        var chosen = prioritized ?? tags.First();
+        return new ClientStatusTag(chosen.Id, chosen.Name, chosen.Color);
     }
 }

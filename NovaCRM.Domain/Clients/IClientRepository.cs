@@ -6,7 +6,7 @@ public interface IClientRepository
     Task<ClientDetailsRecord?> GetClientDetailsAsync(Guid organizationId, Guid clientId, CancellationToken cancellationToken = default);
     Task<ClientCreatedResult> AddClientAsync(Guid organizationId, CreateClientRequest request, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<ClientTag>> GetTagsAsync(Guid organizationId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyCollection<ClientFilterDefinition>> GetFiltersAsync(Guid organizationId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<ClientStatusTag>> GetStatusTagsAsync(Guid organizationId, CancellationToken cancellationToken = default);
 }
 
 public record ClientRecord(
@@ -20,7 +20,7 @@ public record ClientRecord(
     int TotalVisits,
     decimal LifetimeValue,
     decimal Satisfaction,
-    IReadOnlyCollection<string> Tags,
+    IReadOnlyCollection<ClientTag> Tags,
     string? City,
     string? MasterName
 );
@@ -36,7 +36,7 @@ public record ClientDetailsRecord(
     int TotalVisits,
     decimal LifetimeValue,
     decimal Satisfaction,
-    IReadOnlyCollection<string> Tags,
+    IReadOnlyCollection<ClientTag> Tags,
     string? City,
     string? MasterName,
     IReadOnlyCollection<ClientActivity> RecentActivity,

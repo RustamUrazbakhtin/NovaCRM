@@ -1,12 +1,5 @@
 import { api } from "../app/auth";
 
-export type ClientFilter = "All" | "Vip" | "Regular" | "New" | "AtRisk";
-
-export interface ClientFilterDefinition {
-    key: ClientFilter;
-    label: string;
-}
-
 export interface ClientOverview {
     totalClients: number;
     returningClients: number;
@@ -19,7 +12,8 @@ export interface ClientListItem {
     name: string;
     phone: string;
     email?: string | null;
-    status: ClientFilter;
+    status: string;
+    statusColor?: string | null;
     lifetimeValue: number;
     lastVisitAt?: string | null;
     satisfaction: number;
@@ -41,7 +35,8 @@ export interface ClientDetails {
     email?: string | null;
     city?: string | null;
     master?: string | null;
-    status: ClientFilter;
+    status: string;
+    statusColor?: string | null;
     lifetimeValue: number;
     visits: number;
     satisfaction: number;
@@ -64,9 +59,15 @@ export interface ClientTag {
     color?: string | null;
 }
 
-export async function getClientFilters(signal?: AbortSignal): Promise<ClientFilterDefinition[]> {
-    const { data } = await api.get<ClientFilterDefinition[]>("/clients/filters", { signal });
-    return data;
+export interface ClientStatusTag {
+    id: string;
+    name: string;
+    color?: string | null;
+}
+
+export interface SearchClientsRequest {
+    search?: string;
+    statusTagId?: string | null;
 }
 
 export async function getClientsOverview(signal?: AbortSignal): Promise<ClientOverview> {
@@ -74,15 +75,12 @@ export async function getClientsOverview(signal?: AbortSignal): Promise<ClientOv
     return data;
 }
 
-export async function searchClients(
-    params: { search?: string; filter?: ClientFilter },
-    signal?: AbortSignal
-): Promise<ClientListItem[]> {
-    const { search, filter } = params;
+export async function searchClients(params: SearchClientsRequest, signal?: AbortSignal): Promise<ClientListItem[]> {
+    const { search, statusTagId } = params;
     const { data } = await api.get<ClientListItem[]>("/clients", {
         params: {
             search: search?.trim() || undefined,
-            filter,
+            statusTagId: statusTagId || undefined,
         },
         signal,
     });
@@ -101,5 +99,10 @@ export async function createClient(payload: CreateClientPayload): Promise<Client
 
 export async function getClientTags(signal?: AbortSignal): Promise<ClientTag[]> {
     const { data } = await api.get<ClientTag[]>("/clients/tags", { signal });
+    return data;
+}
+
+export async function getClientStatusTags(signal?: AbortSignal): Promise<ClientStatusTag[]> {
+    const { data } = await api.get<ClientStatusTag[]>("/clients/status-tags", { signal });
     return data;
 }

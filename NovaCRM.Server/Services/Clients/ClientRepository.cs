@@ -1,4 +1,3 @@
-using System;
 using Microsoft.EntityFrameworkCore;
 using NovaCRM.Data;
 using NovaCRM.Domain.Clients;
@@ -30,7 +29,9 @@ public class ClientRepository : IClientRepository
                 c.LastVisitAt,
                 c.TotalVisits,
                 c.Ltv,
-                Tags = c.ClientTagLinks.Select(link => link.Tag.Name),
+                Tags = c.ClientTagLinks
+                    .OrderBy(link => link.Tag.Name)
+                    .Select(link => new ClientTag(link.TagId, link.Tag.Name, link.Tag.Color)),
                 City = c.Branch != null ? c.Branch.City : null,
                 Satisfaction = c.Reviews
                     .Where(r => r.DeletedAt == null)
@@ -79,7 +80,9 @@ public class ClientRepository : IClientRepository
                 c.TotalVisits,
                 c.Ltv,
                 c.Notes,
-                Tags = c.ClientTagLinks.Select(link => link.Tag.Name),
+                Tags = c.ClientTagLinks
+                    .OrderBy(link => link.Tag.Name)
+                    .Select(link => new ClientTag(link.TagId, link.Tag.Name, link.Tag.Color)),
                 City = c.Branch != null ? c.Branch.City : null,
                 Master = c.Appointments
                     .Where(a => a.DeletedAt == null)
@@ -173,27 +176,15 @@ public class ClientRepository : IClientRepository
         return tags;
     }
 
-    public async Task<IReadOnlyCollection<ClientFilterDefinition>> GetFiltersAsync(Guid organizationId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<ClientStatusTag>> GetStatusTagsAsync(Guid organizationId, CancellationToken cancellationToken = default)
     {
-        var definitions = await _dbContext.ClientSegmentDefinitions
+        var tags = await _dbContext.ClientTags
             .AsNoTracking()
-            .Where(definition =>
-                definition.IsActive &&
-                (definition.OrganizationId == organizationId || definition.OrganizationId == null))
-            .OrderBy(definition => definition.SortOrder)
+            .Where(t => t.OrganizationId == organizationId && t.DeletedAt == null)
+            .OrderBy(t => t.Name)
+            .Select(t => new ClientStatusTag(t.Id, t.Name, t.Color))
             .ToListAsync(cancellationToken);
 
-        var normalized = definitions
-            .GroupBy(definition => definition.Key, StringComparer.OrdinalIgnoreCase)
-            .Select(group =>
-            {
-                var scoped = group.FirstOrDefault(item => item.OrganizationId == organizationId);
-                var preferred = scoped ?? group.First();
-                return new ClientFilterDefinition(preferred.Key, preferred.Label, preferred.SortOrder);
-            })
-            .OrderBy(definition => definition.SortOrder)
-            .ToList();
-
-        return normalized;
+        return tags;
     }
 }

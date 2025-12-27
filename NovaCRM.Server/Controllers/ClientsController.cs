@@ -37,7 +37,7 @@ public class ClientsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IReadOnlyCollection<ClientListItemDto>>> GetClients([
         FromQuery] string? search,
-        [FromQuery] string? filter,
+        [FromQuery] Guid? statusTagId,
         CancellationToken cancellationToken = default)
     {
         var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
@@ -46,25 +46,8 @@ public class ClientsController : ControllerBase
             return Unauthorized();
         }
 
-        var parsedFilter = Enum.TryParse<ClientFilter>(filter, true, out var result)
-            ? result
-            : ClientFilter.All;
-
-        var clients = await _clientService.SearchClientsAsync(organizationId.Value, search, parsedFilter, cancellationToken);
+        var clients = await _clientService.SearchClientsAsync(organizationId.Value, search, statusTagId, cancellationToken);
         return Ok(clients.Select(ClientListItemDto.FromDomain).ToList());
-    }
-
-    [HttpGet("filters")]
-    public async Task<ActionResult<IReadOnlyCollection<ClientFilterDto>>> GetFilters(CancellationToken cancellationToken = default)
-    {
-        var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
-        if (organizationId is null)
-        {
-            return Unauthorized();
-        }
-
-        var filters = await _clientService.GetFiltersAsync(organizationId.Value, cancellationToken);
-        return Ok(filters.Select(ClientFilterDto.FromDomain).ToList());
     }
 
     [HttpGet("tags")]
@@ -78,6 +61,19 @@ public class ClientsController : ControllerBase
 
         var tags = await _clientService.GetTagsAsync(organizationId.Value, cancellationToken);
         return Ok(tags.Select(ClientTagDto.FromDomain).ToList());
+    }
+
+    [HttpGet("status-tags")]
+    public async Task<ActionResult<IReadOnlyCollection<ClientStatusTagDto>>> GetStatusTags(CancellationToken cancellationToken = default)
+    {
+        var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
+        if (organizationId is null)
+        {
+            return Unauthorized();
+        }
+
+        var tags = await _clientService.GetStatusTagsAsync(organizationId.Value, cancellationToken);
+        return Ok(tags.Select(ClientStatusTagDto.FromDomain).ToList());
     }
 
     [HttpGet("{id:guid}")]

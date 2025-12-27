@@ -273,6 +273,19 @@
     background: color-mix(in oklab, #ff9f0a 20%, transparent);
 }
 
+.clients-status--at-risk,
+.clients-status--risk {
+    background: color-mix(in oklab, #ff9f0a 20%, transparent);
+}
+
+.clients-status--problem {
+    background: color-mix(in oklab, #ff9f0a 26%, transparent);
+}
+
+.clients-status--blocked {
+    background: color-mix(in oklab, #ff453a 28%, transparent);
+}
+
 .clients-table-empty {
     text-align: center;
     color: color-mix(in oklab, var(--ink) 60%, transparent);
