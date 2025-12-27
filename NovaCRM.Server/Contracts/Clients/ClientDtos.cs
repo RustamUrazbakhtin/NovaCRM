@@ -8,6 +8,11 @@ public record ClientOverviewDto(int TotalClients, int ReturningClients, decimal 
         new(overview.TotalClients, overview.ReturningClients, overview.AverageLtv, overview.Satisfaction);
 }
 
+public record ClientFilterDto(string Key, string Label)
+{
+    public static ClientFilterDto FromDomain(ClientFilterDefinition filter) => new(filter.Key, filter.Label);
+}
+
 public record ClientListItemDto(
     Guid Id,
     string Name,

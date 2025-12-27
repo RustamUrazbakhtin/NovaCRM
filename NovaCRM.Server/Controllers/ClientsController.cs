@@ -54,6 +54,19 @@ public class ClientsController : ControllerBase
         return Ok(clients.Select(ClientListItemDto.FromDomain).ToList());
     }
 
+    [HttpGet("filters")]
+    public async Task<ActionResult<IReadOnlyCollection<ClientFilterDto>>> GetFilters(CancellationToken cancellationToken = default)
+    {
+        var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
+        if (organizationId is null)
+        {
+            return Unauthorized();
+        }
+
+        var filters = await _clientService.GetFiltersAsync(organizationId.Value, cancellationToken);
+        return Ok(filters.Select(ClientFilterDto.FromDomain).ToList());
+    }
+
     [HttpGet("tags")]
     public async Task<ActionResult<IReadOnlyCollection<ClientTagDto>>> GetTags(CancellationToken cancellationToken = default)
     {

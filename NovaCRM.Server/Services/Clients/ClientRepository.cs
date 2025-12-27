@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore;
 using NovaCRM.Data;
 using NovaCRM.Domain.Clients;
@@ -170,5 +171,29 @@ public class ClientRepository : IClientRepository
             .ToListAsync(cancellationToken);
 
         return tags;
+    }
+
+    public async Task<IReadOnlyCollection<ClientFilterDefinition>> GetFiltersAsync(Guid organizationId, CancellationToken cancellationToken = default)
+    {
+        var definitions = await _dbContext.ClientSegmentDefinitions
+            .AsNoTracking()
+            .Where(definition =>
+                definition.IsActive &&
+                (definition.OrganizationId == organizationId || definition.OrganizationId == null))
+            .OrderBy(definition => definition.SortOrder)
+            .ToListAsync(cancellationToken);
+
+        var normalized = definitions
+            .GroupBy(definition => definition.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var scoped = group.FirstOrDefault(item => item.OrganizationId == organizationId);
+                var preferred = scoped ?? group.First();
+                return new ClientFilterDefinition(preferred.Key, preferred.Label, preferred.SortOrder);
+            })
+            .OrderBy(definition => definition.SortOrder)
+            .ToList();
+
+        return normalized;
     }
 }

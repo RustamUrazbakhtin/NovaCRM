@@ -6,6 +6,7 @@ public interface IClientRepository
     Task<ClientDetailsRecord?> GetClientDetailsAsync(Guid organizationId, Guid clientId, CancellationToken cancellationToken = default);
     Task<ClientCreatedResult> AddClientAsync(Guid organizationId, CreateClientRequest request, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<ClientTag>> GetTagsAsync(Guid organizationId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<ClientFilterDefinition>> GetFiltersAsync(Guid organizationId, CancellationToken cancellationToken = default);
 }
 
 public record ClientRecord(

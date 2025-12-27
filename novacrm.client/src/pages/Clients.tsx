@@ -2,19 +2,19 @@ import axios from "axios";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../layout/Header";
 import ThemeProvider from "../providers/ThemeProvider";
-import type { ClientDetails, ClientFilter, ClientListItem, ClientOverview } from "../api/clients";
-import { createClient, getClientDetails, getClientsOverview, searchClients } from "../api/clients";
+import type { ClientDetails, ClientFilter, ClientFilterDefinition, ClientListItem, ClientOverview } from "../api/clients";
+import { createClient, getClientDetails, getClientFilters, getClientsOverview, searchClients } from "../api/clients";
 import "../styles/dashboard/index.css";
 import "../styles/clients/index.css";
 import { authApi } from "../app/auth";
 import { useNavigate } from "react-router-dom";
 
-const filters: { label: string; value: ClientFilter }[] = [
-    { label: "All", value: "All" },
-    { label: "VIP", value: "Vip" },
-    { label: "Regular", value: "Regular" },
-    { label: "New", value: "New" },
-    { label: "At risk", value: "AtRisk" },
+const fallbackFilters: ClientFilterDefinition[] = [
+    { label: "All", key: "All" },
+    { label: "VIP", key: "Vip" },
+    { label: "Regular", key: "Regular" },
+    { label: "New", key: "New" },
+    { label: "At risk", key: "AtRisk" },
 ];
 
 const formatCurrency = (value: number) =>
@@ -26,18 +26,12 @@ const formatDate = (value?: string | null) => {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 };
 
-const statusLabel: Record<ClientFilter, string> = {
-    All: "All",
-    Vip: "VIP",
-    Regular: "Regular",
-    New: "New",
-    AtRisk: "At risk",
-};
-
 export default function Clients() {
     const navigate = useNavigate();
     const [overview, setOverview] = useState<ClientOverview | null>(null);
     const [clients, setClients] = useState<ClientListItem[]>([]);
+    const [filters, setFilters] = useState<ClientFilterDefinition[]>(fallbackFilters);
+    const [loadingFilters, setLoadingFilters] = useState(true);
     const [filter, setFilter] = useState<ClientFilter>("All");
     const [search, setSearch] = useState("");
     const [loadingList, setLoadingList] = useState(false);
@@ -49,6 +43,26 @@ export default function Clients() {
     const [addForm, setAddForm] = useState({ firstName: "", lastName: "", phone: "", email: "", segment: "" });
     const [savingClient, setSavingClient] = useState(false);
     const abortControllerRef = useRef<AbortController | null>(null);
+
+    const loadFilters = async () => {
+        setLoadingFilters(true);
+        try {
+            const data = await getClientFilters();
+            setFilters(data);
+            if (!data.some((item) => item.key === filter) && data.length > 0) {
+                setFilter(data[0].key);
+            }
+        } catch (error: any) {
+            if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
+            console.error("Failed to load client filters", error);
+            setFilters(fallbackFilters);
+            if (!fallbackFilters.some((item) => item.key === filter)) {
+                setFilter(fallbackFilters[0].key);
+            }
+        } finally {
+            setLoadingFilters(false);
+        }
+    };
 
     const loadOverview = async () => {
         setLoadingOverview(true);
@@ -97,6 +111,10 @@ export default function Clients() {
     };
 
     useEffect(() => {
+        void loadFilters();
+    }, []);
+
+    useEffect(() => {
         void loadOverview();
     }, []);
 
@@ -127,6 +145,22 @@ export default function Clients() {
         document.addEventListener("keydown", onKeyDown);
         return () => document.removeEventListener("keydown", onKeyDown);
     }, []);
+
+    const statusLabel = useMemo(() => {
+        const base = fallbackFilters.reduce((acc, item) => {
+            acc[item.key] = item.label;
+            return acc;
+        }, {} as Record<ClientFilter, string>);
+        filters.forEach((item) => {
+            base[item.key] = item.label;
+        });
+        return base;
+    }, [filters]);
+
+    const filterOptions = useMemo(
+        () => (loadingFilters ? fallbackFilters : filters),
+        [filters, loadingFilters]
+    );
 
     const handleLogout = () => {
         authApi.logout();
@@ -226,16 +260,18 @@ export default function Clients() {
                             />
                         </div>
                         <div className="clients-segments" role="tablist" aria-label="Client segments">
-                            {filters.map((item) => (
+                            {filterOptions.map((item) => (
                                 <button
-                                    key={item.value}
+                                    key={item.key}
                                     type="button"
                                     role="tab"
-                                    aria-selected={filter === item.value}
-                                    className={`clients-segment${filter === item.value ? " is-active" : ""}`}
-                                    onClick={() => setFilter(item.value)}
+                                    aria-selected={filter === item.key}
+                                    className={`clients-segment${filter === item.key ? " is-active" : ""}`}
+                                    onClick={() => setFilter(item.key)}
+                                    disabled={loadingFilters}
+                                    aria-busy={loadingFilters}
                                 >
-                                    {item.label}
+                                    {loadingFilters ? "Loading…" : item.label}
                                 </button>
                             ))}
                         </div>
@@ -299,12 +335,12 @@ export default function Clients() {
                                                 </td>
                                                 <td>{formatDate(client.lastVisitAt)}</td>
                                                 <td>{formatCurrency(client.lifetimeValue)}</td>
-                                                <td>
-                                                    <span className={`clients-status clients-status--${client.status.toLowerCase()}`}>
-                                                        {statusLabel[client.status]}
-                                                    </span>
-                                                </td>
-                                            </tr>
+                                                    <td>
+                                                        <span className={`clients-status clients-status--${client.status.toLowerCase()}`}>
+                                                        {statusLabel[client.status] ?? client.status}
+                                                        </span>
+                                                    </td>
+                                                </tr>
                                         ))
                                     )}
                                 </tbody>
@@ -327,7 +363,7 @@ export default function Clients() {
                                 </div>
                                 <div className="clients-modal__status">
                                     <span className={`clients-status clients-status--${selectedClient.status.toLowerCase()}`}>
-                                        {statusLabel[selectedClient.status]}
+                                        {statusLabel[selectedClient.status] ?? selectedClient.status}
                                     </span>
                                     {loadingDetails && <span className="clients-loading">Refreshing…</span>}
                                     <button type="button" className="clients-modal__close" onClick={() => setSelectedClient(null)}>
