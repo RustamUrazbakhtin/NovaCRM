@@ -92,3 +92,10 @@ public record ClientStatusTagDto(Guid Id, string Name, string? Color)
 {
     public static ClientStatusTagDto FromDomain(ClientStatusTag tag) => new(tag.Id, tag.Name, tag.Color);
 }
+
+public record ClientFilterDto(string Key, string Label, string? Color)
+{
+    public static ClientFilterDto All { get; } = new("All", "All", null);
+
+    public static ClientFilterDto FromDomain(ClientStatusTag tag) => new(tag.Id.ToString(), tag.Name, tag.Color);
+}

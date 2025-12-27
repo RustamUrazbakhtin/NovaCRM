@@ -292,6 +292,13 @@
     padding: 20px;
 }
 
+.clients-error {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
 .clients-modal {
     position: fixed;
     inset: 0;

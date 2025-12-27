@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using NovaCRM.Domain.Clients;
 using NovaCRM.Server.Contracts.Clients;
 using NovaCRM.Server.Services;
@@ -37,13 +38,30 @@ public class ClientsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IReadOnlyCollection<ClientListItemDto>>> GetClients([
         FromQuery] string? search,
-        [FromQuery] Guid? statusTagId,
+        [FromQuery] string? filter,
         CancellationToken cancellationToken = default)
     {
         var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
         if (organizationId is null)
         {
             return Unauthorized();
+        }
+
+        Guid? statusTagId = null;
+        if (!string.IsNullOrWhiteSpace(filter) && !string.Equals(filter, "All", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!Guid.TryParse(filter, out var parsed))
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Title = "Invalid filter",
+                    Detail = "The filter must be \"All\" or a valid status tag identifier.",
+                    Extensions = { ["traceId"] = HttpContext.TraceIdentifier }
+                });
+            }
+
+            statusTagId = parsed;
         }
 
         var clients = await _clientService.SearchClientsAsync(organizationId.Value, search, statusTagId, cancellationToken);
@@ -74,6 +92,22 @@ public class ClientsController : ControllerBase
 
         var tags = await _clientService.GetStatusTagsAsync(organizationId.Value, cancellationToken);
         return Ok(tags.Select(ClientStatusTagDto.FromDomain).ToList());
+    }
+
+    [HttpGet("filters")]
+    public async Task<ActionResult<IReadOnlyCollection<ClientFilterDto>>> GetFilters(CancellationToken cancellationToken = default)
+    {
+        var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
+        if (organizationId is null)
+        {
+            return Unauthorized();
+        }
+
+        var tags = await _clientService.GetStatusTagsAsync(organizationId.Value, cancellationToken);
+        var filters = new List<ClientFilterDto> { ClientFilterDto.All };
+        filters.AddRange(tags.Select(ClientFilterDto.FromDomain));
+
+        return Ok(filters);
     }
 
     [HttpGet("{id:guid}")]

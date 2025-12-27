@@ -59,15 +59,17 @@ export interface ClientTag {
     color?: string | null;
 }
 
-export interface ClientStatusTag {
-    id: string;
-    name: string;
+export type ClientFilterKey = "All" | string;
+
+export interface ClientFilter {
+    key: ClientFilterKey;
+    label: string;
     color?: string | null;
 }
 
 export interface SearchClientsRequest {
     search?: string;
-    statusTagId?: string | null;
+    filter?: ClientFilterKey | null;
 }
 
 export async function getClientsOverview(signal?: AbortSignal): Promise<ClientOverview> {
@@ -76,11 +78,12 @@ export async function getClientsOverview(signal?: AbortSignal): Promise<ClientOv
 }
 
 export async function searchClients(params: SearchClientsRequest, signal?: AbortSignal): Promise<ClientListItem[]> {
-    const { search, statusTagId } = params;
+    const { search, filter } = params;
+    const filterParam = filter && filter !== "All" ? filter : undefined;
     const { data } = await api.get<ClientListItem[]>("/clients", {
         params: {
             search: search?.trim() || undefined,
-            statusTagId: statusTagId || undefined,
+            filter: filterParam || undefined,
         },
         signal,
     });
@@ -102,7 +105,7 @@ export async function getClientTags(signal?: AbortSignal): Promise<ClientTag[]> 
     return data;
 }
 
-export async function getClientStatusTags(signal?: AbortSignal): Promise<ClientStatusTag[]> {
-    const { data } = await api.get<ClientStatusTag[]>("/clients/status-tags", { signal });
+export async function getClientFilters(signal?: AbortSignal): Promise<ClientFilter[]> {
+    const { data } = await api.get<ClientFilter[]>("/clients/filters", { signal });
     return data;
 }

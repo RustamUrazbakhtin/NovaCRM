@@ -2,8 +2,8 @@ import axios from "axios";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../layout/Header";
 import ThemeProvider from "../providers/ThemeProvider";
-import type { ClientDetails, ClientListItem, ClientOverview, ClientStatusTag } from "../api/clients";
-import { createClient, getClientDetails, getClientsOverview, getClientStatusTags, searchClients } from "../api/clients";
+import type { ClientDetails, ClientFilter, ClientListItem, ClientOverview } from "../api/clients";
+import { createClient, getClientDetails, getClientFilters, getClientsOverview, searchClients } from "../api/clients";
 import "../styles/dashboard/index.css";
 import "../styles/clients/index.css";
 import { authApi } from "../app/auth";
@@ -24,26 +24,19 @@ export default function Clients() {
     const navigate = useNavigate();
     const [overview, setOverview] = useState<ClientOverview | null>(null);
     const [clients, setClients] = useState<ClientListItem[]>([]);
-    const [statusFilter, setStatusFilter] = useState<string | null>(null);
-    const [statusTags, setStatusTags] = useState<ClientStatusTag[]>([]);
+    const [statusFilter, setStatusFilter] = useState<string>("All");
+    const [filters, setFilters] = useState<ClientFilter[]>([{ key: "All", label: "All", color: null }]);
     const [search, setSearch] = useState("");
     const [loadingList, setLoadingList] = useState(false);
     const [loadingOverview, setLoadingOverview] = useState(false);
     const [loadingDetails, setLoadingDetails] = useState(false);
+    const [clientsError, setClientsError] = useState<string | null>(null);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [selectedClient, setSelectedClient] = useState<ClientDetails | null>(null);
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [addForm, setAddForm] = useState({ firstName: "", lastName: "", phone: "", email: "", segment: "" });
     const [savingClient, setSavingClient] = useState(false);
     const abortControllerRef = useRef<AbortController | null>(null);
-
-    const filters = useMemo(
-        () => [
-            { id: null as string | null, label: "All" },
-            ...statusTags.map((tag) => ({ id: tag.id, label: tag.name })),
-        ],
-        [statusTags]
-    );
 
     const loadOverview = async () => {
         setLoadingOverview(true);
@@ -59,25 +52,41 @@ export default function Clients() {
     };
 
     useEffect(() => {
-        getClientStatusTags()
-            .then(setStatusTags)
-            .catch((error) => console.error("Failed to load status tags", error));
+        const controller = new AbortController();
+
+        getClientFilters(controller.signal)
+            .then((data) => {
+                const incoming = data.length > 0 ? data : [{ key: "All", label: "All", color: null }];
+                setFilters(incoming);
+                setStatusFilter((current) =>
+                    current && incoming.some((item) => item.key === current) ? current : "All"
+                );
+            })
+            .catch((error) => {
+                console.error("Failed to load client filters", error?.message ?? error);
+                setFilters([{ key: "All", label: "All", color: null }]);
+                setStatusFilter("All");
+            });
+
+        return () => controller.abort();
     }, []);
 
-    const loadClients = async (query: string, statusTagId: string | null) => {
+    const loadClients = async (query: string, filterKey: string) => {
         abortControllerRef.current?.abort();
         const controller = new AbortController();
         abortControllerRef.current = controller;
         setLoadingList(true);
+        setClientsError(null);
         try {
-            const data = await searchClients({ search: query, statusTagId }, controller.signal);
+            const data = await searchClients({ search: query, filter: filterKey }, controller.signal);
             setClients(data);
             if (data.length === 0) {
                 setSelectedId(null);
             }
         } catch (error: any) {
             if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
-            console.error("Failed to load clients", error);
+            setClientsError("Failed to load clients");
+            console.error("Failed to load clients", error?.message ?? error);
         } finally {
             setLoadingList(false);
         }
@@ -229,12 +238,13 @@ export default function Clients() {
                         <div className="clients-segments" role="tablist" aria-label="Client segments">
                             {filters.map((item) => (
                                 <button
-                                    key={item.id ?? "all"}
+                                    key={item.key}
                                     type="button"
                                     role="tab"
-                                    aria-selected={statusFilter === item.id}
-                                    className={`clients-segment${statusFilter === item.id ? " is-active" : ""}`}
-                                    onClick={() => setStatusFilter(item.id)}
+                                    aria-selected={statusFilter === item.key}
+                                    className={`clients-segment${statusFilter === item.key ? " is-active" : ""}`}
+                                    onClick={() => setStatusFilter(item.key)}
+                                    style={item.color ? { borderColor: item.color } : undefined}
                                 >
                                     {item.label}
                                 </button>
@@ -255,7 +265,18 @@ export default function Clients() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {loadingList ? (
+                                    {clientsError ? (
+                                        <tr>
+                                            <td colSpan={5} className="clients-table-empty">
+                                                <div className="clients-error">
+                                                    <p>{clientsError}.</p>
+                                                    <button type="button" className="clients-primary" onClick={() => void loadClients(search, statusFilter)}>
+                                                        Retry
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : loadingList ? (
                                         <tr>
                                             <td colSpan={5} className="clients-table-empty">
                                                 Loading clients…

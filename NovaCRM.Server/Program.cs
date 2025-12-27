@@ -9,6 +9,10 @@ using NovaCRM.Data.Model;
 using NovaCRM.Server.Services;
 using NovaCRM.Server.Services.Clients;
 using NovaCRM.Domain.Clients;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
+using Microsoft.AspNetCore.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,6 +78,27 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // --- Middleware ---
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var exceptionDetails = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+        var problem = new ProblemDetails
+        {
+            Title = "An unexpected error occurred.",
+            Status = StatusCodes.Status500InternalServerError,
+            Detail = exceptionDetails?.Message,
+            Instance = context.Request.Path
+        };
+
+        problem.Extensions["traceId"] = Activity.Current?.Id ?? context.TraceIdentifier;
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/problem+json";
+        await context.Response.WriteAsJsonAsync(problem);
+    });
+});
+
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
