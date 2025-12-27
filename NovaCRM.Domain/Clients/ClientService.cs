@@ -4,16 +4,6 @@ public class ClientService : IClientService
 {
     private readonly IClientRepository _repository;
 
-    private static readonly string[] StatusPriority =
-    {
-        "BLOCKED",
-        "PROBLEM",
-        "RISK",
-        "VIP",
-        "NEW",
-        "REGULAR",
-    };
-
     public ClientService(IClientRepository repository)
     {
         _repository = repository;
@@ -106,7 +96,6 @@ public class ClientService : IClientService
             LastName = request.LastName.Trim(),
             Phone = request.Phone.Trim(),
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
-            Segment = string.IsNullOrWhiteSpace(request.Segment) ? null : request.Segment.Trim()
         };
 
         if (string.IsNullOrWhiteSpace(trimmed.FirstName))
@@ -122,6 +111,11 @@ public class ClientService : IClientService
         if (string.IsNullOrWhiteSpace(trimmed.Phone))
         {
             throw new ArgumentException("Phone is required", nameof(request));
+        }
+
+        if (trimmed.SegmentTagId is not null)
+        {
+            return ValidateSegmentAndCreateAsync(organizationId, trimmed, cancellationToken);
         }
 
         return _repository.AddClientAsync(organizationId, trimmed, cancellationToken);
@@ -157,16 +151,32 @@ public class ClientService : IClientService
 
     private static ClientStatusTag ResolveStatus(IReadOnlyCollection<ClientTag> tags)
     {
-        if (tags.Count == 0)
+        var statusTags = tags.Where(tag => ClientStatusRules.IsStatusName(tag.Name)).ToList();
+
+        if (statusTags.Count == 0)
         {
             return new ClientStatusTag(Guid.Empty, "Regular", null);
         }
 
-        var prioritized = StatusPriority
-            .Select(priority => tags.FirstOrDefault(tag => string.Equals(tag.Name, priority, StringComparison.OrdinalIgnoreCase)))
+        var prioritized = ClientStatusRules.StatusPriority
+            .Select(priority => statusTags.FirstOrDefault(tag => string.Equals(tag.Name, priority, StringComparison.OrdinalIgnoreCase)))
             .FirstOrDefault(tag => tag is not null);
 
-        var chosen = prioritized ?? tags.First();
+        var chosen = prioritized ?? statusTags.First();
         return new ClientStatusTag(chosen.Id, chosen.Name, chosen.Color);
+    }
+
+    private async Task<ClientCreatedResult> ValidateSegmentAndCreateAsync(
+        Guid organizationId,
+        CreateClientRequest trimmed,
+        CancellationToken cancellationToken)
+    {
+        var statusTags = await _repository.GetStatusTagsAsync(organizationId, cancellationToken);
+        if (trimmed.SegmentTagId is not null && statusTags.All(tag => tag.Id != trimmed.SegmentTagId.Value))
+        {
+            throw new ArgumentException("The selected segment is invalid for this organization.", nameof(trimmed));
+        }
+
+        return await _repository.AddClientAsync(organizationId, trimmed, cancellationToken);
     }
 }

@@ -25,7 +25,6 @@ public class ClientRepository : IClientRepository
                 c.LastName,
                 c.Phone,
                 c.Email,
-                c.Segment,
                 c.LastVisitAt,
                 c.TotalVisits,
                 c.Ltv,
@@ -52,7 +51,6 @@ public class ClientRepository : IClientRepository
             c.LastName,
             c.Phone,
             c.Email,
-            c.Segment,
             c.LastVisitAt,
             c.TotalVisits,
             c.Ltv,
@@ -75,7 +73,6 @@ public class ClientRepository : IClientRepository
                 c.LastName,
                 c.Phone,
                 c.Email,
-                c.Segment,
                 c.LastVisitAt,
                 c.TotalVisits,
                 c.Ltv,
@@ -119,7 +116,6 @@ public class ClientRepository : IClientRepository
             client.LastName,
             client.Phone,
             client.Email,
-            client.Segment,
             client.LastVisitAt,
             client.TotalVisits,
             client.Ltv,
@@ -134,6 +130,20 @@ public class ClientRepository : IClientRepository
 
     public async Task<ClientCreatedResult> AddClientAsync(Guid organizationId, CreateClientRequest request, CancellationToken cancellationToken = default)
     {
+        Data.Model.ClientTag? segmentTag = null;
+        if (request.SegmentTagId is not null)
+        {
+            segmentTag = await _dbContext.ClientTags
+                .AsNoTracking()
+                .Where(t => t.OrganizationId == organizationId && t.DeletedAt == null)
+                .FirstOrDefaultAsync(t => t.Id == request.SegmentTagId.Value, cancellationToken);
+
+            if (segmentTag is null || !ClientStatusRules.IsStatusName(segmentTag.Name))
+            {
+                throw new ArgumentException("Segment tag is not valid for this organization.");
+            }
+        }
+
         var branchId = await _dbContext.Branches
             .Where(b => b.OrganizationId == organizationId && b.DeletedAt == null)
             .OrderByDescending(b => b.IsDefault)
@@ -150,7 +160,7 @@ public class ClientRepository : IClientRepository
             LastName = request.LastName,
             Phone = request.Phone,
             Email = request.Email,
-            Segment = request.Segment,
+            Segment = segmentTag?.Name,
             MarketingOptIn = false,
             TotalVisits = 0,
             Ltv = 0,
@@ -159,6 +169,17 @@ public class ClientRepository : IClientRepository
         };
 
         _dbContext.Clients.Add(client);
+
+        if (segmentTag is not null)
+        {
+            _dbContext.ClientTagLinks.Add(new Data.Model.ClientTagLink
+            {
+                ClientId = client.Id,
+                TagId = segmentTag.Id,
+                CreatedAt = now
+            });
+        }
+
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return new ClientCreatedResult(client.Id);
@@ -181,6 +202,7 @@ public class ClientRepository : IClientRepository
         var tags = await _dbContext.ClientTags
             .AsNoTracking()
             .Where(t => t.OrganizationId == organizationId && t.DeletedAt == null)
+            .Where(t => ClientStatusRules.IsStatusName(t.Name))
             .OrderBy(t => t.Name)
             .Select(t => new ClientStatusTag(t.Id, t.Name, t.Color))
             .ToListAsync(cancellationToken);

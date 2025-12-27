@@ -1,3 +1,5 @@
+using System;
+
 namespace NovaCRM.Domain.Clients;
 
 public record ClientListItem(
@@ -46,5 +48,5 @@ public record CreateClientRequest(
     string LastName,
     string Phone,
     string? Email,
-    string? Segment
+    Guid? SegmentTagId
 );

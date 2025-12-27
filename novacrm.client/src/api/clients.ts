@@ -50,7 +50,7 @@ export interface CreateClientPayload {
     lastName: string;
     phone: string;
     email?: string | null;
-    segment?: string | null;
+    segmentTagId?: string | null;
 }
 
 export interface ClientTag {
@@ -107,5 +107,10 @@ export async function getClientTags(signal?: AbortSignal): Promise<ClientTag[]> 
 
 export async function getClientFilters(signal?: AbortSignal): Promise<ClientFilter[]> {
     const { data } = await api.get<ClientFilter[]>("/clients/filters", { signal });
+    return data;
+}
+
+export async function getClientStatusTags(signal?: AbortSignal): Promise<ClientTag[]> {
+    const { data } = await api.get<ClientTag[]>("/clients/status-tags", { signal });
     return data;
 }

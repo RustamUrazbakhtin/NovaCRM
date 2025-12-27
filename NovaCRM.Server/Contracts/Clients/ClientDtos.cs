@@ -1,3 +1,4 @@
+using System;
 using NovaCRM.Domain.Clients;
 
 namespace NovaCRM.Server.Contracts.Clients;
@@ -78,9 +79,9 @@ public record ClientActivityDto(DateTime OccurredAt, string Title, string? Descr
         new(activity.OccurredAt, activity.Title, activity.Description);
 }
 
-public record CreateClientDto(string FirstName, string LastName, string Phone, string? Email, string? Segment)
+public record CreateClientDto(string FirstName, string LastName, string Phone, string? Email, Guid? SegmentTagId)
 {
-    public CreateClientRequest ToDomain() => new(FirstName, LastName, Phone, Email, Segment);
+    public CreateClientRequest ToDomain() => new(FirstName, LastName, Phone, Email, SegmentTagId);
 }
 
 public record ClientTagDto(Guid Id, string Name, string? Color)

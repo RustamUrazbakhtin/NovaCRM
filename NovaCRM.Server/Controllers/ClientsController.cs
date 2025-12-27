@@ -142,13 +142,26 @@ public class ClientsController : ControllerBase
             return Unauthorized();
         }
 
-        var created = await _clientService.AddClientAsync(organizationId.Value, dto.ToDomain(), cancellationToken);
-        var client = await _clientService.GetClientDetailsAsync(organizationId.Value, created.Id, cancellationToken);
-        if (client is null)
+        try
         {
-            return NotFound();
-        }
+            var created = await _clientService.AddClientAsync(organizationId.Value, dto.ToDomain(), cancellationToken);
+            var client = await _clientService.GetClientDetailsAsync(organizationId.Value, created.Id, cancellationToken);
+            if (client is null)
+            {
+                return NotFound();
+            }
 
-        return CreatedAtAction(nameof(GetClient), new { id = client.Id }, ClientDetailsDto.FromDomain(client));
+            return CreatedAtAction(nameof(GetClient), new { id = client.Id }, ClientDetailsDto.FromDomain(client));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Invalid client data",
+                Detail = ex.Message,
+                Extensions = { ["traceId"] = HttpContext.TraceIdentifier }
+            });
+        }
     }
 }

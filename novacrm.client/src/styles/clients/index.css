@@ -436,12 +436,18 @@
     font-size: 14px;
 }
 
-.clients-form-grid input {
+.clients-form-grid input,
+.clients-form-grid select {
     border-radius: 12px;
     border: 1px solid var(--card-bd);
     padding: 10px 12px;
     font-size: 14px;
     background: var(--card-bg);
+}
+
+.clients-field-hint {
+    color: color-mix(in oklab, var(--ink) 65%, transparent);
+    font-size: 13px;
 }
 
 .clients-modal__footer {

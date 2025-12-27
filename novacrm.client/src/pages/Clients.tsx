@@ -2,8 +2,8 @@ import axios from "axios";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../layout/Header";
 import ThemeProvider from "../providers/ThemeProvider";
-import type { ClientDetails, ClientFilter, ClientListItem, ClientOverview } from "../api/clients";
-import { createClient, getClientDetails, getClientFilters, getClientsOverview, searchClients } from "../api/clients";
+import type { ClientDetails, ClientFilter, ClientListItem, ClientOverview, ClientTag } from "../api/clients";
+import { createClient, getClientDetails, getClientFilters, getClientStatusTags, getClientsOverview, searchClients } from "../api/clients";
 import "../styles/dashboard/index.css";
 import "../styles/clients/index.css";
 import { authApi } from "../app/auth";
@@ -34,8 +34,11 @@ export default function Clients() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [selectedClient, setSelectedClient] = useState<ClientDetails | null>(null);
     const [isAddOpen, setIsAddOpen] = useState(false);
-    const [addForm, setAddForm] = useState({ firstName: "", lastName: "", phone: "", email: "", segment: "" });
+    const [addForm, setAddForm] = useState({ firstName: "", lastName: "", phone: "", email: "", segmentTagId: "" });
     const [savingClient, setSavingClient] = useState(false);
+    const [segmentTags, setSegmentTags] = useState<ClientTag[]>([]);
+    const [loadingSegments, setLoadingSegments] = useState(false);
+    const [segmentsError, setSegmentsError] = useState<string | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
     const loadOverview = async () => {
@@ -117,6 +120,27 @@ export default function Clients() {
     useEffect(() => () => abortControllerRef.current?.abort(), []);
 
     useEffect(() => {
+        if (!isAddOpen || segmentTags.length > 0) {
+            return;
+        }
+
+        const controller = new AbortController();
+        setLoadingSegments(true);
+        setSegmentsError(null);
+
+        getClientStatusTags(controller.signal)
+            .then((data) => setSegmentTags(data))
+            .catch((error: any) => {
+                if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
+                setSegmentsError("Failed to load segments");
+                console.error("Failed to load segment tags", error?.message ?? error);
+            })
+            .finally(() => setLoadingSegments(false));
+
+        return () => controller.abort();
+    }, [isAddOpen, segmentTags.length]);
+
+    useEffect(() => {
         if (!selectedId) {
             setSelectedClient(null);
             return;
@@ -144,7 +168,7 @@ export default function Clients() {
     };
 
     const handleOpenAdd = () => {
-        setAddForm({ firstName: "", lastName: "", phone: "", email: "", segment: "" });
+        setAddForm({ firstName: "", lastName: "", phone: "", email: "", segmentTagId: "" });
         setIsAddOpen(true);
     };
 
@@ -160,12 +184,14 @@ export default function Clients() {
                 lastName: addForm.lastName,
                 phone: addForm.phone,
                 email: addForm.email || null,
-                segment: addForm.segment || null,
+                segmentTagId: addForm.segmentTagId || null,
             });
             setIsAddOpen(false);
             setSelectedId(created.id);
             await loadOverview();
             await loadClients(search, statusFilter);
+        } catch (error: any) {
+            console.error("Failed to create client", error?.message ?? error);
         } finally {
             setSavingClient(false);
         }
@@ -475,12 +501,22 @@ export default function Clients() {
                                 </label>
                                 <label>
                                     <span>Segment</span>
-                                    <input
-                                        type="text"
-                                        value={addForm.segment}
-                                        onChange={(e) => setAddForm((prev) => ({ ...prev, segment: e.target.value }))}
-                                        placeholder="VIP / Regular"
-                                    />
+                                    <select
+                                        value={addForm.segmentTagId}
+                                        disabled={loadingSegments || (!!segmentsError && segmentTags.length === 0)}
+                                        onChange={(e) => setAddForm((prev) => ({ ...prev, segmentTagId: e.target.value }))}
+                                    >
+                                        <option value="">No segment</option>
+                                        {segmentTags.map((tag) => (
+                                            <option key={tag.id} value={tag.id}>
+                                                {tag.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {loadingSegments && <small className="clients-field-hint">Loading segments…</small>}
+                                    {segmentsError && !loadingSegments && (
+                                        <small className="clients-field-hint">{segmentsError}</small>
+                                    )}
                                 </label>
                             </div>
                             <footer className="clients-modal__footer">
