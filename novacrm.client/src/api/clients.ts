@@ -2,6 +2,11 @@ import { api } from "../app/auth";
 
 export type ClientFilter = "All" | "Vip" | "Regular" | "New" | "AtRisk";
 
+export interface ClientFilterDefinition {
+    key: ClientFilter;
+    label: string;
+}
+
 export interface ClientOverview {
     totalClients: number;
     returningClients: number;
@@ -57,6 +62,11 @@ export interface ClientTag {
     id: string;
     name: string;
     color?: string | null;
+}
+
+export async function getClientFilters(signal?: AbortSignal): Promise<ClientFilterDefinition[]> {
+    const { data } = await api.get<ClientFilterDefinition[]>("/clients/filters", { signal });
+    return data;
 }
 
 export async function getClientsOverview(signal?: AbortSignal): Promise<ClientOverview> {

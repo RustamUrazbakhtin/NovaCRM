@@ -6,6 +6,14 @@ public class ClientService : IClientService
 
     private const decimal VipLtvThreshold = 100000m;
     private static readonly TimeSpan AtRiskThreshold = TimeSpan.FromDays(90);
+    private static readonly IReadOnlyCollection<ClientFilterDefinition> DefaultFilters = new[]
+    {
+        new ClientFilterDefinition(ClientFilter.All.ToString(), "All", 1),
+        new ClientFilterDefinition(ClientFilter.Vip.ToString(), "VIP", 2),
+        new ClientFilterDefinition(ClientFilter.Regular.ToString(), "Regular", 3),
+        new ClientFilterDefinition(ClientFilter.New.ToString(), "New", 4),
+        new ClientFilterDefinition(ClientFilter.AtRisk.ToString(), "At risk", 5)
+    };
 
     public ClientService(IClientRepository repository)
     {
@@ -123,6 +131,24 @@ public class ClientService : IClientService
     public Task<IReadOnlyCollection<ClientTag>> GetTagsAsync(Guid organizationId, CancellationToken cancellationToken = default)
     {
         return _repository.GetTagsAsync(organizationId, cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<ClientFilterDefinition>> GetFiltersAsync(
+        Guid organizationId,
+        CancellationToken cancellationToken = default)
+    {
+        var definitions = await _repository.GetFiltersAsync(organizationId, cancellationToken);
+
+        var parsed = definitions
+            .Select(definition => Enum.TryParse<ClientFilter>(definition.Key, true, out var parsedKey)
+                ? new ClientFilterDefinition(parsedKey.ToString(), definition.Label, definition.SortOrder)
+                : null)
+            .Where(definition => definition is not null)
+            .Select(definition => definition!)
+            .OrderBy(definition => definition.SortOrder)
+            .ToList();
+
+        return parsed.Count > 0 ? parsed : DefaultFilters.ToList();
     }
 
     private static ClientStatus ResolveStatus(string? segment, decimal lifetimeValue, DateTime? lastVisitAt, int totalVisits)
