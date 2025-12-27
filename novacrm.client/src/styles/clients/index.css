@@ -25,116 +25,74 @@
     color: color-mix(in oklab, var(--ink) 60%, transparent);
 }
 
-.clients-add {
-    border: none;
-    border-radius: 999px;
-    padding: 10px 20px;
-    font-weight: 600;
-    font-size: 15px;
-    color: #fff;
-    background: linear-gradient(120deg, var(--accent), var(--accent-2));
-    cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    box-shadow: 0 8px 18px -12px var(--accent);
+.clients-overview-card,
+.clients-widget {
+    border-radius: 20px;
+    border: 1px solid var(--card-bd);
+    background: var(--card-bg);
+    box-shadow: 0 18px 48px -32px color-mix(in oklab, var(--ink) 18%, transparent);
+    padding: clamp(18px, 3vw, 26px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(16px, 2vw, 20px);
 }
 
-.clients-add:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 24px -14px var(--accent-2);
+.clients-overview-card header,
+.clients-widget__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
-.clients-add:active {
-    transform: scale(0.99);
+.clients-overview-card h2 {
+    margin: 0;
+    font-size: 18px;
 }
 
-.clients-metrics {
+.clients-overview-card span {
+    color: color-mix(in oklab, var(--ink) 60%, transparent);
+}
+
+.clients-metrics-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: var(--gap);
 }
 
 .clients-metric-card {
-    padding: 18px;
-    border-radius: 18px;
-    background: var(--card-bg);
+    padding: 16px;
+    border-radius: 16px;
     border: 1px solid var(--card-bd);
+    background: color-mix(in oklab, var(--card-bg) 80%, transparent);
     display: flex;
     flex-direction: column;
     gap: 6px;
-    min-height: 120px;
 }
 
 .clients-metric-label {
-    font-size: 14px;
-    color: color-mix(in oklab, var(--ink) 55%, transparent);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.clients-metric-value {
-    font-size: clamp(26px, 4vw, 32px);
-    font-weight: 700;
-}
-
-.clients-metric-hint {
-    font-size: 14px;
-    color: color-mix(in oklab, var(--ink) 50%, transparent);
-}
-
-
-.clients-content {
-    display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 1fr);
-    gap: calc(var(--gap) * 2);
-    align-items: start;
-}
-
-.clients-table-panel {
-    min-width: 0;
-}
-
-.clients-table-wrapper {
-    border-radius: 22px;
-    border: 1px solid var(--card-bd);
-    background: var(--card-bg);
-    overflow: hidden;
-    box-shadow: 0 18px 48px -32px color-mix(in oklab, var(--ink) 18%, transparent);
-}
-
-.clients-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 640px;
-}
-
-.clients-table thead th {
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: color-mix(in oklab, var(--ink) 55%, transparent);
 }
 
-.clients-table th,
-.clients-table td {
-    padding: 16px 20px;
-    text-align: left;
-    border-bottom: 1px solid color-mix(in oklab, var(--card-bd) 75%, transparent);
+.clients-metric-value {
+    font-size: clamp(24px, 4vw, 30px);
+    font-weight: 700;
 }
 
-.clients-table-controls th {
-    padding: 18px 20px 12px;
-    border-bottom: none;
+.clients-metric-hint {
+    font-size: 14px;
+    color: color-mix(in oklab, var(--ink) 55%, transparent);
 }
 
-.clients-table-head th {
-    background: color-mix(in oklab, var(--ink) 4%, transparent);
-}
-
-.clients-table-tools {
+.clients-widget__actions {
     display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
     align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .clients-search {
@@ -180,70 +138,87 @@
     color: var(--ink);
 }
 
+.clients-add {
+    border: none;
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 15px;
+    color: #fff;
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 8px 18px -12px var(--accent);
+}
+
+.clients-add:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px -14px var(--accent-2);
+}
+
+.clients-add:active {
+    transform: scale(0.99);
+}
+
+.clients-table-card {
+    border-radius: 18px;
+    border: 1px solid var(--card-bd);
+    overflow: hidden;
+}
+
+.clients-table-scroll {
+    max-height: 520px;
+    overflow: auto;
+}
+
+.clients-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 720px;
+}
+
+.clients-table th,
+.clients-table td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid color-mix(in oklab, var(--card-bd) 75%, transparent);
+}
+
+.clients-table thead {
+    background: color-mix(in oklab, var(--ink) 4%, transparent);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
 .clients-table-row {
     cursor: pointer;
-    transition: background 0.15s ease, box-shadow 0.15s ease;
+    transition: background 0.15s ease;
 }
 
 .clients-table-row:hover {
     background: color-mix(in oklab, var(--accent) 6%, transparent);
 }
 
-.clients-table-row.is-active {
-    background: color-mix(in oklab, var(--accent) 12%, transparent);
-    box-shadow: inset 3px 0 0 color-mix(in oklab, var(--accent-2) 60%, transparent);
-}
-
-.clients-table-row:focus-visible {
-    outline: 2px solid color-mix(in oklab, var(--accent-2) 55%, transparent);
-    outline-offset: -2px;
-}
-
 .clients-table-primary {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .clients-client-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
 }
 
 .clients-client-name {
     font-weight: 600;
 }
 
-.clients-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: var(--ink);
-    background: color-mix(in oklab, var(--ink) 8%, transparent);
-}
-
-.clients-status--vip {
-    background: color-mix(in oklab, var(--accent) 25%, transparent);
-}
-
-.clients-status--лояльный {
-    background: color-mix(in oklab, #30d158 18%, transparent);
-}
-
-.clients-status--новый {
-    background: color-mix(in oklab, #0a84ff 16%, transparent);
-}
-
-.clients-status--риск {
-    background: color-mix(in oklab, #ff9f0a 20%, transparent);
+.clients-client-city {
+    color: color-mix(in oklab, var(--ink) 60%, transparent);
 }
 
 .clients-client-meta {
@@ -268,55 +243,132 @@
     color: color-mix(in oklab, var(--ink) 70%, transparent);
 }
 
-.clients-empty {
-    border-radius: 16px;
-    border: 1px dashed color-mix(in oklab, var(--ink) 18%, transparent);
-    background: color-mix(in oklab, var(--ink) 4%, transparent);
-    padding: 24px;
+.clients-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--ink);
+    background: color-mix(in oklab, var(--ink) 8%, transparent);
+}
+
+.clients-status--vip {
+    background: color-mix(in oklab, var(--accent) 25%, transparent);
+}
+
+.clients-status--regular {
+    background: color-mix(in oklab, #30d158 14%, transparent);
+}
+
+.clients-status--new {
+    background: color-mix(in oklab, #0a84ff 16%, transparent);
+}
+
+.clients-status--atrisk {
+    background: color-mix(in oklab, #ff9f0a 20%, transparent);
+}
+
+.clients-status--at-risk,
+.clients-status--risk {
+    background: color-mix(in oklab, #ff9f0a 20%, transparent);
+}
+
+.clients-status--problem {
+    background: color-mix(in oklab, #ff9f0a 26%, transparent);
+}
+
+.clients-status--blocked {
+    background: color-mix(in oklab, #ff453a 28%, transparent);
+}
+
+.clients-table-empty {
     text-align: center;
     color: color-mix(in oklab, var(--ink) 60%, transparent);
+    padding: 20px;
 }
 
-.clients-detail-panel {
-    min-height: 360px;
-}
-
-.clients-detail-card {
-    border-radius: 24px;
-    border: 1px solid var(--card-bd);
-    background: var(--card-bg);
-    padding: clamp(20px, 3vw, 28px);
-    display: flex;
-    flex-direction: column;
-    gap: clamp(16px, 3vw, 24px);
-}
-
-.clients-detail-header {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.clients-detail-title {
-    display: flex;
-    flex-wrap: wrap;
+.clients-error {
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 12px;
 }
 
-.clients-detail-title h2 {
-    margin: 0;
-    font-size: clamp(22px, 3vw, 26px);
+.clients-modal {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    z-index: 40;
 }
 
-.clients-detail-header p {
+.clients-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in oklab, #000 50%, transparent);
+    backdrop-filter: blur(6px);
+}
+
+.clients-modal__content {
+    position: relative;
+    background: var(--card-bg);
+    border: 1px solid var(--card-bd);
+    border-radius: 18px;
+    padding: clamp(18px, 3vw, 28px);
+    width: min(720px, 92vw);
+    max-height: 90vh;
+    overflow: auto;
+    box-shadow: 0 24px 64px -28px color-mix(in oklab, #000 36%, transparent);
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.clients-modal__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.clients-modal__header h2 {
     margin: 0;
+}
+
+.clients-modal__header p {
+    margin: 4px 0 0;
     color: color-mix(in oklab, var(--ink) 60%, transparent);
+}
+
+.clients-modal__status {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.clients-loading {
+    font-size: 12px;
+    color: color-mix(in oklab, var(--ink) 55%, transparent);
+    align-self: center;
+}
+
+.clients-modal__close {
+    border: 1px solid var(--card-bd);
+    background: var(--card-bg);
+    border-radius: 10px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
 }
 
 .clients-detail-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 16px;
 }
 
@@ -329,7 +381,6 @@
 
 .clients-detail-section h3 {
     margin: 0 0 8px;
-    font-size: 16px;
 }
 
 .clients-detail-contacts {
@@ -351,7 +402,7 @@
 
 .clients-timeline li {
     display: grid;
-    grid-template-columns: minmax(90px, auto) 1fr;
+    grid-template-columns: minmax(120px, auto) 1fr;
     gap: 12px;
     font-size: 14px;
 }
@@ -366,63 +417,84 @@
     color: color-mix(in oklab, var(--ink) 60%, transparent);
 }
 
-.clients-tasks li {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    font-size: 14px;
-    color: color-mix(in oklab, var(--ink) 65%, transparent);
-}
-
-.clients-tasks input[type="checkbox"] {
-    margin-top: 3px;
-}
-
-.clients-tasks small {
-    display: block;
-    color: color-mix(in oklab, var(--ink) 55%, transparent);
-}
-
 .clients-detail-notes {
     margin: 0;
     line-height: 1.5;
     color: color-mix(in oklab, var(--ink) 65%, transparent);
 }
 
-@media (max-width: 1023.98px) {
-    .clients-content {
-        grid-template-columns: 1fr;
-    }
+.clients-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
 
+.clients-form-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.clients-form-grid input,
+.clients-form-grid select {
+    border-radius: 12px;
+    border: 1px solid var(--card-bd);
+    padding: 10px 12px;
+    font-size: 14px;
+    background: var(--card-bg);
+}
+
+.clients-field-hint {
+    color: color-mix(in oklab, var(--ink) 65%, transparent);
+    font-size: 13px;
+}
+
+.clients-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.clients-secondary,
+.clients-primary {
+    border: 1px solid var(--card-bd);
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--card-bg);
+}
+
+.clients-primary {
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    color: #fff;
+    border: none;
+}
+
+.clients-primary:disabled {
+    opacity: 0.7;
+    cursor: progress;
+}
+
+@media (max-width: 900px) {
     .clients-table {
-        min-width: 100%;
+        min-width: 580px;
     }
 
-    .clients-table-wrapper {
-        border-radius: 18px;
-    }
-
-    .clients-detail-panel {
-        order: -1;
+    .clients-table-scroll {
+        max-height: 420px;
     }
 }
 
-@media (max-width: 639.98px) {
-    .clients-metrics {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    }
-
-    .clients-timeline li {
-        grid-template-columns: 1fr;
-    }
-
-    .clients-table-tools {
+@media (max-width: 640px) {
+    .clients-overview-card header,
+    .clients-widget__header {
         flex-direction: column;
-        align-items: stretch;
+        align-items: flex-start;
     }
 
     .clients-segments {
-        justify-content: flex-start;
         margin-left: 0;
     }
 
