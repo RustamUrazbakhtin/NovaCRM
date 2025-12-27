@@ -47,6 +47,8 @@ public partial class Organization
 
     public virtual ICollection<ClientTag> ClientTags { get; set; } = new List<ClientTag>();
 
+    public virtual ICollection<ClientSegmentDefinition> ClientSegmentDefinitions { get; set; } = new List<ClientSegmentDefinition>();
+
     public virtual ICollection<Client> Clients { get; set; } = new List<Client>();
 
     public virtual ICollection<ExpenseCategory> ExpenseCategories { get; set; } = new List<ExpenseCategory>();

@@ -47,6 +47,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<ClientNote> ClientNotes { get; set; }
 
+    public virtual DbSet<ClientSegmentDefinition> ClientSegmentDefinitions { get; set; }
+
     public virtual DbSet<ClientTag> ClientTags { get; set; }
 
     public virtual DbSet<ClientTagLink> ClientTagLinks { get; set; }
@@ -382,6 +384,70 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.Organization).WithMany(p => p.Clients)
                 .HasForeignKey(d => d.OrganizationId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ClientSegmentDefinition>(entity =>
+        {
+            entity.HasIndex(e => new { e.OrganizationId, e.Key }, "IX_ClientSegmentDefinitions_OrganizationId_Key")
+                .IsUnique();
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.Key).HasMaxLength(64);
+            entity.Property(e => e.Label).HasMaxLength(128);
+            entity.Property(e => e.SortOrder).HasDefaultValue(0);
+
+            entity.HasOne(d => d.Organization).WithMany(p => p.ClientSegmentDefinitions)
+                .HasForeignKey(d => d.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasData(
+                new ClientSegmentDefinition
+                {
+                    Id = Guid.Parse("3f7f0a73-b38b-4e9f-94d1-0d0f2b5759d1"),
+                    OrganizationId = null,
+                    Key = "All",
+                    Label = "All",
+                    SortOrder = 1,
+                    IsActive = true
+                },
+                new ClientSegmentDefinition
+                {
+                    Id = Guid.Parse("2aaf7d9a-487d-4b33-9b30-cc6ad3a2e6d1"),
+                    OrganizationId = null,
+                    Key = "Vip",
+                    Label = "VIP",
+                    SortOrder = 2,
+                    IsActive = true
+                },
+                new ClientSegmentDefinition
+                {
+                    Id = Guid.Parse("8f2b6d4d-1b46-4e9c-9f7a-e0b0a1e4e0e5"),
+                    OrganizationId = null,
+                    Key = "Regular",
+                    Label = "Regular",
+                    SortOrder = 3,
+                    IsActive = true
+                },
+                new ClientSegmentDefinition
+                {
+                    Id = Guid.Parse("5a3b917a-e09f-4e58-90c1-5d8d4bfa3fb9"),
+                    OrganizationId = null,
+                    Key = "New",
+                    Label = "New",
+                    SortOrder = 4,
+                    IsActive = true
+                },
+                new ClientSegmentDefinition
+                {
+                    Id = Guid.Parse("6dfc2ea0-62e9-4316-9d59-8285343334d2"),
+                    OrganizationId = null,
+                    Key = "AtRisk",
+                    Label = "At risk",
+                    SortOrder = 5,
+                    IsActive = true
+                }
+            );
         });
 
         modelBuilder.Entity<ClientNote>(entity =>
