@@ -268,6 +268,89 @@ namespace NovaCRM.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
+            modelBuilder.Entity("NovaCRM.Data.Model.ClientSegmentDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid?>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId", "Key")
+                        .IsUnique();
+
+                    b.ToTable("ClientSegmentDefinitions", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("3f7f0a73-b38b-4e9f-94d1-0d0f2b5759d1"),
+                            IsActive = true,
+                            Key = "All",
+                            Label = "All",
+                            OrganizationId = (Guid?)null,
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("2aaf7d9a-487d-4b33-9b30-cc6ad3a2e6d1"),
+                            IsActive = true,
+                            Key = "Vip",
+                            Label = "VIP",
+                            OrganizationId = (Guid?)null,
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = new Guid("8f2b6d4d-1b46-4e9c-9f7a-e0b0a1e4e0e5"),
+                            IsActive = true,
+                            Key = "Regular",
+                            Label = "Regular",
+                            OrganizationId = (Guid?)null,
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            Id = new Guid("5a3b917a-e09f-4e58-90c1-5d8d4bfa3fb9"),
+                            IsActive = true,
+                            Key = "New",
+                            Label = "New",
+                            OrganizationId = (Guid?)null,
+                            SortOrder = 4
+                        },
+                        new
+                        {
+                            Id = new Guid("6dfc2ea0-62e9-4316-9d59-8285343334d2"),
+                            IsActive = true,
+                            Key = "AtRisk",
+                            Label = "At risk",
+                            OrganizationId = (Guid?)null,
+                            SortOrder = 5
+                        });
+                });
             modelBuilder.Entity("NovaCRM.Domain.Organization", b =>
                 {
                     b.Property<Guid>("Id")
@@ -458,6 +541,14 @@ namespace NovaCRM.Data.Migrations
                     b.Navigation("Branch");
 
                     b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("NovaCRM.Data.Model.ClientSegmentDefinition", b =>
+                {
+                    b.HasOne("NovaCRM.Domain.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("NovaCRM.Domain.Branch", b =>
