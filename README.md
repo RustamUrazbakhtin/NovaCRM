@@ -1,57 +1,41 @@
-# NovaCRM
+# NovaCRM (Work in Progress)
 
-NovaCRM is a web-based CRM system designed for small businesses, with an initial focus on beauty salons and service-based companies.
+NovaCRM is a personal full-stack CRM project built for portfolio and learning purposes.
+It currently runs locally and is **not production-ready**. The database is **not hosted publicly**.
 
-The project is built as a full-stack application using ASP.NET Core, PostgreSQL, and React, with a strong focus on clean backend architecture, scalability, and maintainability.
-
----
-
-## 🚀 Features
-
-- User authentication and authorization (JWT)
-- Role-based access control (Admin / Manager / Staff)
-- Client management (CRUD)
-- Appointment and schedule management
-- Services catalog
-- Basic analytics and dashboard
-- REST API architecture
-- Database migrations with Entity Framework Core
+The goal of the project is to practice building a modern web app with ASP.NET Core, PostgreSQL, and React (or a front-end UI), focusing on clean backend structure, authentication, and basic CRM modules.
 
 ---
 
-## 🧱 Architecture
+## ✅ Current Status
+
+This project is in an early stage and actively evolving.
+
+### Implemented (partially)
+- Authentication / Authorization
+- Dashboard (basic)
+- Profile page (partially working)
+- Clients module (partially working)
+- Staff module (partially working)
+
+### Not implemented / planned
+- Public demo hosting
+- Full CRUD coverage & validations
+- Automated tests coverage
+- Production configuration (Docker, CI/CD, cloud hosting)
+
+---
+
+## 🧱 Tech Stack
 
 **Backend**
-- ASP.NET Core Web API
+- C# / ASP.NET Core (Web API)
 - Entity Framework Core
 - PostgreSQL
-- Layered architecture (Controllers, Services, Repositories)
-- DTOs and validation
+- Swagger (OpenAPI)
 
 **Frontend**
-- React
-- REST API integration
-- Modular UI structure
-
-**Authentication**
-- JWT access tokens
-- Role-based authorization
-
----
-
-## 🛠 Tech Stack
-
-**Backend**
-- C#
-- .NET / ASP.NET Core
-- Entity Framework Core
-- PostgreSQL
-- REST APIs
-- Swagger
-
-**Frontend**
-- React
-- JavaScript / TypeScript
+- React (UI in progress)
 
 **Tools**
 - Git
@@ -60,20 +44,68 @@ The project is built as a full-stack application using ASP.NET Core, PostgreSQL,
 
 ---
 
-## ⚙️ Getting Started
+## ⚙️ Run Locally
 
 ### Prerequisites
-
-- .NET SDK 8.0+
+- .NET SDK (8.0+ recommended)
 - PostgreSQL
-- Node.js (for frontend)
+- Node.js (if running the frontend)
 
----
-
-### Backend setup
+### 1) Backend
 
 ```bash
 cd backend
 dotnet restore
 dotnet ef database update
 dotnet run
+Swagger (API docs):
+
+bash
+Copy code
+https://localhost:5001/swagger
+2) Frontend (optional)
+bash
+Copy code
+cd frontend
+npm install
+npm start
+Frontend:
+
+arduino
+Copy code
+http://localhost:3000
+🔐 Configuration
+Set your local PostgreSQL connection string in appsettings.json (or appsettings.Development.json).
+
+Example:
+
+json
+Copy code
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=novacrm;Username=postgres;Password=yourpassword"
+  }
+}
+Note: JWT settings / secrets should be stored securely (user-secrets or environment variables).
+This repo may use simplified settings for local development.
+
+🧭 Roadmap (High Level)
+Finish Clients and Staff modules (CRUD + validation)
+
+Improve profile workflow
+
+Add role-based access (Admin/Staff)
+
+Add basic unit tests (services layer)
+
+Add Docker for local setup (optional)
+
+Add CI pipeline (build + tests)
+
+📌 Disclaimer
+This repository is a work-in-progress portfolio project.
+It is not intended for production use.
+
+👨‍💻 Author
+Rustam Urazbakhtin
+GitHub: https://github.com/RustamUrazbakhtin
