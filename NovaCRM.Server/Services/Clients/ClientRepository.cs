@@ -138,7 +138,7 @@ public class ClientRepository : IClientRepository
                 .Where(t => t.OrganizationId == organizationId && t.DeletedAt == null)
                 .FirstOrDefaultAsync(t => t.Id == request.SegmentTagId.Value, cancellationToken);
 
-            if (segmentTag is null || !ClientStatusRules.IsStatusName(segmentTag.Name))
+            if (segmentTag is null)
             {
                 throw new ArgumentException("Segment tag is not valid for this organization.");
             }

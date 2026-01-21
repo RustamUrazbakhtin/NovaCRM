@@ -171,8 +171,8 @@ public class ClientService : IClientService
         CreateClientRequest trimmed,
         CancellationToken cancellationToken)
     {
-        var statusTags = await _repository.GetStatusTagsAsync(organizationId, cancellationToken);
-        if (trimmed.SegmentTagId is not null && statusTags.All(tag => tag.Id != trimmed.SegmentTagId.Value))
+        var tags = await _repository.GetTagsAsync(organizationId, cancellationToken);
+        if (trimmed.SegmentTagId is not null && tags.All(tag => tag.Id != trimmed.SegmentTagId.Value))
         {
             throw new ArgumentException("The selected segment is invalid for this organization.", nameof(trimmed));
         }

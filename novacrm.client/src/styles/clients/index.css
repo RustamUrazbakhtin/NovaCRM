@@ -450,6 +450,17 @@
     font-size: 13px;
 }
 
+.clients-retry {
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+}
+
 .clients-modal__footer {
     display: flex;
     justify-content: flex-end;
