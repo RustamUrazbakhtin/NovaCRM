@@ -101,7 +101,7 @@ export async function createClient(payload: CreateClientPayload): Promise<Client
 }
 
 export async function getClientTags(signal?: AbortSignal): Promise<ClientTag[]> {
-    const { data } = await api.get<ClientTag[]>("/clients/tags", { signal });
+    const { data } = await api.get<ClientTag[]>("/client-tags", { signal });
     return data;
 }
 

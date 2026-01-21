@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../layout/Header";
 import ThemeProvider from "../providers/ThemeProvider";
 import type { ClientDetails, ClientFilter, ClientListItem, ClientOverview, ClientTag } from "../api/clients";
-import { createClient, getClientDetails, getClientFilters, getClientStatusTags, getClientsOverview, searchClients } from "../api/clients";
+import { createClient, getClientDetails, getClientFilters, getClientTags, getClientsOverview, searchClients } from "../api/clients";
 import "../styles/dashboard/index.css";
 import "../styles/clients/index.css";
 import { authApi } from "../app/auth";
@@ -40,6 +40,7 @@ export default function Clients() {
     const [loadingSegments, setLoadingSegments] = useState(false);
     const [segmentsError, setSegmentsError] = useState<string | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
+    const segmentAbortRef = useRef<AbortController | null>(null);
 
     const loadOverview = async () => {
         setLoadingOverview(true);
@@ -119,25 +120,37 @@ export default function Clients() {
 
     useEffect(() => () => abortControllerRef.current?.abort(), []);
 
+    const loadSegmentTags = async (signal?: AbortSignal) => {
+        setLoadingSegments(true);
+        setSegmentsError(null);
+
+        try {
+            const data = await getClientTags(signal);
+            setSegmentTags(data);
+        } catch (error: any) {
+            if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
+            setSegmentsError("Failed to load segments.");
+            console.error("Failed to load segment tags", error?.message ?? error);
+        } finally {
+            setLoadingSegments(false);
+        }
+    };
+
+    const handleRetrySegments = () => {
+        segmentAbortRef.current?.abort();
+        const controller = new AbortController();
+        segmentAbortRef.current = controller;
+        void loadSegmentTags(controller.signal);
+    };
+
     useEffect(() => {
         if (!isAddOpen || segmentTags.length > 0) {
             return;
         }
 
-        const controller = new AbortController();
-        setLoadingSegments(true);
-        setSegmentsError(null);
+        handleRetrySegments();
 
-        getClientStatusTags(controller.signal)
-            .then((data) => setSegmentTags(data))
-            .catch((error: any) => {
-                if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
-                setSegmentsError("Failed to load segments");
-                console.error("Failed to load segment tags", error?.message ?? error);
-            })
-            .finally(() => setLoadingSegments(false));
-
-        return () => controller.abort();
+        return () => segmentAbortRef.current?.abort();
     }, [isAddOpen, segmentTags.length]);
 
     useEffect(() => {
@@ -503,10 +516,16 @@ export default function Clients() {
                                     <span>Segment</span>
                                     <select
                                         value={addForm.segmentTagId}
-                                        disabled={loadingSegments || (!!segmentsError && segmentTags.length === 0)}
+                                        disabled={loadingSegments}
                                         onChange={(e) => setAddForm((prev) => ({ ...prev, segmentTagId: e.target.value }))}
                                     >
-                                        <option value="">No segment</option>
+                                        <option value="">
+                                            {loadingSegments
+                                                ? "Loading…"
+                                                : segmentTags.length === 0
+                                                  ? "No segments"
+                                                  : "No segment"}
+                                        </option>
                                         {segmentTags.map((tag) => (
                                             <option key={tag.id} value={tag.id}>
                                                 {tag.name}
@@ -515,7 +534,12 @@ export default function Clients() {
                                     </select>
                                     {loadingSegments && <small className="clients-field-hint">Loading segments…</small>}
                                     {segmentsError && !loadingSegments && (
-                                        <small className="clients-field-hint">{segmentsError}</small>
+                                        <small className="clients-field-hint">
+                                            {segmentsError}{" "}
+                                            <button type="button" className="clients-retry" onClick={handleRetrySegments}>
+                                                Retry
+                                            </button>
+                                        </small>
                                     )}
                                 </label>
                             </div>
