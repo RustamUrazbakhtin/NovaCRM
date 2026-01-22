@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using NovaCRM.Domain.Clients;
 using NovaCRM.Server.Contracts.Clients;
 using NovaCRM.Server.Services;
@@ -15,11 +16,16 @@ public class ClientsController : ControllerBase
 {
     private readonly IClientService _clientService;
     private readonly IOrganizationContext _organizationContext;
+    private readonly ILogger<ClientsController> _logger;
 
-    public ClientsController(IClientService clientService, IOrganizationContext organizationContext)
+    public ClientsController(
+        IClientService clientService,
+        IOrganizationContext organizationContext,
+        ILogger<ClientsController> logger)
     {
         _clientService = clientService;
         _organizationContext = organizationContext;
+        _logger = logger;
     }
 
     [HttpGet("overview")]
@@ -28,6 +34,9 @@ public class ClientsController : ControllerBase
         var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
         if (organizationId is null)
         {
+            _logger.LogWarning(
+                "Unable to load clients because organization id is missing for user {UserId}.",
+                User.FindFirstValue(ClaimTypes.NameIdentifier));
             return Unauthorized();
         }
 
@@ -64,8 +73,22 @@ public class ClientsController : ControllerBase
             statusTagId = parsed;
         }
 
-        var clients = await _clientService.SearchClientsAsync(organizationId.Value, search, statusTagId, cancellationToken);
-        return Ok(clients.Select(ClientListItemDto.FromDomain).ToList());
+        try
+        {
+            var clients = await _clientService.SearchClientsAsync(organizationId.Value, search, statusTagId, cancellationToken);
+            return Ok(clients.Select(ClientListItemDto.FromDomain).ToList());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load clients for organization {OrganizationId}.", organizationId);
+            return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "Failed to load clients.",
+                Detail = "An unexpected error occurred while loading clients.",
+                Extensions = { ["traceId"] = HttpContext.TraceIdentifier }
+            });
+        }
     }
 
     [HttpGet("tags")]

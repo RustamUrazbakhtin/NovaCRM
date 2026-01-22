@@ -45,6 +45,8 @@ public partial class Client
 
     public virtual Branch? Branch { get; set; }
 
+    public virtual ClientMetric? ClientMetric { get; set; }
+
     public virtual ICollection<ClientNote> ClientNotes { get; set; } = new List<ClientNote>();
 
     public virtual ICollection<ClientTagLink> ClientTagLinks { get; set; } = new List<ClientTagLink>();

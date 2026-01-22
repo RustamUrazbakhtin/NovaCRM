@@ -15,13 +15,12 @@ public record ClientRecord(
     string LastName,
     string Phone,
     string? Email,
-    DateTime? LastVisitAt,
-    int TotalVisits,
-    decimal LifetimeValue,
-    decimal Satisfaction,
     IReadOnlyCollection<ClientTag> Tags,
-    string? City,
-    string? MasterName
+    DateTime? LastVisitAt,
+    decimal? LifetimeValue,
+    string? Status,
+    int TotalVisits,
+    decimal Satisfaction
 );
 
 public record ClientDetailsRecord(

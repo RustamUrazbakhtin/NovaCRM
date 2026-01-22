@@ -9,17 +9,14 @@ export interface ClientOverview {
 
 export interface ClientListItem {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     phone: string;
     email?: string | null;
-    status: string;
-    statusColor?: string | null;
-    lifetimeValue: number;
+    tags: ClientTag[];
     lastVisitAt?: string | null;
-    satisfaction: number;
-    visits: number;
-    tags: string[];
-    city?: string | null;
+    lifetimeValue?: number | null;
+    status?: string | null;
 }
 
 export interface ClientActivityDto {

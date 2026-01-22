@@ -4,17 +4,14 @@ namespace NovaCRM.Domain.Clients;
 
 public record ClientListItem(
     Guid Id,
-    string Name,
+    string FirstName,
+    string LastName,
     string Phone,
     string? Email,
-    string Status,
-    string? StatusColor,
-    decimal LifetimeValue,
+    IReadOnlyCollection<ClientTag> Tags,
     DateTime? LastVisitAt,
-    decimal Satisfaction,
-    int Visits,
-    IReadOnlyCollection<string> Tags,
-    string? City
+    decimal? LifetimeValue,
+    string? Status
 );
 
 public record ClientDetails(
