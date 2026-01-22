@@ -25,12 +25,7 @@ public class ClientRepository : IClientRepository
                 c.LastName,
                 c.Phone,
                 c.Email,
-                c.TotalVisits,
-                Satisfaction = c.Reviews
-                    .Where(r => r.DeletedAt == null)
-                    .Select(r => (decimal?)r.Rating)
-                    .DefaultIfEmpty(0m)
-                    .Average() ?? 0m
+                c.TotalVisits
             })
             .ToListAsync(cancellationToken);
 
@@ -40,6 +35,22 @@ public class ClientRepository : IClientRepository
         }
 
         var clientIds = clients.Select(c => c.Id).ToList();
+
+        var satisfaction = await _dbContext.Reviews
+            .AsNoTracking()
+            .Where(r => r.DeletedAt == null
+                && r.OrganizationId == organizationId
+                && r.ClientId != null
+                && clientIds.Contains(r.ClientId.Value))
+            .GroupBy(r => r.ClientId!.Value)
+            .Select(group => new
+            {
+                ClientId = group.Key,
+                Avg = group.Average(r => (decimal?)r.Rating) ?? 0m
+            })
+            .ToListAsync(cancellationToken);
+
+        var satisfactionByClient = satisfaction.ToDictionary(item => item.ClientId, item => item.Avg);
 
         var tags = await _dbContext.ClientTagLinks
             .AsNoTracking()
@@ -85,6 +96,7 @@ public class ClientRepository : IClientRepository
         {
             tagsByClient.TryGetValue(client.Id, out var clientTags);
             metricsByClient.TryGetValue(client.Id, out var metric);
+            var clientSatisfaction = satisfactionByClient.TryGetValue(client.Id, out var score) ? score : 0m;
 
             return new ClientRecord(
                 client.Id,
@@ -97,7 +109,7 @@ public class ClientRepository : IClientRepository
                 metric?.LifetimeValue,
                 metric?.Status,
                 client.TotalVisits,
-                client.Satisfaction
+                clientSatisfaction
             );
         }).ToList();
     }
