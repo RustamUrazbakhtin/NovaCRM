@@ -45,7 +45,11 @@ public partial class Organization
 
     public virtual ICollection<ClientNote> ClientNotes { get; set; } = new List<ClientNote>();
 
+    public virtual ICollection<ClientMetric> ClientMetrics { get; set; } = new List<ClientMetric>();
+
     public virtual ICollection<ClientTag> ClientTags { get; set; } = new List<ClientTag>();
+
+    public virtual ICollection<ClientTagLink> ClientTagLinks { get; set; } = new List<ClientTagLink>();
 
     public virtual ICollection<ClientSegmentDefinition> ClientSegmentDefinitions { get; set; } = new List<ClientSegmentDefinition>();
 

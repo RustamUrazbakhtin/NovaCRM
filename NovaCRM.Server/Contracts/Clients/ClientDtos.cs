@@ -11,32 +11,26 @@ public record ClientOverviewDto(int TotalClients, int ReturningClients, decimal 
 
 public record ClientListItemDto(
     Guid Id,
-    string Name,
+    string FirstName,
+    string LastName,
     string Phone,
     string? Email,
-    string Status,
-    string? StatusColor,
-    decimal LifetimeValue,
+    IReadOnlyCollection<ClientTagDto> Tags,
     DateTime? LastVisitAt,
-    decimal Satisfaction,
-    int Visits,
-    IReadOnlyCollection<string> Tags,
-    string? City)
+    decimal? LifetimeValue,
+    string? Status)
 {
     public static ClientListItemDto FromDomain(ClientListItem item) =>
         new(
             item.Id,
-            item.Name,
+            item.FirstName,
+            item.LastName,
             item.Phone,
             item.Email,
-            item.Status,
-            item.StatusColor,
-            item.LifetimeValue,
+            item.Tags.Select(ClientTagDto.FromDomain).ToList(),
             item.LastVisitAt,
-            item.Satisfaction,
-            item.Visits,
-            item.Tags,
-            item.City);
+            item.LifetimeValue,
+            item.Status);
 }
 
 public record ClientDetailsDto(

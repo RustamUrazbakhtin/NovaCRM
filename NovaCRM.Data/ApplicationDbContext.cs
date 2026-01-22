@@ -47,6 +47,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<ClientNote> ClientNotes { get; set; }
 
+    public virtual DbSet<ClientMetric> ClientMetrics { get; set; }
+
     public virtual DbSet<ClientSegmentDefinition> ClientSegmentDefinitions { get; set; }
 
     public virtual DbSet<ClientTag> ClientTags { get; set; }
@@ -493,15 +495,49 @@ public partial class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<ClientTagLink>(entity =>
         {
-            entity.HasKey(e => new { e.ClientId, e.TagId });
+            entity.HasKey(e => e.Id);
 
-            entity.HasIndex(e => e.TagId, "IX_ClientTagLinks_TagId");
+            entity.HasIndex(e => new { e.OrganizationId, e.ClientId }, "IX_ClientTagLinks_OrganizationId_ClientId");
 
+            entity.HasIndex(e => new { e.OrganizationId, e.ClientTagId }, "IX_ClientTagLinks_OrganizationId_ClientTagId");
+
+            entity.HasIndex(e => new { e.OrganizationId, e.ClientId, e.ClientTagId }, "IX_ClientTagLinks_Unique")
+                .IsUnique();
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
 
-            entity.HasOne(d => d.Client).WithMany(p => p.ClientTagLinks).HasForeignKey(d => d.ClientId);
+            entity.HasOne(d => d.Client).WithMany(p => p.ClientTagLinks)
+                .HasForeignKey(d => d.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(d => d.Tag).WithMany(p => p.ClientTagLinks).HasForeignKey(d => d.TagId);
+            entity.HasOne(d => d.Organization).WithMany(p => p.ClientTagLinks)
+                .HasForeignKey(d => d.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(d => d.Tag).WithMany(p => p.ClientTagLinks)
+                .HasForeignKey(d => d.ClientTagId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ClientMetric>(entity =>
+        {
+            entity.HasKey(e => e.ClientId);
+
+            entity.HasIndex(e => e.OrganizationId, "IX_ClientMetrics_OrganizationId");
+
+            entity.HasIndex(e => new { e.OrganizationId, e.LastVisitAt }, "IX_ClientMetrics_OrganizationId_LastVisitAt");
+
+            entity.Property(e => e.LifetimeValue).HasPrecision(12, 2);
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("now()");
+
+            entity.HasOne(d => d.Client).WithOne(p => p.ClientMetric)
+                .HasForeignKey<ClientMetric>(d => d.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(d => d.Organization).WithMany(p => p.ClientMetrics)
+                .HasForeignKey(d => d.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Expense>(entity =>

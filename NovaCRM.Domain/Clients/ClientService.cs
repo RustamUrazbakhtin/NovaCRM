@@ -18,7 +18,7 @@ public class ClientService : IClientService
         }
 
         var returning = clients.Count(c => c.TotalVisits > 1);
-        var averageLtv = Math.Round(clients.Average(c => (decimal)c.LifetimeValue), 0);
+        var averageLtv = Math.Round(clients.Average(c => c.LifetimeValue ?? 0m), 0);
         var satisfaction = Math.Round(clients.Average(c => c.Satisfaction), 1);
 
         return new ClientOverview(clients.Count, returning, averageLtv, satisfaction);
@@ -36,24 +36,17 @@ public class ClientService : IClientService
         var filtered = clients
             .Where(client => MatchesSearch(client, normalizedQuery))
             .Where(client => statusTagId is null || client.Tags.Any(tag => tag.Id == statusTagId))
-            .Select(client =>
-            {
-                var status = ResolveStatus(client.Tags);
-                return new ClientListItem(
-                    client.Id,
-                    BuildName(client.FirstName, client.LastName),
-                    client.Phone,
-                    client.Email,
-                    status.Name,
-                    status.Color,
-                    client.LifetimeValue,
-                    client.LastVisitAt,
-                    client.Satisfaction,
-                    client.TotalVisits,
-                    client.Tags.Select(t => t.Name).ToList(),
-                    client.City
-                );
-            })
+            .Select(client => new ClientListItem(
+                client.Id,
+                client.FirstName,
+                client.LastName,
+                client.Phone,
+                client.Email,
+                client.Tags,
+                client.LastVisitAt,
+                client.LifetimeValue,
+                client.Status
+            ))
             .OrderByDescending(x => x.LastVisitAt ?? DateTime.MinValue)
             .ToList();
 

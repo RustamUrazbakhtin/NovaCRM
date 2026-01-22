@@ -18,6 +18,11 @@ const formatDate = (value?: string | null) => {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 };
 
+const formatLastVisit = (value?: string | null) => {
+    if (!value) return "No visits yet";
+    return formatDate(value);
+};
+
 const statusSlug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
 export default function Clients() {
@@ -89,7 +94,7 @@ export default function Clients() {
             }
         } catch (error: any) {
             if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
-            setClientsError("Failed to load clients");
+            setClientsError("Failed to load clients. Please try again.");
             console.error("Failed to load clients", error?.message ?? error);
         } finally {
             setLoadingList(false);
@@ -308,7 +313,7 @@ export default function Clients() {
                                         <tr>
                                             <td colSpan={5} className="clients-table-empty">
                                                 <div className="clients-error">
-                                                    <p>{clientsError}.</p>
+                                                    <p>{clientsError}</p>
                                                     <button type="button" className="clients-primary" onClick={() => void loadClients(search, statusFilter)}>
                                                         Retry
                                                     </button>
@@ -344,8 +349,9 @@ export default function Clients() {
                                                 <td>
                                                     <div className="clients-table-primary">
                                                         <div className="clients-client-heading">
-                                                            <span className="clients-client-name">{client.name}</span>
-                                                            {client.city && <small className="clients-client-city">{client.city}</small>}
+                                                            <span className="clients-client-name">
+                                                                {client.firstName} {client.lastName}
+                                                            </span>
                                                         </div>
                                                         <div className="clients-client-meta">
                                                             <span>{client.phone}</span>
@@ -355,15 +361,20 @@ export default function Clients() {
                                                 </td>
                                                 <td>
                                                     <div className="clients-client-tags">
-                                                        {client.tags.length ? client.tags.map((tag) => <span key={tag}>{tag}</span>) : "—"}
+                                                        {client.tags.length
+                                                            ? client.tags.map((tag) => (
+                                                                  <span key={tag.id} style={tag.color ? { backgroundColor: tag.color, color: "var(--ink)" } : undefined}>
+                                                                      {tag.name}
+                                                                  </span>
+                                                              ))
+                                                            : "—"}
                                                     </div>
                                                 </td>
-                                                <td>{formatDate(client.lastVisitAt)}</td>
-                                                <td>{formatCurrency(client.lifetimeValue)}</td>
+                                                <td>{formatLastVisit(client.lastVisitAt)}</td>
+                                                <td>{formatCurrency(client.lifetimeValue ?? 0)}</td>
                                                 <td>
                                                     <span
                                                         className={`clients-status clients-status--${statusSlug(client.status || "")}`}
-                                                        style={client.statusColor ? { backgroundColor: client.statusColor } : undefined}
                                                     >
                                                         {client.status || "—"}
                                                     </span>
