@@ -2,7 +2,7 @@ import { api } from "../app/auth";
 
 export interface ClientOverview {
     totalClients: number;
-    returningClients: number;
+    returning: number;
     averageLtv: number;
     satisfaction: number;
 }
@@ -13,10 +13,10 @@ export interface ClientListItem {
     lastName: string;
     phone: string;
     email?: string | null;
-    //tags: ClientTag[];
-    //lastVisitAt?: string | null;
-    //lifetimeValue?: number | null;
-    //status?: string | null;
+    tags: ClientTag[];
+    lastVisitAt?: string | null;
+    lifetimeValue?: number | null;
+    status?: string | null;
 }
 
 export interface ClientActivityDto {
@@ -56,6 +56,12 @@ export interface ClientTag {
     color?: string | null;
 }
 
+export interface ClientFiltersResponse {
+    clientTags: ClientTag[];
+    statuses: ClientTag[];
+    segments: ClientTag[];
+}
+
 export type ClientFilterKey = "All" | string;
 
 export interface ClientFilter {
@@ -70,21 +76,26 @@ export interface SearchClientsRequest {
 }
 
 export async function getClientsOverview(signal?: AbortSignal): Promise<ClientOverview> {
-    const { data } = await api.get<ClientOverview>("/clients/overview", { signal });
-    return data;
+    const { data } = await api.get<ClientOverview & { returningClients?: number }>("/clients/overview", { signal });
+    return {
+        totalClients: data?.totalClients ?? 0,
+        returning: data?.returning ?? data?.returningClients ?? 0,
+        averageLtv: data?.averageLtv ?? 0,
+        satisfaction: data?.satisfaction ?? 0,
+    };
 }
 
 export async function searchClients(params: SearchClientsRequest, signal?: AbortSignal): Promise<ClientListItem[]> {
-    const { search, filter } = params;
-    const filterParam = filter && filter !== "All" ? filter : undefined;
     const { data } = await api.get<ClientListItem[]>("/clients", {
-        params: {
-            search: search?.trim() || undefined,
-            filter: filterParam || undefined,
-        },
         signal,
     });
-    return data;
+    return (data ?? []).map((client) => ({
+        ...client,
+        tags: client?.tags ?? [],
+        lastVisitAt: client?.lastVisitAt ?? null,
+        lifetimeValue: client?.lifetimeValue ?? null,
+        status: client?.status ?? null,
+    }));
 }
 
 export async function getClientDetails(id: string, signal?: AbortSignal): Promise<ClientDetails> {
@@ -102,9 +113,13 @@ export async function getClientTags(signal?: AbortSignal): Promise<ClientTag[]> 
     return data;
 }
 
-export async function getClientFilters(signal?: AbortSignal): Promise<ClientFilter[]> {
-    const { data } = await api.get<ClientFilter[]>("/filters", { signal });
-    return data;
+export async function getClientFilters(signal?: AbortSignal): Promise<ClientFiltersResponse> {
+    const { data } = await api.get<ClientFiltersResponse>("/filters", { signal });
+    return {
+        clientTags: data?.clientTags ?? [],
+        statuses: data?.statuses ?? [],
+        segments: data?.segments ?? [],
+    };
 }
 
 export async function getClientStatusTags(signal?: AbortSignal): Promise<ClientTag[]> {

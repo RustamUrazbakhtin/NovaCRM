@@ -2,7 +2,14 @@ import axios from "axios";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../layout/Header";
 import ThemeProvider from "../providers/ThemeProvider";
-import type { ClientDetails, ClientFilter, ClientListItem, ClientOverview, ClientTag } from "../api/clients";
+import type {
+    ClientDetails,
+    ClientFilter,
+    ClientFiltersResponse,
+    ClientListItem,
+    ClientOverview,
+    ClientTag,
+} from "../api/clients";
 import { createClient, getClientDetails, getClientFilters, getClientTags, getClientsOverview, searchClients } from "../api/clients";
 import "../styles/dashboard/index.css";
 import "../styles/clients/index.css";
@@ -27,10 +34,20 @@ const statusSlug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g,
 
 export default function Clients() {
     const navigate = useNavigate();
-    const [overview, setOverview] = useState<ClientOverview | null>(null);
+    const [overview, setOverview] = useState<ClientOverview>({
+        totalClients: 0,
+        returning: 0,
+        averageLtv: 0,
+        satisfaction: 0,
+    });
     const [clients, setClients] = useState<ClientListItem[]>([]);
     const [statusFilter, setStatusFilter] = useState<string>("All");
-    const [filters, setFilters] = useState<ClientFilter[]>([{ key: "All", label: "All", color: null }]);
+    const [filters, setFilters] = useState<ClientFiltersResponse>({
+        clientTags: [],
+        statuses: [],
+        segments: [],
+    });
+    const [statusFilters, setStatusFilters] = useState<ClientFilter[]>([{ key: "All", label: "All", color: null }]);
     const [search, setSearch] = useState("");
     const [loadingList, setLoadingList] = useState(false);
     const [loadingOverview, setLoadingOverview] = useState(false);
@@ -46,6 +63,9 @@ export default function Clients() {
     const [segmentsError, setSegmentsError] = useState<string | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
     const segmentAbortRef = useRef<AbortController | null>(null);
+    const hasLoggedOverviewError = useRef(false);
+    const hasLoggedClientsError = useRef(false);
+    const hasLoggedFiltersError = useRef(false);
 
     const loadOverview = async () => {
         setLoadingOverview(true);
@@ -54,7 +74,11 @@ export default function Clients() {
             setOverview(data);
         } catch (error: any) {
             if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
-            console.error("Failed to load clients overview", error);
+            setOverview({ totalClients: 0, returning: 0, averageLtv: 0, satisfaction: 0 });
+            if (!hasLoggedOverviewError.current) {
+                console.error("Failed to load clients overview", error);
+                hasLoggedOverviewError.current = true;
+            }
         } finally {
             setLoadingOverview(false);
         }
@@ -65,16 +89,29 @@ export default function Clients() {
 
         getClientFilters(controller.signal)
             .then((data) => {
-                const incoming = data.length > 0 ? data : [{ key: "All", label: "All", color: null }];
-                setFilters(incoming);
+                const statuses = data?.statuses ?? [];
+                const incoming = statuses.length > 0
+                    ? [
+                          { key: "All", label: "All", color: null },
+                          ...statuses.map((status) => ({ key: status.id, label: status.name, color: status.color ?? null })),
+                      ]
+                    : [{ key: "All", label: "All", color: null }];
+
+                setFilters(data);
+                setStatusFilters(incoming);
                 setStatusFilter((current) =>
                     current && incoming.some((item) => item.key === current) ? current : "All"
                 );
             })
             .catch((error) => {
-                console.error("Failed to load client filters", error?.message ?? error);
-                setFilters([{ key: "All", label: "All", color: null }]);
+                if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
+                setFilters({ clientTags: [], statuses: [], segments: [] });
+                setStatusFilters([{ key: "All", label: "All", color: null }]);
                 setStatusFilter("All");
+                if (!hasLoggedFiltersError.current) {
+                    console.error("Failed to load client filters", error?.message ?? error);
+                    hasLoggedFiltersError.current = true;
+                }
             });
 
         return () => controller.abort();
@@ -95,7 +132,10 @@ export default function Clients() {
         } catch (error: any) {
             if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
             setClientsError("Failed to load clients. Please try again.");
-            console.error("Failed to load clients", error?.message ?? error);
+            if (!hasLoggedClientsError.current) {
+                console.error("Failed to load clients", error?.message ?? error);
+                hasLoggedClientsError.current = true;
+            }
         } finally {
             setLoadingList(false);
         }
@@ -215,7 +255,7 @@ export default function Clients() {
         }
     };
 
-    const sortedClients = useMemo(() => clients, [clients]);
+    const sortedClients = useMemo(() => clients ?? [], [clients]);
 
     return (
         <ThemeProvider>
@@ -244,7 +284,7 @@ export default function Clients() {
                         <article className="clients-metric-card">
                             <span className="clients-metric-label">Returning</span>
                             <strong className="clients-metric-value">
-                                {loadingOverview ? "—" : overview?.returningClients ?? 0}
+                                {loadingOverview ? "—" : overview?.returning ?? 0}
                             </strong>
                             <span className="clients-metric-hint">Visited more than once</span>
                         </article>
@@ -258,7 +298,7 @@ export default function Clients() {
                         <article className="clients-metric-card">
                             <span className="clients-metric-label">Satisfaction</span>
                             <strong className="clients-metric-value">
-                                {loadingOverview ? "—" : overview?.satisfaction.toFixed(1) ?? "0"}
+                                {loadingOverview ? "—" : (overview?.satisfaction ?? 0).toFixed(1)}
                             </strong>
                             <span className="clients-metric-hint">Average rating from reviews</span>
                         </article>
@@ -281,7 +321,7 @@ export default function Clients() {
                             />
                         </div>
                         <div className="clients-segments" role="tablist" aria-label="Client segments">
-                            {filters.map((item) => (
+                            {statusFilters.map((item) => (
                                 <button
                                     key={item.key}
                                     type="button"
@@ -362,8 +402,8 @@ export default function Clients() {
                                                 </td>
                                                 <td>
                                                     <div className="clients-client-tags">
-                                                        {client.tags.length
-                                                            ? client.tags.map((tag) => (
+                                                        {(client.tags ?? []).length
+                                                            ? (client.tags ?? []).map((tag) => (
                                                                   <span key={tag.id} style={tag.color ? { backgroundColor: tag.color, color: "var(--ink)" } : undefined}>
                                                                       {tag.name}
                                                                   </span>
@@ -441,10 +481,10 @@ export default function Clients() {
                             <section className="clients-detail-section">
                                 <h3>Recent activity</h3>
                                 <ul className="clients-timeline">
-                                    {selectedClient.recentActivity.length === 0 ? (
+                                    {(selectedClient.recentActivity ?? []).length === 0 ? (
                                         <li>No recent activity found.</li>
                                     ) : (
-                                        selectedClient.recentActivity.map((item) => (
+                                        (selectedClient.recentActivity ?? []).map((item) => (
                                             <li key={`${item.occurredAt}-${item.title}`}>
                                                 <span className="clients-timeline-time">{formatDate(item.occurredAt)}</span>
                                                 <div>
@@ -460,7 +500,9 @@ export default function Clients() {
                             <section className="clients-detail-section">
                                 <h3>Tags</h3>
                                 <div className="clients-client-tags">
-                                    {selectedClient.tags.length ? selectedClient.tags.map((tag) => <span key={tag}>{tag}</span>) : "—"}
+                                    {(selectedClient.tags ?? []).length
+                                        ? (selectedClient.tags ?? []).map((tag) => <span key={tag}>{tag}</span>)
+                                        : "—"}
                                 </div>
                             </section>
 

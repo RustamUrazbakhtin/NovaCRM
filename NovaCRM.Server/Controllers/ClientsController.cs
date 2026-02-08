@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
@@ -47,6 +48,36 @@ public class ClientsController : ControllerBase
     //    return Ok(ClientOverviewDto.FromDomain(overview));
     //}
 
+    [HttpGet("overview")]
+    public async Task<IActionResult> GetOverview(CancellationToken cancellationToken)
+    {
+        var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
+        if (organizationId is null)
+        {
+            return Ok(new { totalClients = 0, returning = 0, averageLtv = 0m, satisfaction = 0m });
+        }
+
+        try
+        {
+            var clients = await _clientRepository.GetClientsAsync(organizationId.Value, cancellationToken);
+            var returning = clients.Count(client => client.TotalVisits > 1);
+            var totalClients = clients.Count;
+
+            return Ok(new
+            {
+                totalClients,
+                returning,
+                averageLtv = 0m,
+                satisfaction = 0m
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load client overview for organization {OrganizationId}.", organizationId);
+            return Ok(new { totalClients = 0, returning = 0, averageLtv = 0m, satisfaction = 0m });
+        }
+    }
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyCollection<ClientListItemDto>>> GetClients([
         FromQuery] string? search,
@@ -56,7 +87,7 @@ public class ClientsController : ControllerBase
         var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
         if (organizationId is null)
         {
-            return Unauthorized();
+            return Ok(Array.Empty<ClientListItemDto>());
         }
 
         //Guid? statusTagId = null;
@@ -80,19 +111,25 @@ public class ClientsController : ControllerBase
         {
             var clients = await _clientRepository.GetClientsAsync(organizationId.Value, cancellationToken);
             //_clientService.SearchClientsAsync(organizationId.Value, search, statusTagId, cancellationToken);
-            //return Ok(clients.Select(ClientListItemDto.FromDomain).ToList());
-            return Ok(clients);
+            var response = clients
+                .Select(client => new ClientListItemDto(
+                    client.Id,
+                    client.FirstName,
+                    client.LastName,
+                    client.Phone,
+                    client.Email,
+                    Array.Empty<ClientTagDto>(),
+                    null,
+                    null,
+                    null))
+                .ToList();
+
+            return Ok(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to load clients for organization {OrganizationId}.", organizationId);
-            return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
-            {
-                Status = StatusCodes.Status500InternalServerError,
-                Title = "Failed to load clients.",
-                Detail = "An unexpected error occurred while loading clients.",
-                Extensions = { ["traceId"] = HttpContext.TraceIdentifier }
-            });
+            return Ok(Array.Empty<ClientListItemDto>());
         }
     }
 
