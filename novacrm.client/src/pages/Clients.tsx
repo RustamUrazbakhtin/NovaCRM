@@ -269,7 +269,8 @@ export default function Clients() {
                     <header className="clients-widget__header">
                         <div className="clients-widget__actions">
                             <button type="button" className="clients-add" onClick={handleOpenAdd}>
-                                Add client
+                                <span className="clients-add__text">Add client</span>
+                                <span className="clients-add__icon">+</span>
                             </button>
                             <input
                                 type="search"

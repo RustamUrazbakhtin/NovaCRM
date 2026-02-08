@@ -9,49 +9,49 @@ public class ClientService : IClientService
         _repository = repository;
     }
 
-    public async Task<ClientOverview> GetOverviewAsync(Guid organizationId, CancellationToken cancellationToken = default)
-    {
-        var clients = await _repository.GetClientsAsync(organizationId, cancellationToken);
-        if (clients.Count == 0)
-        {
-            return new ClientOverview(0, 0, 0, 0);
-        }
+    //public async Task<ClientOverview> GetOverviewAsync(Guid organizationId, CancellationToken cancellationToken = default)
+    //{
+    //    var clients = await _repository.GetClientsAsync(organizationId, cancellationToken);
+    //    if (clients.Count == 0)
+    //    {
+    //        return new ClientOverview(0, 0, 0, 0);
+    //    }
+    //
+    //    var returning = clients.Count(c => c.TotalVisits > 1);
+    //    var averageLtv = Math.Round(clients.Average(c => c.LifetimeValue ?? 0m), 0);
+    //    var satisfaction = Math.Round(clients.Average(c => c.Satisfaction), 1);
+    //
+    //    return new ClientOverview(clients.Count, returning, averageLtv, satisfaction);
+    //}
 
-        var returning = clients.Count(c => c.TotalVisits > 1);
-        var averageLtv = Math.Round(clients.Average(c => c.LifetimeValue ?? 0m), 0);
-        var satisfaction = Math.Round(clients.Average(c => c.Satisfaction), 1);
-
-        return new ClientOverview(clients.Count, returning, averageLtv, satisfaction);
-    }
-
-    public async Task<IReadOnlyCollection<ClientListItem>> SearchClientsAsync(
-        Guid organizationId,
-        string? query,
-        Guid? statusTagId,
-        CancellationToken cancellationToken = default)
-    {
-        var clients = await _repository.GetClientsAsync(organizationId, cancellationToken);
-        var normalizedQuery = (query ?? string.Empty).Trim().ToLowerInvariant();
-
-        var filtered = clients
-            .Where(client => MatchesSearch(client, normalizedQuery))
-            .Where(client => statusTagId is null || client.Tags.Any(tag => tag.Id == statusTagId))
-            .Select(client => new ClientListItem(
-                client.Id,
-                client.FirstName,
-                client.LastName,
-                client.Phone,
-                client.Email,
-                client.Tags,
-                client.LastVisitAt,
-                client.LifetimeValue,
-                client.Status
-            ))
-            .OrderByDescending(x => x.LastVisitAt ?? DateTime.MinValue)
-            .ToList();
-
-        return filtered;
-    }
+    //public async Task<IReadOnlyCollection<ClientListItem>> SearchClientsAsync(
+    //    Guid organizationId,
+    //    string? query,
+    //    Guid? statusTagId,
+    //    CancellationToken cancellationToken = default)
+    //{
+    //    var clients = await _repository.GetClientsAsync(organizationId, cancellationToken);
+    //    var normalizedQuery = (query ?? string.Empty).Trim().ToLowerInvariant();
+    //
+    //    var filtered = clients
+    //        .Where(client => MatchesSearch(client, normalizedQuery))
+    //        .Where(client => statusTagId is null || client.Tags.Any(tag => tag.Id == statusTagId))
+    //        .Select(client => new ClientListItem(
+    //            client.Id,
+    //            client.FirstName,
+    //            client.LastName,
+    //            client.Phone,
+    //            client.Email,
+    //            client.Tags,
+    //            client.LastVisitAt,
+    //            client.LifetimeValue,
+    //            client.Status
+    //        ))
+    //        .OrderByDescending(x => x.LastVisitAt ?? DateTime.MinValue)
+    //        .ToList();
+    //
+    //    return filtered;
+    //}
 
     public async Task<ClientDetails?> GetClientDetailsAsync(Guid organizationId, Guid clientId, CancellationToken cancellationToken = default)
     {

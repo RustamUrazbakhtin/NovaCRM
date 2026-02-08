@@ -1,4 +1,4 @@
-.clients-page {
+﻿.clients-page {
     display: flex;
     flex-direction: column;
     gap: calc(var(--gap) * 2);
@@ -92,7 +92,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .clients-search {
@@ -147,9 +147,45 @@
     color: #fff;
     background: linear-gradient(120deg, var(--accent), var(--accent-2));
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    box-shadow: 0 8px 18px -12px var(--accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: all 0.2s ease;
 }
+
+/* текст */
+.clients-add__text {
+    display: inline;
+}
+
+/* плюс */
+.clients-add__icon {
+    display: none;
+    font-size: 20px;
+    line-height: 1;
+}
+
+/* когда мало места (брейкпоинт) */
+@media (max-width: 480px) {
+    .clients-add {
+        padding: 10px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+    }
+
+    .clients-add__text {
+        display: none;
+    }
+
+    .clients-add__icon {
+        display: inline;
+    }
+}
+
 
 .clients-add:hover {
     transform: translateY(-1px);
@@ -503,6 +539,7 @@
     .clients-widget__header {
         flex-direction: column;
         align-items: flex-start;
+        flex-wrap: nowrap;
     }
 
     .clients-segments {

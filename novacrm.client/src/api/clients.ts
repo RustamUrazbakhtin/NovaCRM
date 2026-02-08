@@ -13,10 +13,10 @@ export interface ClientListItem {
     lastName: string;
     phone: string;
     email?: string | null;
-    tags: ClientTag[];
-    lastVisitAt?: string | null;
-    lifetimeValue?: number | null;
-    status?: string | null;
+    //tags: ClientTag[];
+    //lastVisitAt?: string | null;
+    //lifetimeValue?: number | null;
+    //status?: string | null;
 }
 
 export interface ClientActivityDto {
@@ -103,7 +103,7 @@ export async function getClientTags(signal?: AbortSignal): Promise<ClientTag[]> 
 }
 
 export async function getClientFilters(signal?: AbortSignal): Promise<ClientFilter[]> {
-    const { data } = await api.get<ClientFilter[]>("/clients/filters", { signal });
+    const { data } = await api.get<ClientFilter[]>("/filters", { signal });
     return data;
 }
 

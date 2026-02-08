@@ -15,34 +15,37 @@ namespace NovaCRM.Server.Controllers;
 public class ClientsController : ControllerBase
 {
     private readonly IClientService _clientService;
+    private readonly IClientRepository _clientRepository;
     private readonly IOrganizationContext _organizationContext;
     private readonly ILogger<ClientsController> _logger;
 
     public ClientsController(
         IClientService clientService,
+        IClientRepository clientRepository,
         IOrganizationContext organizationContext,
         ILogger<ClientsController> logger)
     {
         _clientService = clientService;
         _organizationContext = organizationContext;
         _logger = logger;
+        _clientRepository = clientRepository;
     }
 
-    [HttpGet("overview")]
-    public async Task<ActionResult<ClientOverviewDto>> GetOverview(CancellationToken cancellationToken)
-    {
-        var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
-        if (organizationId is null)
-        {
-            _logger.LogWarning(
-                "Unable to load clients because organization id is missing for user {UserId}.",
-                User.FindFirstValue(ClaimTypes.NameIdentifier));
-            return Unauthorized();
-        }
-
-        var overview = await _clientService.GetOverviewAsync(organizationId.Value, cancellationToken);
-        return Ok(ClientOverviewDto.FromDomain(overview));
-    }
+    //[HttpGet("overview")]
+    //public async Task<ActionResult<ClientOverviewDto>> GetOverview(CancellationToken cancellationToken)
+    //{
+    //    var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
+    //    if (organizationId is null)
+    //    {
+    //        _logger.LogWarning(
+    //            "Unable to load clients because organization id is missing for user {UserId}.",
+    //            User.FindFirstValue(ClaimTypes.NameIdentifier));
+    //        return Unauthorized();
+    //    }
+    //
+    //    var overview = await _clientService.GetOverviewAsync(organizationId.Value, cancellationToken);
+    //    return Ok(ClientOverviewDto.FromDomain(overview));
+    //}
 
     [HttpGet]
     public async Task<ActionResult<IReadOnlyCollection<ClientListItemDto>>> GetClients([
@@ -56,27 +59,29 @@ public class ClientsController : ControllerBase
             return Unauthorized();
         }
 
-        Guid? statusTagId = null;
-        if (!string.IsNullOrWhiteSpace(filter) && !string.Equals(filter, "All", StringComparison.OrdinalIgnoreCase))
-        {
-            if (!Guid.TryParse(filter, out var parsed))
-            {
-                return BadRequest(new ProblemDetails
-                {
-                    Status = StatusCodes.Status400BadRequest,
-                    Title = "Invalid filter",
-                    Detail = "The filter must be \"All\" or a valid status tag identifier.",
-                    Extensions = { ["traceId"] = HttpContext.TraceIdentifier }
-                });
-            }
-
-            statusTagId = parsed;
-        }
+        //Guid? statusTagId = null;
+        //if (!string.IsNullOrWhiteSpace(filter) && !string.Equals(filter, "All", StringComparison.OrdinalIgnoreCase))
+        //{
+        //    if (!Guid.TryParse(filter, out var parsed))
+        //    {
+        //        return BadRequest(new ProblemDetails
+        //        {
+        //            Status = StatusCodes.Status400BadRequest,
+        //            Title = "Invalid filter",
+        //            Detail = "The filter must be \"All\" or a valid status tag identifier.",
+        //            Extensions = { ["traceId"] = HttpContext.TraceIdentifier }
+        //        });
+        //    }
+        //
+        //    statusTagId = parsed;
+        //}
 
         try
         {
-            var clients = await _clientService.SearchClientsAsync(organizationId.Value, search, statusTagId, cancellationToken);
-            return Ok(clients.Select(ClientListItemDto.FromDomain).ToList());
+            var clients = await _clientRepository.GetClientsAsync(organizationId.Value, cancellationToken);
+            //_clientService.SearchClientsAsync(organizationId.Value, search, statusTagId, cancellationToken);
+            //return Ok(clients.Select(ClientListItemDto.FromDomain).ToList());
+            return Ok(clients);
         }
         catch (Exception ex)
         {
@@ -118,7 +123,7 @@ public class ClientsController : ControllerBase
     }
 
     [HttpGet("filters")]
-    public async Task<ActionResult<IReadOnlyCollection<ClientFilterDto>>> GetFilters(CancellationToken cancellationToken = default)
+    public async Task<ActionResult<IReadOnlyCollection<ClientTag>>> GetFilters(CancellationToken cancellationToken = default)
     {
         var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
         if (organizationId is null)
@@ -126,11 +131,11 @@ public class ClientsController : ControllerBase
             return Unauthorized();
         }
 
-        var tags = await _clientService.GetStatusTagsAsync(organizationId.Value, cancellationToken);
-        var filters = new List<ClientFilterDto> { ClientFilterDto.All };
-        filters.AddRange(tags.Select(ClientFilterDto.FromDomain));
+        var tags = await _clientService.GetTagsAsync(organizationId.Value, cancellationToken);
+        //var filters = new List<ClientTag> { ClientFilterDto.All };
+        //filters.AddRange(tags.Select(ClientFilterDto.FromDomain));
 
-        return Ok(filters);
+        return Ok(tags);
     }
 
     [HttpGet("{id:guid}")]
