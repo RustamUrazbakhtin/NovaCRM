@@ -75,13 +75,7 @@ export async function getClientsOverview(signal?: AbortSignal): Promise<ClientOv
 }
 
 export async function searchClients(params: SearchClientsRequest, signal?: AbortSignal): Promise<ClientListItem[]> {
-    const { search, filter } = params;
-    const filterParam = filter && filter !== "All" ? filter : undefined;
     const { data } = await api.get<ClientListItem[]>("/clients", {
-        params: {
-            search: search?.trim() || undefined,
-            filter: filterParam || undefined,
-        },
         signal,
     });
     return data;
