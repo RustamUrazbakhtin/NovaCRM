@@ -1,11 +1,13 @@
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../layout/Header";
 import ThemeProvider from "../providers/ThemeProvider";
 import Widget from "../components/Widget";
 import MonthCalendar from "../components/MonthCalendar";
 import { authApi } from "../app/auth";
+import { getClientsOverview, type ClientOverview } from "../api/clients";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import "../styles/dashboard/index.css"; // базовая тема, сетка и виджеты дашборда
+import "../styles/dashboard/index.css";
 
 const MAX_VISIBLE_ITEMS = 3;
 
@@ -24,6 +26,22 @@ const renderLimitedList = (items: string[]) => {
 
 export default function Dashboard() {
     const navigate = useNavigate();
+    const [overview, setOverview] = useState<ClientOverview>({ totalClients: 0, returning: 0, averageLtv: 0, satisfaction: 0 });
+
+    useEffect(() => {
+        getClientsOverview().then(setOverview).catch((error) => {
+            console.error("Failed to load dashboard overview", error);
+            setOverview({ totalClients: 0, returning: 0, averageLtv: 0, satisfaction: 0 });
+        });
+    }, []);
+
+    const salonOverview = useMemo(() => [
+        `Total clients: ${overview.totalClients}`,
+        `Returning clients: ${overview.returning}`,
+        `Avg LTV: $${Math.round(overview.averageLtv)}`,
+        `Satisfaction: ${overview.satisfaction.toFixed(1)}`,
+    ], [overview]);
+
     const today = new Date();
     const todayISO = today.toISOString().slice(0, 10);
     const tomorrowISO = new Date(today.getTime() + 86400000).toISOString().slice(0, 10);
@@ -31,10 +49,7 @@ export default function Dashboard() {
     const events = [
         { date: todayISO, title: "Haircut — Anna", start: "12:00", end: "12:45", master: "Alsu" },
         { date: todayISO, title: "Nails — Kate", start: "15:30", end: "16:30", master: "Julia" },
-        { date: todayISO, title: "Brows — Lina", start: "17:30", end: "18:15", master: "Mia" },
-        { date: todayISO, title: "Balayage — Mia", start: "18:15", end: "19:30", master: "Aigul" },
         { date: tomorrowISO, title: "Coloring — Maria", start: "11:00", end: "12:00", master: "Alsu" },
-        { date: tomorrowISO, title: "Massage — Leo", start: "16:00", end: "17:00", master: "Mia" },
     ];
 
     const open = (s: string) => alert(s);
@@ -44,27 +59,6 @@ export default function Dashboard() {
         navigate("/auth", { replace: true });
     };
 
-    const salonOverview = [
-        "Appointments: 18",
-        "New Clients: 3",
-        "No-shows: 1",
-        "Walk-ins: 2",
-    ];
-
-    const topClients = [
-        "Anna Petrova — 12 visits",
-        "Julia Sokolova — 9 visits",
-        "Lina Karimova — 8 visits",
-        "Sofia Volkova — 7 visits",
-    ];
-
-    const staffStatus = [
-        "Olga — In service",
-        "Kate — Break",
-        "Maria — Available",
-        "Daniel — Training",
-    ];
-
     return (
         <ThemeProvider>
             <Header breadcrumb="Dashboard" onLogout={handleLogout} />
@@ -72,44 +66,28 @@ export default function Dashboard() {
             <main className="fx-page">
                 <section className="fx-row fx-top">
                     <div className="fx-quarter">
-                        <Widget
-                            title="Today (Salon)"
-                            footer="Overview"
-                            minH={160}
-                            onClick={() => open("Today overview")}
-                        >
+                        <Widget title="Today (Salon)" footer="Overview" minH={160} onClick={() => open("Today overview")}>
                             {renderLimitedList(salonOverview)}
                         </Widget>
                     </div>
                     <div className="fx-quarter">
-                        <Widget
-                            title="Clients"
-                            footer="Top visitors"
-                            minH={160}
-                            onClick={() => open("Clients")}
-                        >
-                            {renderLimitedList(topClients)}
+                        <Widget title="Clients" footer="Core stats" minH={160} onClick={() => navigate("/clients")}>
+                            {renderLimitedList([
+                                `Total: ${overview.totalClients}`,
+                                `Returning: ${overview.returning}`,
+                                `Satisfaction: ${overview.satisfaction.toFixed(1)}`,
+                            ])}
                         </Widget>
                     </div>
                     <div className="fx-quarter">
-                        <Widget
-                            title="Revenue"
-                            footer="This month"
-                            minH={160}
-                            onClick={() => open("Revenue")}
-                        >
-                            <div className="nx-number">$ 18,240</div>
-                            <span className="nx-subtle">↑ 12% vs August</span>
+                        <Widget title="Revenue" footer="From client LTV" minH={160}>
+                            <div className="nx-number">$ {Math.round(overview.averageLtv * Math.max(overview.totalClients, 1)).toLocaleString()}</div>
+                            <span className="nx-subtle">Based on actual client records</span>
                         </Widget>
                     </div>
                     <div className="fx-quarter">
-                        <Widget
-                            title="Staff"
-                            footer="Status"
-                            minH={160}
-                            href="/workers"
-                        >
-                            {renderLimitedList(staffStatus)}
+                        <Widget title="Staff" footer="Status" minH={160} href="/workers">
+                            {renderLimitedList(["Use Workers page for details"])}
                         </Widget>
                     </div>
                 </section>
@@ -120,44 +98,8 @@ export default function Dashboard() {
                             <MonthCalendar title="Calendar" events={events} />
                         </Widget>
                     </div>
-                    <div className="fx-right">
-                        <Widget
-                            title="Tasks"
-                            footer="Today"
-                            minH={120}
-                            onClick={() => open("Tasks")}
-                        >
-                            <ul className="nx-todos">
-                                <li><input type="checkbox" defaultChecked /> Order hair dye</li>
-                                <li><input type="checkbox" /> Call supplier</li>
-                                <li><input type="checkbox" /> IG promo post</li>
-                            </ul>
-                        </Widget>
-                        <Widget
-                            title="Inventory"
-                            footer="Low stock"
-                            minH={120}
-                            onClick={() => open("Inventory")}
-                        >
-                            <ul className="nx-list">
-                                <li>Shampoo #4 — 6 left</li>
-                                <li>Nail base — 3 left</li>
-                                <li>Serum — 5 left</li>
-                            </ul>
-                        </Widget>
-                        <Widget
-                            title="Reviews"
-                            footer="This week"
-                            minH={120}
-                            onClick={() => open("Reviews")}
-                        >
-                            <div className="nx-number">4.8 ★</div>
-                            <span className="nx-subtle">+32 new responses</span>
-                        </Widget>
-                    </div>
                 </section>
             </main>
         </ThemeProvider>
     );
 }
-

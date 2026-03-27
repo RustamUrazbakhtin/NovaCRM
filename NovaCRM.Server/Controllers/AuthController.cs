@@ -60,7 +60,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login(LoginDto dto)
+    public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
         var normalizedEmail = dto.Email.Trim().ToUpperInvariant();
 
@@ -85,12 +85,17 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("me")]
-    public async Task<IActionResult> Me()
+    public async Task<IActionResult> Me(CancellationToken cancellationToken)
     {
         var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (id == null) return Unauthorized();
-        var user = await _dbContext.AspNetUsers.FindAsync(id);
-        return Ok(new { user!.Email });
+        var user = await _dbContext.AspNetUsers.FindAsync(new object?[] { id }, cancellationToken);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(new { user.Email });
     }
 
     private string CreateJwt(AspNetUser user)
