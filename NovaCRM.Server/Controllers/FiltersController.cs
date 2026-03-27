@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using NovaCRM.Server.Contracts.Filters;
 using NovaCRM.Server.Contracts.Clients;
 using NovaCRM.Server.Services;
+using NovaCRM.Domain.Clients;
 
 namespace NovaCRM.Server.Controllers;
 
