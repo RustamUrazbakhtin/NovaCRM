@@ -9,50 +9,6 @@ public class ClientService : IClientService
         _repository = repository;
     }
 
-    //public async Task<ClientOverview> GetOverviewAsync(Guid organizationId, CancellationToken cancellationToken = default)
-    //{
-    //    var clients = await _repository.GetClientsAsync(organizationId, cancellationToken);
-    //    if (clients.Count == 0)
-    //    {
-    //        return new ClientOverview(0, 0, 0, 0);
-    //    }
-    //
-    //    var returning = clients.Count(c => c.TotalVisits > 1);
-    //    var averageLtv = Math.Round(clients.Average(c => c.LifetimeValue ?? 0m), 0);
-    //    var satisfaction = Math.Round(clients.Average(c => c.Satisfaction), 1);
-    //
-    //    return new ClientOverview(clients.Count, returning, averageLtv, satisfaction);
-    //}
-
-    //public async Task<IReadOnlyCollection<ClientListItem>> SearchClientsAsync(
-    //    Guid organizationId,
-    //    string? query,
-    //    Guid? statusTagId,
-    //    CancellationToken cancellationToken = default)
-    //{
-    //    var clients = await _repository.GetClientsAsync(organizationId, cancellationToken);
-    //    var normalizedQuery = (query ?? string.Empty).Trim().ToLowerInvariant();
-    //
-    //    var filtered = clients
-    //        .Where(client => MatchesSearch(client, normalizedQuery))
-    //        .Where(client => statusTagId is null || client.Tags.Any(tag => tag.Id == statusTagId))
-    //        .Select(client => new ClientListItem(
-    //            client.Id,
-    //            client.FirstName,
-    //            client.LastName,
-    //            client.Phone,
-    //            client.Email,
-    //            client.Tags,
-    //            client.LastVisitAt,
-    //            client.LifetimeValue,
-    //            client.Status
-    //        ))
-    //        .OrderByDescending(x => x.LastVisitAt ?? DateTime.MinValue)
-    //        .ToList();
-    //
-    //    return filtered;
-    //}
-
     public async Task<ClientDetails?> GetClientDetailsAsync(Guid organizationId, Guid clientId, CancellationToken cancellationToken = default)
     {
         var record = await _repository.GetClientDetailsAsync(organizationId, clientId, cancellationToken);
@@ -91,20 +47,7 @@ public class ClientService : IClientService
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
         };
 
-        if (string.IsNullOrWhiteSpace(trimmed.FirstName))
-        {
-            throw new ArgumentException("First name is required", nameof(request));
-        }
-
-        if (string.IsNullOrWhiteSpace(trimmed.LastName))
-        {
-            throw new ArgumentException("Last name is required", nameof(request));
-        }
-
-        if (string.IsNullOrWhiteSpace(trimmed.Phone))
-        {
-            throw new ArgumentException("Phone is required", nameof(request));
-        }
+        ValidateClient(trimmed.FirstName, trimmed.LastName, trimmed.Phone);
 
         if (trimmed.SegmentTagId is not null)
         {
@@ -114,6 +57,28 @@ public class ClientService : IClientService
         return _repository.AddClientAsync(organizationId, trimmed, cancellationToken);
     }
 
+    public Task<bool> UpdateClientAsync(Guid organizationId, Guid clientId, UpdateClientRequest request, CancellationToken cancellationToken = default)
+    {
+        var trimmed = request with
+        {
+            FirstName = request.FirstName.Trim(),
+            LastName = request.LastName.Trim(),
+            Phone = request.Phone.Trim(),
+            Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
+            Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim()
+        };
+
+        ValidateClient(trimmed.FirstName, trimmed.LastName, trimmed.Phone);
+
+        return _repository.UpdateClientAsync(organizationId, clientId, trimmed, cancellationToken);
+    }
+
+    public Task<bool> DeleteClientAsync(Guid organizationId, Guid clientId, CancellationToken cancellationToken = default)
+        => _repository.DeleteClientAsync(organizationId, clientId, cancellationToken);
+
+    public Task<bool> SetClientTagsAsync(Guid organizationId, Guid clientId, IReadOnlyCollection<Guid> tagIds, CancellationToken cancellationToken = default)
+        => _repository.SetClientTagsAsync(organizationId, clientId, tagIds, cancellationToken);
+
     public Task<IReadOnlyCollection<ClientTag>> GetTagsAsync(Guid organizationId, CancellationToken cancellationToken = default)
     {
         return _repository.GetTagsAsync(organizationId, cancellationToken);
@@ -122,19 +87,6 @@ public class ClientService : IClientService
     public Task<IReadOnlyCollection<ClientStatusTag>> GetStatusTagsAsync(Guid organizationId, CancellationToken cancellationToken = default)
     {
         return _repository.GetStatusTagsAsync(organizationId, cancellationToken);
-    }
-
-    private static bool MatchesSearch(ClientRecord client, string normalizedQuery)
-    {
-        if (string.IsNullOrEmpty(normalizedQuery))
-        {
-            return true;
-        }
-
-        var name = BuildName(client.FirstName, client.LastName).ToLowerInvariant();
-        return name.Contains(normalizedQuery)
-            || client.Phone.ToLowerInvariant().Contains(normalizedQuery)
-            || (client.Email?.ToLowerInvariant().Contains(normalizedQuery) ?? false);
     }
 
     private static string BuildName(string first, string last)
@@ -171,5 +123,23 @@ public class ClientService : IClientService
         }
 
         return await _repository.AddClientAsync(organizationId, trimmed, cancellationToken);
+    }
+
+    private static void ValidateClient(string firstName, string lastName, string phone)
+    {
+        if (string.IsNullOrWhiteSpace(firstName))
+        {
+            throw new ArgumentException("First name is required");
+        }
+
+        if (string.IsNullOrWhiteSpace(lastName))
+        {
+            throw new ArgumentException("Last name is required");
+        }
+
+        if (string.IsNullOrWhiteSpace(phone))
+        {
+            throw new ArgumentException("Phone is required");
+        }
     }
 }

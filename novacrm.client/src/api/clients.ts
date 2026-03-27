@@ -50,6 +50,14 @@ export interface CreateClientPayload {
     segmentTagId?: string | null;
 }
 
+export interface UpdateClientPayload {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email?: string | null;
+    notes?: string | null;
+}
+
 export interface ClientTag {
     id: string;
     name: string;
@@ -88,7 +96,12 @@ export async function getClientsOverview(signal?: AbortSignal): Promise<ClientOv
 export async function searchClients(params: SearchClientsRequest, signal?: AbortSignal): Promise<ClientListItem[]> {
     const { data } = await api.get<ClientListItem[]>("/clients", {
         signal,
+        params: {
+            search: params.search,
+            filter: params.filter,
+        },
     });
+
     return (data ?? []).map((client) => ({
         ...client,
         tags: client?.tags ?? [],
@@ -108,9 +121,21 @@ export async function createClient(payload: CreateClientPayload): Promise<Client
     return data;
 }
 
+export async function updateClient(id: string, payload: UpdateClientPayload): Promise<void> {
+    await api.put(`/clients/${id}`, payload);
+}
+
+export async function deleteClient(id: string): Promise<void> {
+    await api.delete(`/clients/${id}`);
+}
+
+export async function setClientTags(id: string, tagIds: string[]): Promise<void> {
+    await api.put(`/clients/${id}/tags`, { tagIds });
+}
+
 export async function getClientTags(signal?: AbortSignal): Promise<ClientTag[]> {
     const { data } = await api.get<ClientTag[]>("/client-tags", { signal });
-    return data;
+    return data ?? [];
 }
 
 export async function getClientFilters(signal?: AbortSignal): Promise<ClientFiltersResponse> {
@@ -124,5 +149,5 @@ export async function getClientFilters(signal?: AbortSignal): Promise<ClientFilt
 
 export async function getClientStatusTags(signal?: AbortSignal): Promise<ClientTag[]> {
     const { data } = await api.get<ClientTag[]>("/clients/status-tags", { signal });
-    return data;
+    return data ?? [];
 }

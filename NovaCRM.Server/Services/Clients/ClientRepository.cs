@@ -18,98 +18,53 @@ public class ClientRepository : IClientRepository
         var clients = await _dbContext.Clients
             .AsNoTracking()
             .Where(c => c.OrganizationId == organizationId && c.DeletedAt == null)
-            .Select(c => new ClientRecord(
+            .Select(c => new
+            {
                 c.Id,
                 c.FirstName,
                 c.LastName,
                 c.Phone,
                 c.Email,
-                c.TotalVisits
-            ))
+                c.TotalVisits,
+                c.LastVisitAt,
+                c.Ltv,
+                c.ClientTagLinks
+            })
             .ToListAsync(cancellationToken);
 
-        if (clients.Count == 0)
+        var tags = await _dbContext.ClientTagLinks
+            .AsNoTracking()
+            .Where(link => link.OrganizationId == organizationId && link.DeletedAt == null)
+            .Join(
+                _dbContext.ClientTags.AsNoTracking().Where(tag => tag.OrganizationId == organizationId && tag.DeletedAt == null),
+                link => link.ClientTagId,
+                tag => tag.Id,
+                (link, tag) => new
+                {
+                    link.ClientId,
+                    Tag = new ClientTag(tag.Id, tag.Name, tag.Color)
+                })
+            .ToListAsync(cancellationToken);
+
+        var tagsByClient = tags
+            .GroupBy(item => item.ClientId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyCollection<ClientTag>)g.Select(x => x.Tag).DistinctBy(t => t.Id).ToList());
+
+        return clients.Select(c =>
         {
-            return Array.Empty<ClientRecord>();
-        }
-
-        //var clientIds = clients.Select(c => c.Id).ToList();
-        //
-        //var satisfaction = await _dbContext.Reviews
-        //    .AsNoTracking()
-        //    .Where(r => r.DeletedAt == null
-        //        && r.OrganizationId == organizationId
-        //        && r.ClientId != null
-        //        && clientIds.Contains(r.ClientId.Value))
-        //    .GroupBy(r => r.ClientId!.Value)
-        //    .Select(group => new
-        //    {
-        //        ClientId = group.Key,
-        //        Avg = group.Average(r => (decimal?)r.Rating) ?? 0m
-        //    })
-        //    .ToListAsync(cancellationToken);
-        //
-        //var satisfactionByClient = satisfaction.ToDictionary(item => item.ClientId, item => item.Avg);
-        //
-        //var tags = await _dbContext.ClientTagLinks
-        //    .AsNoTracking()
-        //    .Where(link =>
-        //        link.OrganizationId == organizationId
-        //        && link.DeletedAt == null
-        //        && clientIds.Contains(link.ClientId))
-        //    .Join(
-        //        _dbContext.ClientTags.AsNoTracking().Where(tag => tag.OrganizationId == organizationId && tag.DeletedAt == null),
-        //        link => link.ClientTagId,
-        //        tag => tag.Id,
-        //        (link, tag) => new
-        //        {
-        //            link.ClientId,
-        //            Tag = new ClientTag(tag.Id, tag.Name, tag.Color)
-        //        })
-        //    .ToListAsync(cancellationToken);
-        //
-        //var tagsByClient = tags
-        //    .GroupBy(item => item.ClientId)
-        //    .ToDictionary(
-        //        group => group.Key,
-        //        group => (IReadOnlyCollection<ClientTag>)group
-        //            .OrderBy(item => item.Tag.Name)
-        //            .Select(item => item.Tag)
-        //            .ToList());
-        //
-       // var metrics = await _dbContext.ClientMetrics
-       //     .AsNoTracking()
-       //     .Where(metric => metric.OrganizationId == organizationId && clientIds.Contains(metric.ClientId))
-       //     .Select(metric => new
-       //     {
-       //         metric.ClientId,
-       //         metric.LastVisitAt,
-       //         metric.LifetimeValue,
-       //         metric.Status
-       //     })
-       //     .ToListAsync(cancellationToken);
-
-        //var metricsByClient = metrics.ToDictionary(item => item.ClientId, item => item);
-
-        return clients.Select(client =>
-        {
-            //tagsByClient.TryGetValue(client.Id, out var clientTags);
-            //metricsByClient.TryGetValue(client.Id, out var metric);
-            //var clientSatisfaction = satisfactionByClient.TryGetValue(client.Id, out var score) ? score : 0m;
-
+            tagsByClient.TryGetValue(c.Id, out var clientTags);
             return new ClientRecord(
-                client.Id,
-                client.FirstName,
-                client.LastName,
-                client.Phone,
-                client.Email,
-                //clientTags ?? Array.Empty<ClientTag>(),
-                //metric?.LastVisitAt,
-                //metric?.LifetimeValue,
-                //metric?.Status,
-                client.TotalVisits
-                //clientSatisfaction
-            );
+                c.Id,
+                c.FirstName,
+                c.LastName,
+                c.Phone,
+                c.Email,
+                clientTags ?? Array.Empty<ClientTag>(),
+                c.LastVisitAt,
+                c.Ltv,
+                c.TotalVisits > 1 ? "Returning" : "New",
+                c.TotalVisits,
+                0m);
         }).ToList();
     }
 
@@ -129,30 +84,7 @@ public class ClientRepository : IClientRepository
                 c.TotalVisits,
                 c.Ltv,
                 c.Notes,
-                Tags = c.ClientTagLinks
-                    .Where(link => link.OrganizationId == organizationId && link.DeletedAt == null)
-                    .OrderBy(link => link.Tag.Name)
-                    .Select(link => new ClientTag(link.ClientTagId, link.Tag.Name, link.Tag.Color)),
                 City = c.Branch != null ? c.Branch.City : null,
-                Master = c.Appointments
-                    .Where(a => a.DeletedAt == null)
-                    .OrderByDescending(a => a.StartAt)
-                    .Select(a => a.Staff.FirstName + " " + a.Staff.LastName)
-                    .FirstOrDefault(),
-                Satisfaction = c.Reviews
-                    .Where(r => r.DeletedAt == null)
-                    .Select(r => (decimal?)r.Rating)
-                    .DefaultIfEmpty(0m)
-                    .Average() ?? 0m,
-                Activity = c.Appointments
-                    .Where(a => a.DeletedAt == null)
-                    .OrderByDescending(a => a.StartAt)
-                    .Take(6)
-                    .Select(a => new ClientActivity(
-                        a.StartAt,
-                        $"Visit · {a.Status}",
-                        a.Branch != null ? a.Branch.Name : a.Notes
-                    ))
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -161,7 +93,15 @@ public class ClientRepository : IClientRepository
             return null;
         }
 
-        var activity = client.Activity.ToList();
+        var tags = await _dbContext.ClientTagLinks
+            .AsNoTracking()
+            .Where(link => link.OrganizationId == organizationId && link.ClientId == clientId && link.DeletedAt == null)
+            .Join(_dbContext.ClientTags.AsNoTracking().Where(t => t.OrganizationId == organizationId && t.DeletedAt == null),
+                link => link.ClientTagId,
+                tag => tag.Id,
+                (_, tag) => new ClientTag(tag.Id, tag.Name, tag.Color))
+            .OrderBy(t => t.Name)
+            .ToListAsync(cancellationToken);
 
         return new ClientDetailsRecord(
             client.Id,
@@ -172,13 +112,12 @@ public class ClientRepository : IClientRepository
             client.LastVisitAt,
             client.TotalVisits,
             client.Ltv,
-            client.Satisfaction,
-            client.Tags.ToList(),
+            0m,
+            tags,
             client.City,
-            client.Master,
-            activity,
-            client.Notes
-        );
+            null,
+            Array.Empty<ClientActivity>(),
+            client.Notes);
     }
 
     public async Task<ClientCreatedResult> AddClientAsync(Guid organizationId, CreateClientRequest request, CancellationToken cancellationToken = default)
@@ -238,6 +177,114 @@ public class ClientRepository : IClientRepository
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return new ClientCreatedResult(client.Id);
+    }
+
+    public async Task<bool> UpdateClientAsync(Guid organizationId, Guid clientId, UpdateClientRequest request, CancellationToken cancellationToken = default)
+    {
+        var client = await _dbContext.Clients
+            .Where(c => c.OrganizationId == organizationId && c.Id == clientId && c.DeletedAt == null)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (client is null)
+        {
+            return false;
+        }
+
+        client.FirstName = request.FirstName;
+        client.LastName = request.LastName;
+        client.Phone = request.Phone;
+        client.Email = request.Email;
+        client.Notes = request.Notes;
+        client.UpdatedAt = DateTime.UtcNow;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> DeleteClientAsync(Guid organizationId, Guid clientId, CancellationToken cancellationToken = default)
+    {
+        var client = await _dbContext.Clients
+            .Where(c => c.OrganizationId == organizationId && c.Id == clientId && c.DeletedAt == null)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (client is null)
+        {
+            return false;
+        }
+
+        var now = DateTime.UtcNow;
+        client.DeletedAt = now;
+        client.UpdatedAt = now;
+
+        var links = await _dbContext.ClientTagLinks
+            .Where(x => x.OrganizationId == organizationId && x.ClientId == clientId && x.DeletedAt == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (var link in links)
+        {
+            link.DeletedAt = now;
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> SetClientTagsAsync(Guid organizationId, Guid clientId, IReadOnlyCollection<Guid> tagIds, CancellationToken cancellationToken = default)
+    {
+        var exists = await _dbContext.Clients
+            .AnyAsync(c => c.OrganizationId == organizationId && c.Id == clientId && c.DeletedAt == null, cancellationToken);
+
+        if (!exists)
+        {
+            return false;
+        }
+
+        var validTagIds = await _dbContext.ClientTags
+            .Where(t => t.OrganizationId == organizationId && t.DeletedAt == null && tagIds.Contains(t.Id))
+            .Select(t => t.Id)
+            .ToListAsync(cancellationToken);
+
+        var current = await _dbContext.ClientTagLinks
+            .Where(x => x.OrganizationId == organizationId && x.ClientId == clientId)
+            .ToListAsync(cancellationToken);
+
+        var now = DateTime.UtcNow;
+        foreach (var link in current)
+        {
+            if (!validTagIds.Contains(link.ClientTagId))
+            {
+                link.DeletedAt = now;
+            }
+        }
+
+        var currentActiveIds = current.Where(x => x.DeletedAt == null).Select(x => x.ClientTagId).ToHashSet();
+
+        foreach (var tagId in validTagIds)
+        {
+            if (currentActiveIds.Contains(tagId))
+            {
+                continue;
+            }
+
+            var deletedMatch = current.FirstOrDefault(x => x.ClientTagId == tagId && x.DeletedAt != null);
+            if (deletedMatch is not null)
+            {
+                deletedMatch.DeletedAt = null;
+                continue;
+            }
+
+            _dbContext.ClientTagLinks.Add(new Data.Model.ClientTagLink
+            {
+                Id = Guid.NewGuid(),
+                OrganizationId = organizationId,
+                ClientId = clientId,
+                ClientTagId = tagId,
+                CreatedAt = now
+            });
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     public async Task<IReadOnlyCollection<ClientTag>> GetTagsAsync(Guid organizationId, CancellationToken cancellationToken = default)

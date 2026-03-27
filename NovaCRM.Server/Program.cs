@@ -119,4 +119,6 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapFallbackToFile("/index.html");
 
+await DataSeeder.SeedAsync(app.Services);
+
 app.Run();

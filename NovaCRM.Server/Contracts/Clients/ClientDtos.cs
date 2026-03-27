@@ -3,11 +3,7 @@ using NovaCRM.Domain.Clients;
 
 namespace NovaCRM.Server.Contracts.Clients;
 
-public record ClientOverviewDto(int TotalClients, int ReturningClients, decimal AverageLtv, decimal Satisfaction)
-{
-    public static ClientOverviewDto FromDomain(ClientOverview overview) =>
-        new(overview.TotalClients, overview.ReturningClients, overview.AverageLtv, overview.Satisfaction);
-}
+public record ClientOverviewDto(int TotalClients, int ReturningClients, decimal AverageLtv, decimal Satisfaction);
 
 public record ClientListItemDto(
     Guid Id,
@@ -18,20 +14,7 @@ public record ClientListItemDto(
     IReadOnlyCollection<ClientTagDto> Tags,
     DateTime? LastVisitAt,
     decimal? LifetimeValue,
-    string? Status)
-{
-    public static ClientListItemDto FromDomain(ClientListItem item) =>
-        new(
-            item.Id,
-            item.FirstName,
-            item.LastName,
-            item.Phone,
-            item.Email,
-            item.Tags.Select(ClientTagDto.FromDomain).ToList(),
-            item.LastVisitAt,
-            item.LifetimeValue,
-            item.Status);
-}
+    string? Status);
 
 public record ClientDetailsDto(
     Guid Id,
@@ -77,6 +60,13 @@ public record CreateClientDto(string FirstName, string LastName, string Phone, s
 {
     public CreateClientRequest ToDomain() => new(FirstName, LastName, Phone, Email, SegmentTagId);
 }
+
+public record UpdateClientDto(string FirstName, string LastName, string Phone, string? Email, string? Notes)
+{
+    public UpdateClientRequest ToDomain() => new(FirstName, LastName, Phone, Email, Notes);
+}
+
+public record UpdateClientTagsDto(IReadOnlyCollection<Guid> TagIds);
 
 public record ClientTagDto(Guid Id, string Name, string? Color)
 {
