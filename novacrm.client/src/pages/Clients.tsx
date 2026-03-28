@@ -397,22 +397,7 @@ export default function Clients() {
                         </article>
                     </div>
 
-                    <div className="clients-toolbar__actions">
-                    <label className="clients-search-wrap" aria-label="Search clients">
-                        <span className="clients-search-icon" aria-hidden="true">⌕</span>
-                        <input
-                            type="search"
-                            className="clients-search"
-                            placeholder="Search by name, phone, or email"
-                            value={search}
-                            onChange={(event) => setSearch(event.target.value)}
-                        />
-                    </label>
-                    <button type="button" className="clients-add" onClick={handleOpenAdd}>
-                        <span className="clients-add__text">Add Client</span>
-                        <span className="clients-add__icon">+</span>
-                    </button>
-                    </div>
+                   
                 </section>
 
                 <section className="clients-widget">
@@ -431,39 +416,25 @@ export default function Clients() {
                                 </button>
                             ))}
                         </div>
-                        <div className="clients-segments" role="tablist" aria-label="Client segments">
-                            {statusFilters.map((item) => (
-                                <button
-                                    key={item.key}
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={statusFilter === item.key}
-                                    className={`clients-segment${statusFilter === item.key ? " is-active" : ""}`}
-                                    onClick={() => setStatusFilter(item.key)}
-                                    style={item.color ? { borderColor: item.color } : undefined}
-                                >
-                                    {item.label}
-                                </button>
-                            ))}
+                        <div className="clients-toolbar__actions">
+                            <label className="clients-search-wrap" aria-label="Search clients">
+                                <span className="clients-search-icon" aria-hidden="true">⌕</span>
+                                <input
+                                    type="search"
+                                    className="clients-search"
+                                    placeholder="Search by name, phone, or email"
+                                    value={search}
+                                    onChange={(event) => setSearch(event.target.value)}
+                                />
+                            </label>
+                            <button type="button" className="clients-add" onClick={handleOpenAdd}>
+                                <span className="clients-add__text">Add Client</span>
+                                <span className="clients-add__icon">+</span>
+                            </button>
                         </div>
-                        <div className="clients-summary-strip" aria-label="Clients summary">
-                            <article>
-                                <span>Total</span>
-                                <strong>{loadingOverview ? "—" : overview?.totalClients ?? 0}</strong>
-                            </article>
-                            <article>
-                                <span>Returning</span>
-                                <strong>{loadingOverview ? "—" : overview?.returning ?? 0}</strong>
-                            </article>
-                            <article>
-                                <span>Avg LTV</span>
-                                <strong>{loadingOverview ? "—" : formatCurrency(overview?.averageLtv ?? 0)}</strong>
-                            </article>
-                            <article>
-                                <span>Satisfaction</span>
-                                <strong>{loadingOverview ? "—" : (overview?.satisfaction ?? 0).toFixed(1)}</strong>
-                            </article>
-                        </div>
+
+
+                        
                     </header>
 
                     <div className="clients-table-card">
