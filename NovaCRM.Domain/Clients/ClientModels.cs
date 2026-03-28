@@ -47,3 +47,11 @@ public record CreateClientRequest(
     string? Email,
     Guid? SegmentTagId
 );
+
+public record UpdateClientRequest(
+    string FirstName,
+    string LastName,
+    string Phone,
+    string? Email,
+    string? Notes
+);

@@ -1,9 +1,7 @@
 using System.Security.Claims;
-using System.Linq;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Mvc;
 using NovaCRM.Domain.Clients;
 using NovaCRM.Server.Contracts.Clients;
 using NovaCRM.Server.Services;
@@ -32,22 +30,6 @@ public class ClientsController : ControllerBase
         _clientRepository = clientRepository;
     }
 
-    //[HttpGet("overview")]
-    //public async Task<ActionResult<ClientOverviewDto>> GetOverview(CancellationToken cancellationToken)
-    //{
-    //    var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
-    //    if (organizationId is null)
-    //    {
-    //        _logger.LogWarning(
-    //            "Unable to load clients because organization id is missing for user {UserId}.",
-    //            User.FindFirstValue(ClaimTypes.NameIdentifier));
-    //        return Unauthorized();
-    //    }
-    //
-    //    var overview = await _clientService.GetOverviewAsync(organizationId.Value, cancellationToken);
-    //    return Ok(ClientOverviewDto.FromDomain(overview));
-    //}
-
     [HttpGet("overview")]
     public async Task<IActionResult> GetOverview(CancellationToken cancellationToken)
     {
@@ -57,30 +39,18 @@ public class ClientsController : ControllerBase
             return Ok(new { totalClients = 0, returning = 0, averageLtv = 0m, satisfaction = 0m });
         }
 
-        try
-        {
-            var clients = await _clientRepository.GetClientsAsync(organizationId.Value, cancellationToken);
-            var returning = clients.Count(client => client.TotalVisits > 1);
-            var totalClients = clients.Count;
+        var clients = await _clientRepository.GetClientsAsync(organizationId.Value, cancellationToken);
+        var returning = clients.Count(client => client.TotalVisits > 1);
+        var totalClients = clients.Count;
+        var averageLtv = clients.Count > 0 ? Math.Round(clients.Average(c => c.LifetimeValue ?? 0m), 0) : 0m;
+        var satisfaction = clients.Count > 0 ? Math.Round(clients.Average(c => c.Satisfaction), 1) : 0m;
 
-            return Ok(new
-            {
-                totalClients,
-                returning,
-                averageLtv = 0m,
-                satisfaction = 0m
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to load client overview for organization {OrganizationId}.", organizationId);
-            return Ok(new { totalClients = 0, returning = 0, averageLtv = 0m, satisfaction = 0m });
-        }
+        return Ok(new { totalClients, returning, averageLtv, satisfaction });
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyCollection<ClientListItemDto>>> GetClients([
-        FromQuery] string? search,
+    public async Task<ActionResult<IReadOnlyCollection<ClientListItemDto>>> GetClients(
+        [FromQuery] string? search,
         [FromQuery] string? filter,
         CancellationToken cancellationToken = default)
     {
@@ -90,47 +60,39 @@ public class ClientsController : ControllerBase
             return Ok(Array.Empty<ClientListItemDto>());
         }
 
-        //Guid? statusTagId = null;
-        //if (!string.IsNullOrWhiteSpace(filter) && !string.Equals(filter, "All", StringComparison.OrdinalIgnoreCase))
-        //{
-        //    if (!Guid.TryParse(filter, out var parsed))
-        //    {
-        //        return BadRequest(new ProblemDetails
-        //        {
-        //            Status = StatusCodes.Status400BadRequest,
-        //            Title = "Invalid filter",
-        //            Detail = "The filter must be \"All\" or a valid status tag identifier.",
-        //            Extensions = { ["traceId"] = HttpContext.TraceIdentifier }
-        //        });
-        //    }
-        //
-        //    statusTagId = parsed;
-        //}
+        var clients = await _clientRepository.GetClientsAsync(organizationId.Value, cancellationToken);
 
-        try
-        {
-            var clients = await _clientRepository.GetClientsAsync(organizationId.Value, cancellationToken);
-            //_clientService.SearchClientsAsync(organizationId.Value, search, statusTagId, cancellationToken);
-            var response = clients
-                .Select(client => new ClientListItemDto(
-                    client.Id,
-                    client.FirstName,
-                    client.LastName,
-                    client.Phone,
-                    client.Email,
-                    Array.Empty<ClientTagDto>(),
-                    null,
-                    null,
-                    null))
-                .ToList();
+        var normalizedSearch = search?.Trim().ToLowerInvariant();
+        var filteredClients = clients
+            .Where(client => string.IsNullOrWhiteSpace(normalizedSearch)
+                || $"{client.FirstName} {client.LastName}".ToLowerInvariant().Contains(normalizedSearch)
+                || client.Phone.ToLowerInvariant().Contains(normalizedSearch)
+                || (client.Email?.ToLowerInvariant().Contains(normalizedSearch) ?? false));
 
-            return Ok(response);
-        }
-        catch (Exception ex)
+        if (!string.IsNullOrWhiteSpace(filter) && !string.Equals(filter, "All", StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogError(ex, "Failed to load clients for organization {OrganizationId}.", organizationId);
-            return Ok(Array.Empty<ClientListItemDto>());
+            if (!Guid.TryParse(filter, out var filterTagId))
+            {
+                return BadRequest(new { message = "Invalid filter id." });
+            }
+
+            filteredClients = filteredClients.Where(c => c.Tags.Any(t => t.Id == filterTagId));
         }
+
+        var response = filteredClients
+            .Select(client => new ClientListItemDto(
+                client.Id,
+                client.FirstName,
+                client.LastName,
+                client.Phone,
+                client.Email,
+                client.Tags.Select(ClientTagDto.FromDomain).ToList(),
+                client.LastVisitAt,
+                client.LifetimeValue,
+                client.Status))
+            .ToList();
+
+        return Ok(response);
     }
 
     [HttpGet("tags")]
@@ -169,9 +131,6 @@ public class ClientsController : ControllerBase
         }
 
         var tags = await _clientService.GetTagsAsync(organizationId.Value, cancellationToken);
-        //var filters = new List<ClientTag> { ClientFilterDto.All };
-        //filters.AddRange(tags.Select(ClientFilterDto.FromDomain));
-
         return Ok(tags);
     }
 
@@ -196,11 +155,6 @@ public class ClientsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ClientDetailsDto>> AddClient([FromBody] CreateClientDto dto, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid)
-        {
-            return ValidationProblem(ModelState);
-        }
-
         var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
         if (organizationId is null)
         {
@@ -220,13 +174,58 @@ public class ClientsController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new ProblemDetails
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Invalid client data",
-                Detail = ex.Message,
-                Extensions = { ["traceId"] = HttpContext.TraceIdentifier }
-            });
+            return BadRequest(new { message = ex.Message });
         }
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> UpdateClient(Guid id, [FromBody] UpdateClientDto dto, CancellationToken cancellationToken)
+    {
+        var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
+        if (organizationId is null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var updated = await _clientService.UpdateClientAsync(organizationId.Value, id, dto.ToDomain(), cancellationToken);
+            if (!updated)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteClient(Guid id, CancellationToken cancellationToken)
+    {
+        var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
+        if (organizationId is null)
+        {
+            return Unauthorized();
+        }
+
+        var deleted = await _clientService.DeleteClientAsync(organizationId.Value, id, cancellationToken);
+        return deleted ? NoContent() : NotFound();
+    }
+
+    [HttpPut("{id:guid}/tags")]
+    public async Task<IActionResult> SetClientTags(Guid id, [FromBody] UpdateClientTagsDto dto, CancellationToken cancellationToken)
+    {
+        var organizationId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
+        if (organizationId is null)
+        {
+            return Unauthorized();
+        }
+
+        var updated = await _clientService.SetClientTagsAsync(organizationId.Value, id, dto.TagIds.Distinct().ToList(), cancellationToken);
+        return updated ? NoContent() : NotFound();
     }
 }

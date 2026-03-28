@@ -5,7 +5,6 @@ import ThemeProvider from "../providers/ThemeProvider";
 import type {
     ClientDetails,
     ClientFilter,
-    ClientFiltersResponse,
     ClientListItem,
     ClientOverview,
     ClientTag,
@@ -42,11 +41,6 @@ export default function Clients() {
     });
     const [clients, setClients] = useState<ClientListItem[]>([]);
     const [statusFilter, setStatusFilter] = useState<string>("All");
-    const [filters, setFilters] = useState<ClientFiltersResponse>({
-        clientTags: [],
-        statuses: [],
-        segments: [],
-    });
     const [statusFilters, setStatusFilters] = useState<ClientFilter[]>([{ key: "All", label: "All", color: null }]);
     const [search, setSearch] = useState("");
     const [loadingList, setLoadingList] = useState(false);
@@ -97,7 +91,6 @@ export default function Clients() {
                       ]
                     : [{ key: "All", label: "All", color: null }];
 
-                setFilters(data);
                 setStatusFilters(incoming);
                 setStatusFilter((current) =>
                     current && incoming.some((item) => item.key === current) ? current : "All"
@@ -105,7 +98,6 @@ export default function Clients() {
             })
             .catch((error) => {
                 if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
-                setFilters({ clientTags: [], statuses: [], segments: [] });
                 setStatusFilters([{ key: "All", label: "All", color: null }]);
                 setStatusFilter("All");
                 if (!hasLoggedFiltersError.current) {
