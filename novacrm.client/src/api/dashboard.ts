@@ -16,11 +16,26 @@ export interface DashboardUpcomingAppointment {
     date: string;
 }
 
-export interface DashboardRevenueSummary {
-    currentMonthRevenue: number;
-    previousMonthRevenue: number;
-    growthPercent: number;
-    trend: "up" | "down" | "flat" | string;
+export interface DashboardAnalyticsRing {
+    key: string;
+    label: string;
+    valuePercent: number;
+    currentValue: number;
+    targetValue?: number | null;
+    description: string;
+}
+
+export interface DashboardAnalyticsSummary {
+    rings: DashboardAnalyticsRing[];
+    isPlaceholder: boolean;
+}
+
+export interface DashboardAccountingPreview {
+    revenueThisMonth: number;
+    payrollThisMonth?: number | null;
+    pendingAmount?: number | null;
+    formsConfiguredCount?: number | null;
+    statusNote: string;
 }
 
 export interface DashboardStaffMember {
@@ -64,8 +79,9 @@ export interface DashboardReviewSummary {
 
 export interface DashboardOverview {
     todaySummary: DashboardTodaySummary;
-    upcomingAppointments: DashboardUpcomingAppointment[];
-    revenueSummary: DashboardRevenueSummary;
+    upcomingSoon: DashboardUpcomingAppointment[];
+    analyticsSummary: DashboardAnalyticsSummary;
+    accountingPreview: DashboardAccountingPreview;
     staffSummary: DashboardStaffSummary;
     calendarCounts: DashboardCalendarCount[];
     recentClients: DashboardRecentClient[];
@@ -75,8 +91,9 @@ export interface DashboardOverview {
 
 const emptyOverview: DashboardOverview = {
     todaySummary: { appointmentsToday: 0, newClientsThisWeek: 0, noShows: 0, completedVisitsToday: 0 },
-    upcomingAppointments: [],
-    revenueSummary: { currentMonthRevenue: 0, previousMonthRevenue: 0, growthPercent: 0, trend: "flat" },
+    upcomingSoon: [],
+    analyticsSummary: { rings: [], isPlaceholder: true },
+    accountingPreview: { revenueThisMonth: 0, payrollThisMonth: null, pendingAmount: null, formsConfiguredCount: null, statusNote: "Accounting data not configured yet." },
     staffSummary: { total: 0, inService: 0, onBreak: 0, available: 0, members: [] },
     calendarCounts: [],
     recentClients: [],
@@ -90,14 +107,19 @@ export async function getDashboardOverview(signal?: AbortSignal): Promise<Dashbo
         ...emptyOverview,
         ...data,
         todaySummary: { ...emptyOverview.todaySummary, ...(data?.todaySummary ?? {}) },
-        revenueSummary: { ...emptyOverview.revenueSummary, ...(data?.revenueSummary ?? {}) },
+        analyticsSummary: {
+            ...emptyOverview.analyticsSummary,
+            ...(data?.analyticsSummary ?? {}),
+            rings: data?.analyticsSummary?.rings ?? [],
+        },
+        accountingPreview: { ...emptyOverview.accountingPreview, ...(data?.accountingPreview ?? {}) },
         staffSummary: {
             ...emptyOverview.staffSummary,
             ...(data?.staffSummary ?? {}),
             members: data?.staffSummary?.members ?? [],
         },
         reviewsSummary: { ...emptyOverview.reviewsSummary, ...(data?.reviewsSummary ?? {}) },
-        upcomingAppointments: data?.upcomingAppointments ?? [],
+        upcomingSoon: data?.upcomingSoon ?? [],
         calendarCounts: data?.calendarCounts ?? [],
         recentClients: data?.recentClients ?? [],
         clientSegments: data?.clientSegments ?? [],

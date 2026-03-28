@@ -28,7 +28,8 @@ public sealed class DashboardController : ControllerBase
             return Ok(new DashboardOverviewDto(
                 new DashboardTodaySummaryDto(0, 0, 0, 0),
                 Array.Empty<DashboardUpcomingItemDto>(),
-                new DashboardRevenueSummaryDto(0, 0, 0, "flat"),
+                new DashboardAnalyticsSummaryDto(Array.Empty<DashboardAnalyticsRingDto>(), true),
+                new DashboardAccountingPreviewDto(0, null, null, null, "Accounting data not configured yet."),
                 new DashboardStaffSummaryDto(0, 0, 0, 0, Array.Empty<DashboardStaffMemberDto>()),
                 Array.Empty<DashboardCalendarCountDto>(),
                 Array.Empty<DashboardRecentClientDto>(),

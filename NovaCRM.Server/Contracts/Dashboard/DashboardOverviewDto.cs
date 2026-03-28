@@ -2,8 +2,9 @@ namespace NovaCRM.Server.Contracts.Dashboard;
 
 public sealed record DashboardOverviewDto(
     DashboardTodaySummaryDto TodaySummary,
-    IReadOnlyCollection<DashboardUpcomingItemDto> UpcomingAppointments,
-    DashboardRevenueSummaryDto RevenueSummary,
+    IReadOnlyCollection<DashboardUpcomingItemDto> UpcomingSoon,
+    DashboardAnalyticsSummaryDto AnalyticsSummary,
+    DashboardAccountingPreviewDto AccountingPreview,
     DashboardStaffSummaryDto StaffSummary,
     IReadOnlyCollection<DashboardCalendarCountDto> CalendarCounts,
     IReadOnlyCollection<DashboardRecentClientDto> RecentClients,
@@ -24,11 +25,24 @@ public sealed record DashboardUpcomingItemDto(
     string Status,
     string Date);
 
-public sealed record DashboardRevenueSummaryDto(
-    decimal CurrentMonthRevenue,
-    decimal PreviousMonthRevenue,
-    decimal GrowthPercent,
-    string Trend);
+public sealed record DashboardAnalyticsSummaryDto(
+    IReadOnlyCollection<DashboardAnalyticsRingDto> Rings,
+    bool IsPlaceholder);
+
+public sealed record DashboardAnalyticsRingDto(
+    string Key,
+    string Label,
+    int ValuePercent,
+    int CurrentValue,
+    int? TargetValue,
+    string Description);
+
+public sealed record DashboardAccountingPreviewDto(
+    decimal RevenueThisMonth,
+    decimal? PayrollThisMonth,
+    decimal? PendingAmount,
+    int? FormsConfiguredCount,
+    string StatusNote);
 
 public sealed record DashboardStaffSummaryDto(
     int Total,

@@ -10,6 +10,7 @@ import InventoryPage from "../pages/Inventory";
 import AnalyticsPage from "../pages/Analytics";
 import TasksPage from "../pages/Tasks";
 import ReviewsPage from "../pages/Reviews";
+import AccountingPage from "../pages/Accounting";
 import SettingsPage from "../pages/Settings";
 import SettingsCompanyPage from "../pages/SettingsCompany";
 import SettingsBillingPage from "../pages/SettingsBilling";
@@ -34,6 +35,7 @@ export default function Router() {
                 <Route path="/analytics" element={<Private><AnalyticsPage /></Private>} />
                 <Route path="/tasks" element={<Private><TasksPage /></Private>} />
                 <Route path="/reviews" element={<Private><ReviewsPage /></Private>} />
+                <Route path="/accounting" element={<Private><AccountingPage /></Private>} />
                 <Route path="/profile" element={<Private><ProfilePage /></Private>} />
                 <Route path="/settings" element={<Private><SettingsPage /></Private>} />
                 <Route path="/settings/profile" element={<Private><Navigate to="/profile" replace /></Private>} />

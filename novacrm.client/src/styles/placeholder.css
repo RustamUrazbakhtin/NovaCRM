@@ -47,3 +47,33 @@
 .dark .fx-placeholder-panel p {
     color: rgba(226, 232, 240, 0.85);
 }
+
+.fx-placeholder-grid {
+    margin-top: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    text-align: left;
+}
+
+.fx-placeholder-grid section {
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 12px;
+    padding: 10px;
+    background: color-mix(in oklab, #fff 80%, transparent);
+}
+
+.fx-placeholder-grid h3 {
+    margin: 0 0 4px;
+    font-size: 14px;
+}
+
+.fx-placeholder-grid p {
+    margin: 0;
+    font-size: 12px;
+}
+
+.dark .fx-placeholder-grid section {
+    background: color-mix(in oklab, #0f111a 82%, transparent);
+    border-color: rgba(148, 163, 184, 0.35);
+}
