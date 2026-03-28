@@ -93,3 +93,86 @@
     background-clip: text;
     color: transparent;
 }
+
+
+.nx-skeleton {
+    height: 84px;
+    border-radius: 12px;
+    background: linear-gradient(90deg, color-mix(in oklab, var(--ink) 5%, transparent) 20%, color-mix(in oklab, var(--ink) 12%, transparent) 50%, color-mix(in oklab, var(--ink) 5%, transparent) 80%);
+    background-size: 200% 100%;
+    animation: nx-shimmer 1.3s linear infinite;
+}
+
+.nx-skeleton-calendar { height: 420px; }
+
+@keyframes nx-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.nx-list-clickable li {
+    border-radius: 8px;
+    padding: 4px 6px;
+    transition: background .2s ease;
+}
+
+.nx-list-clickable li:hover {
+    background: color-mix(in oklab, var(--accent) 9%, transparent);
+}
+
+.nx-inline-retry {
+    border: 1px solid var(--card-bd);
+    border-radius: 10px;
+    background: transparent;
+    font-size: 12px;
+    padding: 4px 10px;
+}
+
+.nx-trend { font-size: 12px; font-weight: 600; }
+.nx-trend-up { color: #159447; }
+.nx-trend-down { color: #cb2c58; }
+.nx-trend-flat { color: color-mix(in oklab, var(--ink) 58%, transparent); }
+
+.nx-page-error {
+    border: 1px solid color-mix(in oklab, #cb2c58 35%, transparent);
+    color: #cb2c58;
+    background: color-mix(in oklab, #cb2c58 8%, transparent);
+    border-radius: 14px;
+    padding: 10px 14px;
+}
+
+
+.nx-split-head {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    font-weight: 700;
+    color: color-mix(in oklab, var(--ink) 62%, transparent);
+}
+
+.nx-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.nx-empty-note {
+    display: grid;
+    gap: 6px;
+}
+
+.nx-inline-link {
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    text-align: left;
+    width: fit-content;
+}
+
+.nx-inline-link:hover {
+    text-decoration: underline;
+}
