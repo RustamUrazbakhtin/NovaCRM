@@ -287,6 +287,12 @@ export default function Dashboard() {
                         </Widget>
                     </aside>
                 </section>
+
+                {(error || isRefreshing) && (
+                    <section className="nx-page-status" aria-live="polite">
+                        {error ?? "Refreshing dashboard data…"}
+                    </section>
+                )}
             </main>
         </ThemeProvider>
     );
