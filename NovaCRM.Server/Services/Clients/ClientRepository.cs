@@ -45,7 +45,7 @@ public class ClientRepository : IClientRepository
 
             var tags = await _dbContext.ClientTagLinks
                 .AsNoTracking()
-                .Where(link => clientIds.Contains(link.ClientId))
+                .Where(link => link.ClientId != Guid.Empty && clientIds.Contains(link.ClientId))
                 .Join(
                     _dbContext.ClientTags.AsNoTracking()
                         .Where(tag => tag.OrganizationId == organizationId && tag.DeletedAt == null),
