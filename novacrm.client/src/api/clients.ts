@@ -47,6 +47,7 @@ export interface CreateClientPayload {
     lastName: string;
     phone: string;
     email?: string | null;
+    notes?: string | null;
     segmentTagId?: string | null;
 }
 

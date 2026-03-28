@@ -45,6 +45,7 @@ public class ClientService : IClientService
             LastName = request.LastName.Trim(),
             Phone = request.Phone.Trim(),
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
+            Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
         };
 
         ValidateClient(trimmed.FirstName, trimmed.LastName, trimmed.Phone);

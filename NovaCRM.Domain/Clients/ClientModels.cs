@@ -45,6 +45,7 @@ public record CreateClientRequest(
     string LastName,
     string Phone,
     string? Email,
+    string? Notes,
     Guid? SegmentTagId
 );
 
