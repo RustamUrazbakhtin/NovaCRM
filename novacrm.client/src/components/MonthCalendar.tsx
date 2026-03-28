@@ -111,9 +111,13 @@ const VIEW_OPTIONS: { key: CalendarView; label: string }[] = [
 export default function MonthCalendar({
     events = [],
     title = "Calendar",
+    onAddEvent,
+    onDaySelect,
 }: {
     events?: CalendarEvent[];
     title?: string;
+    onAddEvent?: () => void;
+    onDaySelect?: (date: string) => void;
 }) {
     const today = useMemo(() => {
         const now = new Date();
@@ -296,7 +300,7 @@ export default function MonthCalendar({
         setView(next);
         setCursor((prev) => normalizeCursor(prev, next));
     };
-    const handleAdd = () => alert("Add new event");
+    const handleAdd = () => onAddEvent?.();
 
     return (
         <div className="mc">
@@ -359,6 +363,7 @@ export default function MonthCalendar({
                                     key={cell.iso}
                                     className={`mc-cell-btn ${cell.isCurrentMonth ? "" : "is-outside"} ${cell.isToday ? "is-today" : ""}`}
                                     role="gridcell"
+                                    onClick={() => onDaySelect?.(cell.iso)}
                                 >
                                     <div className="mc-date" aria-label={dayLabel}>{cell.day}</div>
 
@@ -385,6 +390,7 @@ export default function MonthCalendar({
                                                         const anchor =
                                                             (e.currentTarget.closest(".mc-cell-btn") as HTMLElement) ??
                                                             e.currentTarget;
+                                                        onDaySelect?.(cell.iso);
                                                         openDayPopover(anchor, dateLabel, list);
                                                     }}
                                                     aria-label={`${total} events on ${dateLabel}`}

@@ -60,6 +60,7 @@ builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IOrganizationContext, OrganizationContext>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
 builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 var frontendOrigin = builder.Configuration["FrontendOrigin"] ?? "https://localhost:58876";
 
