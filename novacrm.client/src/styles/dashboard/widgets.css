@@ -93,3 +93,77 @@
     background-clip: text;
     color: transparent;
 }
+
+.nx-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.nx-action-btn {
+    border: none;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 28%, transparent);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.nx-action-btn:hover { transform: translateY(-1px); }
+.nx-action-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.nx-action-btn-secondary {
+    background: var(--card-bg);
+    color: var(--ink);
+    border: 1px solid var(--card-bd);
+    box-shadow: none;
+}
+
+.nx-skeleton {
+    height: 84px;
+    border-radius: 12px;
+    background: linear-gradient(90deg, color-mix(in oklab, var(--ink) 5%, transparent) 20%, color-mix(in oklab, var(--ink) 12%, transparent) 50%, color-mix(in oklab, var(--ink) 5%, transparent) 80%);
+    background-size: 200% 100%;
+    animation: nx-shimmer 1.3s linear infinite;
+}
+
+.nx-skeleton-calendar { height: 420px; }
+
+@keyframes nx-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.nx-list-clickable li {
+    border-radius: 8px;
+    padding: 4px 6px;
+    transition: background .2s ease;
+}
+
+.nx-list-clickable li:hover {
+    background: color-mix(in oklab, var(--accent) 9%, transparent);
+}
+
+.nx-inline-retry {
+    border: 1px solid var(--card-bd);
+    border-radius: 10px;
+    background: transparent;
+    font-size: 12px;
+    padding: 4px 10px;
+}
+
+.nx-trend { font-size: 12px; font-weight: 600; }
+.nx-trend-up { color: #159447; }
+.nx-trend-down { color: #cb2c58; }
+.nx-trend-flat { color: color-mix(in oklab, var(--ink) 58%, transparent); }
+
+.nx-page-error {
+    border: 1px solid color-mix(in oklab, #cb2c58 35%, transparent);
+    color: #cb2c58;
+    background: color-mix(in oklab, #cb2c58 8%, transparent);
+    border-radius: 14px;
+    padding: 10px 14px;
+}
