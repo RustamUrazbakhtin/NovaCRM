@@ -129,8 +129,7 @@ public sealed class DashboardService : IDashboardService
             .ToListAsync(cancellationToken);
 
         var clientSegments = await _dbContext.ClientTagLinks.AsNoTracking()
-            .Where(link => link.OrganizationId == organizationId && link.DeletedAt == null)
-            .GroupBy(link => link.ClientTagId)
+            .GroupBy(link => link.TagId)
             .Select(group => new
             {
                 TagId = group.Key,

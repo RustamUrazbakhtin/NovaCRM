@@ -126,13 +126,13 @@ public static class DataSeeder
         db.Appointments.AddRange(appointments);
 
         db.ClientTagLinks.AddRange(
-            new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[0].Id, ClientTagId = tags[0].Id, CreatedAt = now },
-            new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[0].Id, ClientTagId = tags[2].Id, CreatedAt = now },
-            new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[1].Id, ClientTagId = tags[1].Id, CreatedAt = now },
-            new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[2].Id, ClientTagId = tags[2].Id, CreatedAt = now },
-            new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[3].Id, ClientTagId = tags[0].Id, CreatedAt = now },
-            new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[4].Id, ClientTagId = tags[1].Id, CreatedAt = now },
-            new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[5].Id, ClientTagId = tags[2].Id, CreatedAt = now });
+            new ClientTagLink { ClientId = clients[0].Id, TagId = tags[0].Id, CreatedAt = now },
+            new ClientTagLink { ClientId = clients[0].Id, TagId = tags[2].Id, CreatedAt = now },
+            new ClientTagLink { ClientId = clients[1].Id, TagId = tags[1].Id, CreatedAt = now },
+            new ClientTagLink { ClientId = clients[2].Id, TagId = tags[2].Id, CreatedAt = now },
+            new ClientTagLink { ClientId = clients[3].Id, TagId = tags[0].Id, CreatedAt = now },
+            new ClientTagLink { ClientId = clients[4].Id, TagId = tags[1].Id, CreatedAt = now },
+            new ClientTagLink { ClientId = clients[5].Id, TagId = tags[2].Id, CreatedAt = now });
 
         await db.SaveChangesAsync(cancellationToken);
     }

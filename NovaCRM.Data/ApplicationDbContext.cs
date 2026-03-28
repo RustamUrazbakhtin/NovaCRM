@@ -145,12 +145,10 @@ public partial class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<ClientTagLink>(entity =>
         {
-            entity.HasKey(e => e.Id);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
-            entity.HasIndex(e => new { e.OrganizationId, e.ClientId, e.ClientTagId }).IsUnique();
-            entity.HasOne(d => d.Organization).WithMany(p => p.ClientTagLinks).HasForeignKey(d => d.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => new { e.ClientId, e.TagId }).IsUnique();
             entity.HasOne(d => d.Client).WithMany(p => p.ClientTagLinks).HasForeignKey(d => d.ClientId).OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(d => d.Tag).WithMany(p => p.ClientTagLinks).HasForeignKey(d => d.ClientTagId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(d => d.Tag).WithMany(p => p.ClientTagLinks).HasForeignKey(d => d.TagId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Service>(entity =>

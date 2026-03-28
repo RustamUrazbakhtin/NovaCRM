@@ -9,6 +9,8 @@ public partial class Client
     public string LastName { get; set; } = null!;
     public string Phone { get; set; } = null!;
     public string? Email { get; set; }
+    //public DateTime? Birthday { get; set; }
+    //public string Gender { get; set; }
     public string? Segment { get; set; }
     public string? Notes { get; set; }
     public bool MarketingOptIn { get; set; }
