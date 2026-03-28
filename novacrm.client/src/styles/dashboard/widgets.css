@@ -180,3 +180,72 @@
     padding: 6px 10px;
     font-size: 12px;
 }
+
+.nx-analytics-wrap {
+    display: grid;
+    grid-template-columns: 112px 1fr;
+    align-items: center;
+    gap: 10px;
+    min-height: 94px;
+}
+
+.nx-rings {
+    width: 112px;
+    height: 112px;
+}
+
+.nx-rings svg {
+    width: 100%;
+    height: 100%;
+}
+
+.nx-ring-track {
+    fill: none;
+    stroke: color-mix(in oklab, var(--ink) 12%, transparent);
+}
+
+.nx-ring-progress {
+    fill: none;
+    stroke-linecap: round;
+    transform-origin: 50% 50%;
+    transform: rotate(-90deg);
+    transition: stroke-dashoffset .45s ease;
+}
+
+.nx-rings.is-placeholder .nx-ring-progress {
+    opacity: .45;
+}
+
+.nx-analytics-legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+}
+
+.nx-analytics-legend li {
+    display: grid;
+    grid-template-columns: 10px 1fr;
+    align-items: start;
+    gap: 8px;
+}
+
+.nx-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    margin-top: 4px;
+}
+
+.nx-analytics-legend strong {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.nx-analytics-legend small {
+    display: block;
+    color: color-mix(in oklab, var(--ink) 58%, transparent);
+    font-size: 11px;
+}

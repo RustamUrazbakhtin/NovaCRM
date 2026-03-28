@@ -38,10 +38,10 @@ public sealed class DashboardService : IDashboardService
         var newClientsThisWeek = await activeClients.CountAsync(c => c.CreatedAt >= startOfWeek && c.CreatedAt < startOfTomorrow, cancellationToken);
         var completedVisitsToday = appointmentsToday;
 
-        var upcomingAppointments = await activeClients
+        var upcomingSoon = await activeClients
             .Where(c => c.LastVisitAt >= now && c.LastVisitAt <= now.AddHours(2))
             .OrderBy(c => c.LastVisitAt)
-            .Take(5)
+            .Take(3)
             .Select(c => new DashboardUpcomingItemDto(
                 c.Id.ToString(),
                 (c.LastVisitAt ?? now).ToString("HH:mm"),
@@ -55,7 +55,6 @@ public sealed class DashboardService : IDashboardService
             .Where(c => c.LastVisitAt >= startOfMonth && c.LastVisitAt < startOfNextMonth)
             .Select(c => c.Ltv ?? 0m)
             .ToListAsync(cancellationToken);
-
         var previousMonthlyRevenue = await activeClients
             .Where(c => c.LastVisitAt >= startOfPreviousMonth && c.LastVisitAt < startOfMonth)
             .Select(c => c.Ltv ?? 0m)
@@ -63,15 +62,38 @@ public sealed class DashboardService : IDashboardService
 
         var currentRevenue = monthlyRevenue.Sum();
         var previousRevenue = previousMonthlyRevenue.Sum();
-        var growthPercent = previousRevenue <= 0
-            ? (currentRevenue > 0 ? 100m : 0m)
-            : Math.Round(((currentRevenue - previousRevenue) / previousRevenue) * 100m, 1);
+        var returningClients = await activeClients.CountAsync(c => c.TotalVisits > 1, cancellationToken);
+        var totalClients = await activeClients.CountAsync(cancellationToken);
+        var noShowPercent = appointmentsToday <= 0 ? 0 : 0; // no model support yet
 
-        var trend = growthPercent switch
+        var completionPercent = totalClients <= 0 ? 0 : Math.Clamp((int)Math.Round((decimal)completedVisitsToday / Math.Max(1, totalClients) * 100m), 0, 100);
+        var returningSharePercent = totalClients <= 0 ? 0 : Math.Clamp((int)Math.Round((decimal)returningClients / totalClients * 100m), 0, 100);
+        var attendanceHealth = Math.Clamp(100 - noShowPercent, 0, 100);
+        var isAnalyticsPlaceholder = totalClients == 0 && completedVisitsToday == 0 && appointmentsToday == 0;
+
+        var rings = new List<DashboardAnalyticsRingDto>
         {
-            > 0.01m => "up",
-            < -0.01m => "down",
-            _ => "flat"
+            new(
+                "appointments-completed",
+                "Appointments completed",
+                completionPercent,
+                completedVisitsToday,
+                Math.Max(appointmentsToday, 1),
+                completedVisitsToday == 0 ? "No completed visits yet" : $"{completedVisitsToday} completed today"),
+            new(
+                "returning-clients",
+                "Returning clients",
+                returningSharePercent,
+                returningClients,
+                Math.Max(totalClients, 1),
+                totalClients == 0 ? "No returning client history yet" : $"{returningClients} of {totalClients} clients are returning"),
+            new(
+                "attendance-health",
+                "Attendance health",
+                attendanceHealth,
+                appointmentsToday,
+                Math.Max(appointmentsToday, 1),
+                appointmentsToday == 0 ? "No attendance data yet" : "No-show tracking currently limited")
         };
 
         var staffMembers = await activeStaff
@@ -122,10 +144,15 @@ public sealed class DashboardService : IDashboardService
             .Take(4)
             .ToListAsync(cancellationToken);
 
+        var accountingStatusNote = previousRevenue <= 0m
+            ? "Payroll and forms are not configured yet."
+            : "Review accounting records for payout and tax readiness.";
+
         return new DashboardOverviewDto(
             new DashboardTodaySummaryDto(appointmentsToday, newClientsThisWeek, 0, completedVisitsToday),
-            upcomingAppointments,
-            new DashboardRevenueSummaryDto(currentRevenue, previousRevenue, growthPercent, trend),
+            upcomingSoon,
+            new DashboardAnalyticsSummaryDto(rings, isAnalyticsPlaceholder),
+            new DashboardAccountingPreviewDto(currentRevenue, null, null, null, accountingStatusNote),
             new DashboardStaffSummaryDto(staffTotal, staffInService, staffOnBreak, staffAvailable, staffMembers),
             calendarCounts,
             recentClients,
