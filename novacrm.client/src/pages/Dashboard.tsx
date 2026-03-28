@@ -68,6 +68,11 @@ export default function Dashboard() {
             <Header breadcrumb="Dashboard" onLogout={handleLogout} />
 
             <main className="fx-page">
+                <section className="nx-actions">
+                    <button type="button" className="nx-action-btn" onClick={() => navigate("/calendar")}>New Appointment</button>
+                    <button type="button" className="nx-action-btn nx-action-btn-secondary" onClick={() => navigate("/clients")}>Add Client</button>
+                </section>
+
                 <section className="fx-row fx-top">
                     <div className="fx-quarter">
                         <Widget title="Today (Salon)" footer="Overview" minH={160} onClick={() => navigate("/calendar")}>
