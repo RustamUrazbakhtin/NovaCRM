@@ -123,13 +123,6 @@
 
 
 
-.nx-page-error {
-    border: 1px solid color-mix(in oklab, #cb2c58 35%, transparent);
-    color: #cb2c58;
-    background: color-mix(in oklab, #cb2c58 8%, transparent);
-    border-radius: 14px;
-    padding: 10px 14px;
-}
 
 
 .nx-split-head {
@@ -168,14 +161,6 @@
 }
 
 
-.nx-page-status {
-    border: 1px solid color-mix(in oklab, var(--ink) 14%, transparent);
-    color: color-mix(in oklab, var(--ink) 72%, transparent);
-    background: color-mix(in oklab, var(--card-bg) 86%, transparent);
-    border-radius: 12px;
-    padding: 6px 10px;
-    font-size: 12px;
-}
 
 .nx-analytics-wrap {
     display: grid;

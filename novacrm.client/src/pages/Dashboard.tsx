@@ -84,29 +84,21 @@ export default function Dashboard() {
     const navigate = useNavigate();
     const [overview, setOverview] = useState<DashboardOverview>(EMPTY_OVERVIEW);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const mountedRef = useRef(true);
 
     const fetchOverview = useCallback(async (mode: "initial" | "refresh") => {
-        if (mode === "refresh") setIsRefreshing(true);
-
         try {
             const nextOverview = await getDashboardOverview();
             if (!mountedRef.current) return;
             setOverview(nextOverview);
-            setError(null);
         } catch (err) {
             if (!mountedRef.current) return;
             console.error("Failed to load dashboard overview", err);
-            setError("Live updates are temporarily unavailable.");
             if (mode === "initial") setOverview(EMPTY_OVERVIEW);
         } finally {
             if (mountedRef.current) {
                 if (mode === "initial") {
                     setIsInitialLoading(false);
-                } else {
-                    setIsRefreshing(false);
                 }
             }
         }
@@ -163,6 +155,16 @@ export default function Dashboard() {
                                         <li>No-shows: {overview.todaySummary.noShows}</li>
                                         <li>Completed visits: {overview.todaySummary.completedVisitsToday}</li>
                                     </ul>
+                                    <div className="nx-split-head">Next 2 hours</div>
+                                    {overview.upcomingSoon.length === 0 ? (
+                                        <span className="nx-subtle">No appointments in the next 2 hours.</span>
+                                    ) : (
+                                        <ul className="nx-list nx-list-clickable">
+                                            {overview.upcomingSoon.slice(0, 3).map((item) => (
+                                                <li key={item.id}>{item.startTime} — {item.clientName}</li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </>
                             )}
                         </Widget>
