@@ -436,6 +436,24 @@ export default function Clients() {
                                 </button>
                             ))}
                         </div>
+                        <div className="clients-summary-strip" aria-label="Clients summary">
+                            <article>
+                                <span>Total</span>
+                                <strong>{loadingOverview ? "—" : overview?.totalClients ?? 0}</strong>
+                            </article>
+                            <article>
+                                <span>Returning</span>
+                                <strong>{loadingOverview ? "—" : overview?.returning ?? 0}</strong>
+                            </article>
+                            <article>
+                                <span>Avg LTV</span>
+                                <strong>{loadingOverview ? "—" : formatCurrency(overview?.averageLtv ?? 0)}</strong>
+                            </article>
+                            <article>
+                                <span>Satisfaction</span>
+                                <strong>{loadingOverview ? "—" : (overview?.satisfaction ?? 0).toFixed(1)}</strong>
+                            </article>
+                        </div>
                     </header>
 
                     <div className="clients-table-card">
