@@ -102,9 +102,13 @@ export default function Dashboard() {
             setError("Live updates are temporarily unavailable.");
             if (mode === "initial") setOverview(EMPTY_OVERVIEW);
         } finally {
-            if (!mountedRef.current) return;
-            if (mode === "initial") setIsInitialLoading(false);
-            else setIsRefreshing(false);
+            if (mountedRef.current) {
+                if (mode === "initial") {
+                    setIsInitialLoading(false);
+                } else {
+                    setIsRefreshing(false);
+                }
+            }
         }
     }, []);
 
@@ -281,7 +285,7 @@ export default function Dashboard() {
                             )}
                         </Widget>
 
-                        <Widget title="Reviews" footer="This week" minH={132} onClick={() => navigate("/reviews")}> 
+                        <Widget title="Reviews" footer="This week" minH={132} onClick={() => navigate("/reviews")}>
                             {isInitialLoading ? <div className="nx-skeleton nx-skeleton-compact" /> : overview.reviewsSummary.recentCount === 0 ? (
                                 <span className="nx-subtle">No recent reviews yet.</span>
                             ) : (

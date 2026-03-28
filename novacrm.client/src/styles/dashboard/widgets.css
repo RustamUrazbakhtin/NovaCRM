@@ -122,10 +122,6 @@
 }
 
 
-.nx-trend { font-size: 12px; font-weight: 600; }
-.nx-trend-up { color: #159447; }
-.nx-trend-down { color: #cb2c58; }
-.nx-trend-flat { color: color-mix(in oklab, var(--ink) 58%, transparent); }
 
 .nx-page-error {
     border: 1px solid color-mix(in oklab, #cb2c58 35%, transparent);

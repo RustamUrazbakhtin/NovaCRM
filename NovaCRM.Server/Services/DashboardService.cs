@@ -53,11 +53,11 @@ public sealed class DashboardService : IDashboardService
 
         var monthlyRevenue = await activeClients
             .Where(c => c.LastVisitAt >= startOfMonth && c.LastVisitAt < startOfNextMonth)
-            .Select(c => c.Ltv)
+            .Select(c => c.Ltv ?? 0m)
             .ToListAsync(cancellationToken);
         var previousMonthlyRevenue = await activeClients
             .Where(c => c.LastVisitAt >= startOfPreviousMonth && c.LastVisitAt < startOfMonth)
-            .Select(c => c.Ltv)
+            .Select(c => c.Ltv ?? 0m)
             .ToListAsync(cancellationToken);
 
         var currentRevenue = monthlyRevenue.Sum();
