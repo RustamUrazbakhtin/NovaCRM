@@ -155,16 +155,6 @@ export default function Dashboard() {
                                         <li>No-shows: {overview.todaySummary.noShows}</li>
                                         <li>Completed visits: {overview.todaySummary.completedVisitsToday}</li>
                                     </ul>
-                                    <div className="nx-split-head">Next 2 hours</div>
-                                    {overview.upcomingSoon.length === 0 ? (
-                                        <span className="nx-subtle">No appointments in the next 2 hours.</span>
-                                    ) : (
-                                        <ul className="nx-list nx-list-clickable">
-                                            {overview.upcomingSoon.slice(0, 3).map((item) => (
-                                                <li key={item.id}>{item.startTime} — {item.clientName}</li>
-                                            ))}
-                                        </ul>
-                                    )}
                                 </>
                             )}
                         </Widget>
@@ -287,12 +277,6 @@ export default function Dashboard() {
                         </Widget>
                     </aside>
                 </section>
-
-                {(error || isRefreshing) && (
-                    <section className="nx-page-status" aria-live="polite">
-                        {error ?? "Refreshing dashboard data…"}
-                    </section>
-                )}
             </main>
         </ThemeProvider>
     );
