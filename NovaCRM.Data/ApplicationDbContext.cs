@@ -27,6 +27,8 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<Client> Clients { get; set; }
     public virtual DbSet<ClientTag> ClientTags { get; set; }
     public virtual DbSet<ClientTagLink> ClientTagLinks { get; set; }
+    public virtual DbSet<Service> Services { get; set; }
+    public virtual DbSet<Appointment> Appointments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -149,6 +151,36 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.Organization).WithMany(p => p.ClientTagLinks).HasForeignKey(d => d.OrganizationId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(d => d.Client).WithMany(p => p.ClientTagLinks).HasForeignKey(d => d.ClientId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(d => d.Tag).WithMany(p => p.ClientTagLinks).HasForeignKey(d => d.ClientTagId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Service>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired();
+            entity.Property(e => e.Price).HasPrecision(12, 2);
+            entity.Property(e => e.DurationMinutes).HasDefaultValue(30);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("now()");
+            entity.HasOne(d => d.Organization).WithMany(p => p.Services).HasForeignKey(d => d.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(d => d.Category).WithMany(p => p.Services).HasForeignKey(d => d.CategoryId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(e => new { e.OrganizationId, e.Name }).IsUnique();
+        });
+
+        modelBuilder.Entity<Appointment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.Source).HasDefaultValue("manual");
+            entity.Property(e => e.PriceAtVisit).HasPrecision(12, 2);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("now()");
+            entity.HasOne(d => d.Organization).WithMany(p => p.Appointments).HasForeignKey(d => d.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(d => d.Branch).WithMany(p => p.Appointments).HasForeignKey(d => d.BranchId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(d => d.Client).WithMany(p => p.Appointments).HasForeignKey(d => d.ClientId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(d => d.Staff).WithMany(p => p.Appointments).HasForeignKey(d => d.StaffId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(d => d.Service).WithMany(p => p.Appointments).HasForeignKey(d => d.ServiceId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => new { e.OrganizationId, e.StartAt });
         });
 
         var ownerRoleId = Guid.Parse("11111111-1111-1111-1111-111111111111").ToString();

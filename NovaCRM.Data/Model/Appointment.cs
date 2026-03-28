@@ -1,6 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-
 namespace NovaCRM.Data.Model;
 
 public partial class Appointment
@@ -13,7 +10,9 @@ public partial class Appointment
 
     public Guid ClientId { get; set; }
 
-    public Guid StaffId { get; set; }
+    public Guid ServiceId { get; set; }
+
+    public Guid? StaffId { get; set; }
 
     public DateTime StartAt { get; set; }
 
@@ -23,6 +22,8 @@ public partial class Appointment
 
     public string Source { get; set; } = null!;
 
+    public decimal PriceAtVisit { get; set; }
+
     public string? Notes { get; set; }
 
     public DateTime CreatedAt { get; set; }
@@ -31,21 +32,15 @@ public partial class Appointment
 
     public DateTime? DeletedAt { get; set; }
 
-    public virtual ICollection<AppointmentService> AppointmentServices { get; set; } = new List<AppointmentService>();
-
     public virtual ICollection<AppointmentStatusHistory> AppointmentStatusHistories { get; set; } = new List<AppointmentStatusHistory>();
 
     public virtual Branch? Branch { get; set; }
 
     public virtual Client Client { get; set; } = null!;
 
-    public virtual ICollection<InventoryMovement> InventoryMovements { get; set; } = new List<InventoryMovement>();
-
     public virtual Organization Organization { get; set; } = null!;
 
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public virtual Staff? Staff { get; set; }
 
-    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
-
-    public virtual Staff Staff { get; set; } = null!;
+    public virtual Service Service { get; set; } = null!;
 }

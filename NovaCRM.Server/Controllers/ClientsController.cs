@@ -66,7 +66,7 @@ public class ClientsController : ControllerBase
         var filteredClients = clients
             .Where(client => string.IsNullOrWhiteSpace(normalizedSearch)
                 || $"{client.FirstName} {client.LastName}".ToLowerInvariant().Contains(normalizedSearch)
-                || client.Phone.ToLowerInvariant().Contains(normalizedSearch)
+                || (client.Phone?.ToLowerInvariant().Contains(normalizedSearch) ?? false)
                 || (client.Email?.ToLowerInvariant().Contains(normalizedSearch) ?? false));
 
         if (!string.IsNullOrWhiteSpace(filter) && !string.Equals(filter, "All", StringComparison.OrdinalIgnoreCase))
