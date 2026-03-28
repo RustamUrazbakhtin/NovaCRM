@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovaCRM.Domain", "NovaCRM.D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovaCRM.Data", "NovaCRM.Data\NovaCRM.Data.csproj", "{AC4F2699-ED7A-42D7-A141-1427C6777046}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovaCRM.Server.Tests", "NovaCRM.Server.Tests\NovaCRM.Server.Tests.csproj", "{8A00E1BB-4F6A-4CD8-89A6-4AA517EFB19B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,6 +36,10 @@ Global
 		{AC4F2699-ED7A-42D7-A141-1427C6777046}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC4F2699-ED7A-42D7-A141-1427C6777046}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AC4F2699-ED7A-42D7-A141-1427C6777046}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A00E1BB-4F6A-4CD8-89A6-4AA517EFB19B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A00E1BB-4F6A-4CD8-89A6-4AA517EFB19B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A00E1BB-4F6A-4CD8-89A6-4AA517EFB19B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A00E1BB-4F6A-4CD8-89A6-4AA517EFB19B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

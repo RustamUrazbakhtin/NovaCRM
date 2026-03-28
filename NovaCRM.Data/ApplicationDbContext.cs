@@ -145,8 +145,9 @@ public partial class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<ClientTagLink>(entity =>
         {
+            entity.ToTable("ClientTagLinks");
+            entity.HasKey(e => new { e.ClientId, e.TagId });
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
-            entity.HasIndex(e => new { e.ClientId, e.TagId }).IsUnique();
             entity.HasOne(d => d.Client).WithMany(p => p.ClientTagLinks).HasForeignKey(d => d.ClientId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(d => d.Tag).WithMany(p => p.ClientTagLinks).HasForeignKey(d => d.TagId).OnDelete(DeleteBehavior.Cascade);
         });

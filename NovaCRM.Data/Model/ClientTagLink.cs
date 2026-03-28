@@ -6,6 +6,6 @@ public partial class ClientTagLink
     public Guid TagId { get; set; }
     public DateTime CreatedAt { get; set; }
 
-    public virtual Client Client { get; set; } = null!;
-    public virtual ClientTag Tag { get; set; } = null!;
+    public Client Client { get; set; } = null!;
+    public ClientTag Tag { get; set; } = null!;
 }
