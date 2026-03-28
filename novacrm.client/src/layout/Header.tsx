@@ -110,6 +110,19 @@ export default function Header({
                 href: "/analytics",
             },
             {
+                id: "accounting",
+                label: "Accounting",
+                icon: icon(
+                    <>
+                        <rect x="4" y="6" width="16" height="12" rx="2.5" />
+                        <path d="M4 10h16" />
+                        <path d="M8 14h3" />
+                        <path d="M14 14h4" />
+                    </>
+                ),
+                href: "/accounting",
+            },
+            {
                 id: "tasks",
                 label: "Tasks",
                 icon: icon(
