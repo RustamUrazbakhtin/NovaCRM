@@ -152,6 +152,7 @@ public class ClientRepository : IClientRepository
             LastName = request.LastName,
             Phone = request.Phone,
             Email = request.Email,
+            Notes = request.Notes,
             Segment = segmentTag?.Name,
             MarketingOptIn = false,
             TotalVisits = 0,

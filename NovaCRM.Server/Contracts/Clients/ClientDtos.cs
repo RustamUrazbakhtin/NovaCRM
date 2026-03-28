@@ -56,9 +56,9 @@ public record ClientActivityDto(DateTime OccurredAt, string Title, string? Descr
         new(activity.OccurredAt, activity.Title, activity.Description);
 }
 
-public record CreateClientDto(string FirstName, string LastName, string Phone, string? Email, Guid? SegmentTagId)
+public record CreateClientDto(string FirstName, string LastName, string Phone, string? Email, string? Notes, Guid? SegmentTagId)
 {
-    public CreateClientRequest ToDomain() => new(FirstName, LastName, Phone, Email, SegmentTagId);
+    public CreateClientRequest ToDomain() => new(FirstName, LastName, Phone, Email, Notes, SegmentTagId);
 }
 
 public record UpdateClientDto(string FirstName, string LastName, string Phone, string? Email, string? Notes)
