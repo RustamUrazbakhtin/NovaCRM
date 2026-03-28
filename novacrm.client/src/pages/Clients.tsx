@@ -30,6 +30,8 @@ const formatLastVisit = (value?: string | null) => {
 };
 
 const statusSlug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+const initialsFor = (firstName?: string, lastName?: string) =>
+    `${firstName?.charAt(0) ?? ""}${lastName?.charAt(0) ?? ""}`.toUpperCase() || "CL";
 
 export default function Clients() {
     const navigate = useNavigate();
@@ -256,54 +258,15 @@ export default function Clients() {
                 <section className="clients-toolbar">
                     <div className="clients-heading">
                         <h1>Clients</h1>
-                        <p>All your guests in one place: visits, value, and activity.</p>
+                        <p>Manage your clients, visits, and value in one place.</p>
                     </div>
-                </section>
-
-                <section className="clients-overview-card">
-                    <header>
-                        <h2>Clients overview</h2>
-                        <span>Real-time metrics from your database</span>
-                    </header>
-                    <div className="clients-metrics-grid">
-                        <article className="clients-metric-card">
-                            <span className="clients-metric-label">Total clients</span>
-                            <strong className="clients-metric-value">
-                                {loadingOverview ? "—" : overview?.totalClients ?? 0}
-                            </strong>
-                            <span className="clients-metric-hint">People in your CRM</span>
-                        </article>
-                        <article className="clients-metric-card">
-                            <span className="clients-metric-label">Returning</span>
-                            <strong className="clients-metric-value">
-                                {loadingOverview ? "—" : overview?.returning ?? 0}
-                            </strong>
-                            <span className="clients-metric-hint">Visited more than once</span>
-                        </article>
-                        <article className="clients-metric-card">
-                            <span className="clients-metric-label">Average LTV</span>
-                            <strong className="clients-metric-value">
-                                {loadingOverview ? "—" : formatCurrency(overview?.averageLtv ?? 0)}
-                            </strong>
-                            <span className="clients-metric-hint">Average revenue per client</span>
-                        </article>
-                        <article className="clients-metric-card">
-                            <span className="clients-metric-label">Satisfaction</span>
-                            <strong className="clients-metric-value">
-                                {loadingOverview ? "—" : (overview?.satisfaction ?? 0).toFixed(1)}
-                            </strong>
-                            <span className="clients-metric-hint">Average rating from reviews</span>
-                        </article>
-                    </div>
-                </section>
-
-                <section className="clients-widget">
-                    <header className="clients-widget__header">
-                        <div className="clients-widget__actions">
-                            <button type="button" className="clients-add" onClick={handleOpenAdd}>
-                                <span className="clients-add__text">Add client</span>
-                                <span className="clients-add__icon">+</span>
-                            </button>
+                    <div className="clients-toolbar__actions">
+                        <button type="button" className="clients-add" onClick={handleOpenAdd}>
+                            <span className="clients-add__text">Add Client</span>
+                            <span className="clients-add__icon">+</span>
+                        </button>
+                        <label className="clients-search-wrap" aria-label="Search clients">
+                            <span className="clients-search-icon" aria-hidden="true">⌕</span>
                             <input
                                 type="search"
                                 className="clients-search"
@@ -311,7 +274,12 @@ export default function Clients() {
                                 value={search}
                                 onChange={(event) => setSearch(event.target.value)}
                             />
-                        </div>
+                        </label>
+                    </div>
+                </section>
+
+                <section className="clients-widget">
+                    <header className="clients-widget__header">
                         <div className="clients-segments" role="tablist" aria-label="Client segments">
                             {statusFilters.map((item) => (
                                 <button
@@ -326,6 +294,24 @@ export default function Clients() {
                                     {item.label}
                                 </button>
                             ))}
+                        </div>
+                        <div className="clients-summary-strip" aria-label="Clients summary">
+                            <article>
+                                <span>Total</span>
+                                <strong>{loadingOverview ? "—" : overview?.totalClients ?? 0}</strong>
+                            </article>
+                            <article>
+                                <span>Returning</span>
+                                <strong>{loadingOverview ? "—" : overview?.returning ?? 0}</strong>
+                            </article>
+                            <article>
+                                <span>Avg LTV</span>
+                                <strong>{loadingOverview ? "—" : formatCurrency(overview?.averageLtv ?? 0)}</strong>
+                            </article>
+                            <article>
+                                <span>Satisfaction</span>
+                                <strong>{loadingOverview ? "—" : (overview?.satisfaction ?? 0).toFixed(1)}</strong>
+                            </article>
                         </div>
                     </header>
 
@@ -354,22 +340,37 @@ export default function Clients() {
                                             </td>
                                         </tr>
                                     ) : loadingList ? (
-                                        <tr>
-                                            <td colSpan={5} className="clients-table-empty">
-                                                Loading clients…
-                                            </td>
-                                        </tr>
+                                        Array.from({ length: 6 }).map((_, index) => (
+                                            <tr key={`loading-${index}`} className="clients-row-loading">
+                                                <td colSpan={5}>
+                                                    <div className="clients-skeleton-row" />
+                                                </td>
+                                            </tr>
+                                        ))
                                     ) : sortedClients.length === 0 ? (
                                         <tr>
                                             <td colSpan={5} className="clients-table-empty">
-                                                No clients found for this query.
+                                                <div className="clients-empty">
+                                                    <span className="clients-empty__icon" aria-hidden="true">◌</span>
+                                                    <h3>No clients yet</h3>
+                                                    <p>
+                                                        {search
+                                                            ? "No clients matched this search. Try another query or clear filters."
+                                                            : "Start building your client base by adding your first client."}
+                                                    </p>
+                                                    {!search && (
+                                                        <button type="button" className="clients-primary" onClick={handleOpenAdd}>
+                                                            Add Client
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ) : (
                                         sortedClients.map((client) => (
                                             <tr
                                                 key={client.id}
-                                                className="clients-table-row"
+                                                className={`clients-table-row${selectedId === client.id ? " is-selected" : ""}`}
                                                 onClick={() => setSelectedId(client.id)}
                                                 tabIndex={0}
                                                 onKeyDown={(event) => {
@@ -382,6 +383,9 @@ export default function Clients() {
                                                 <td>
                                                     <div className="clients-table-primary">
                                                         <div className="clients-client-heading">
+                                                            <span className="clients-avatar">
+                                                                {initialsFor(client.firstName, client.lastName)}
+                                                            </span>
                                                             <span className="clients-client-name">
                                                                 {client.firstName} {client.lastName}
                                                             </span>
