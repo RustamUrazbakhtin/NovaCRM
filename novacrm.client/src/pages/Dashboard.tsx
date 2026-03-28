@@ -147,8 +147,6 @@ export default function Dashboard() {
         navigate("/auth", { replace: true });
     };
 
-    const trendClass = `nx-trend nx-trend-${overview.revenueSummary.trend}`;
-
     return (
         <ThemeProvider>
             <Header breadcrumb="Dashboard" onLogout={handleLogout} />
@@ -165,16 +163,6 @@ export default function Dashboard() {
                                         <li>No-shows: {overview.todaySummary.noShows}</li>
                                         <li>Completed visits: {overview.todaySummary.completedVisitsToday}</li>
                                     </ul>
-                                    <div className="nx-split-head">Next 2 hours</div>
-                                    {overview.upcomingSoon.length === 0 ? (
-                                        <span className="nx-subtle">No appointments in the next 2 hours.</span>
-                                    ) : (
-                                        <ul className="nx-list nx-list-clickable">
-                                            {overview.upcomingSoon.slice(0, 3).map((item) => (
-                                                <li key={item.id}>{item.startTime} — {item.clientName}</li>
-                                            ))}
-                                        </ul>
-                                    )}
                                 </>
                             )}
                         </Widget>
