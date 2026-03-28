@@ -142,27 +142,56 @@ export default function Dashboard() {
                     </div>
 
                     <aside className="fx-right">
-                        <Widget title="Recent Clients" footer="New" minH={180} onClick={() => navigate("/clients")}>
-                            {loading ? <div className="nx-skeleton" /> : overview.recentClients.length === 0 ? (
-                                <span className="nx-subtle">No recent clients yet.</span>
-                            ) : (
-                                <ul className="nx-list nx-list-clickable">
-                                    {overview.recentClients.slice(0, 4).map((client) => (
-                                        <li key={client.id}>{client.name}</li>
-                                    ))}
-                                </ul>
-                            )}
-                        </Widget>
+                        <Widget title="Clients" footer="Overview" minH={260} onClick={() => navigate("/clients")}>
+                            {loading ? <div className="nx-skeleton" /> : (
+                                <>
+                                    {overview.recentClients.length === 0 ? (
+                                        <div className="nx-empty-note">
+                                            <strong>No clients yet.</strong>
+                                            <span>Clients will appear here after you add them.</span>
+                                            <span className="nx-subtle">Use the Clients page to create your first client.</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="nx-split-head">Recent clients</div>
+                                            <ul className="nx-list nx-list-clickable">
+                                                {overview.recentClients.slice(0, 4).map((client) => (
+                                                    <li key={client.id} onClick={(e) => { e.stopPropagation(); navigate('/clients'); }}>
+                                                        <span>{client.name}</span>
+                                                        <small className="nx-subtle">{client.createdAt}</small>
+                                                    </li>
+                                                ))}
+                                            </ul>
 
-                        <Widget title="Client Segments" footer="Distribution" minH={180} onClick={() => navigate("/clients")}>
-                            {loading ? <div className="nx-skeleton" /> : overview.clientSegments.length === 0 ? (
-                                <span className="nx-subtle">No segment data available.</span>
-                            ) : (
-                                <ul className="nx-list nx-list-clickable">
-                                    {overview.clientSegments.map((segment) => (
-                                        <li key={segment.id}>{segment.name} — {segment.count}</li>
-                                    ))}
-                                </ul>
+                                            <div className="nx-split-head">Segments</div>
+                                            {overview.clientSegments.length === 0 ? (
+                                                <ul className="nx-list">
+                                                    <li>Total clients: {overview.recentClients.length}</li>
+                                                    <li>New this week: {overview.todaySummary.newClientsThisWeek}</li>
+                                                </ul>
+                                            ) : (
+                                                <ul className="nx-list nx-list-clickable">
+                                                    {overview.clientSegments.slice(0, 4).map((segment) => (
+                                                        <li key={segment.id} onClick={(e) => { e.stopPropagation(); navigate('/clients'); }}>
+                                                            <span>{segment.name}</span>
+                                                            <strong>{segment.count}</strong>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </>
+                                    )}
+                                    <button
+                                        type="button"
+                                        className="nx-inline-link"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate('/clients');
+                                        }}
+                                    >
+                                        View all clients
+                                    </button>
+                                </>
                             )}
                         </Widget>
 

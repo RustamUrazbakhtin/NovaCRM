@@ -94,33 +94,6 @@
     color: transparent;
 }
 
-.nx-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
-
-.nx-action-btn {
-    border: none;
-    border-radius: 12px;
-    padding: 10px 14px;
-    font-size: 13px;
-    font-weight: 700;
-    color: #fff;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
-    box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 28%, transparent);
-    transition: transform .2s ease, box-shadow .2s ease;
-}
-
-.nx-action-btn:hover { transform: translateY(-1px); }
-.nx-action-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-.nx-action-btn-secondary {
-    background: var(--card-bg);
-    color: var(--ink);
-    border: 1px solid var(--card-bd);
-    box-shadow: none;
-}
 
 .nx-skeleton {
     height: 84px;
@@ -166,4 +139,40 @@
     background: color-mix(in oklab, #cb2c58 8%, transparent);
     border-radius: 14px;
     padding: 10px 14px;
+}
+
+
+.nx-split-head {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    font-weight: 700;
+    color: color-mix(in oklab, var(--ink) 62%, transparent);
+}
+
+.nx-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.nx-empty-note {
+    display: grid;
+    gap: 6px;
+}
+
+.nx-inline-link {
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    text-align: left;
+    width: fit-content;
+}
+
+.nx-inline-link:hover {
+    text-decoration: underline;
 }
