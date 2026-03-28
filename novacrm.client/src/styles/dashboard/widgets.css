@@ -4,10 +4,10 @@
     border: 1px solid var(--card-bd);
     border-radius: 20px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
-    padding: 14px 16px;
+    padding: 11px 13px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
     text-align: left;
     color: inherit;
@@ -48,7 +48,7 @@
     margin: 0;
     font-weight: 800;
     letter-spacing: 0.2px;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .nx-widget-foot {
@@ -62,7 +62,7 @@
     list-style: none;
     font-size: 14px;
     display: grid;
-    gap: 6px;
+    gap: 4px;
 }
 
 .nx-subtle {
@@ -86,7 +86,7 @@
 }
 
 .nx-number {
-    font-size: 30px;
+    font-size: 26px;
     font-weight: 900;
     background: linear-gradient(90deg, var(--accent), var(--accent-2));
     -webkit-background-clip: text;
@@ -96,14 +96,15 @@
 
 
 .nx-skeleton {
-    height: 84px;
+    height: 68px;
     border-radius: 12px;
     background: linear-gradient(90deg, color-mix(in oklab, var(--ink) 5%, transparent) 20%, color-mix(in oklab, var(--ink) 12%, transparent) 50%, color-mix(in oklab, var(--ink) 5%, transparent) 80%);
     background-size: 200% 100%;
     animation: nx-shimmer 1.3s linear infinite;
 }
 
-.nx-skeleton-calendar { height: 420px; }
+.nx-skeleton-calendar { height: 360px; }
+.nx-skeleton-compact { height: 56px; }
 
 @keyframes nx-shimmer {
     0% { background-position: 200% 0; }
@@ -120,13 +121,6 @@
     background: color-mix(in oklab, var(--accent) 9%, transparent);
 }
 
-.nx-inline-retry {
-    border: 1px solid var(--card-bd);
-    border-radius: 10px;
-    background: transparent;
-    font-size: 12px;
-    padding: 4px 10px;
-}
 
 .nx-trend { font-size: 12px; font-weight: 600; }
 .nx-trend-up { color: #159447; }
@@ -159,7 +153,7 @@
 
 .nx-empty-note {
     display: grid;
-    gap: 6px;
+    gap: 4px;
 }
 
 .nx-inline-link {
@@ -175,4 +169,14 @@
 
 .nx-inline-link:hover {
     text-decoration: underline;
+}
+
+
+.nx-page-status {
+    border: 1px solid color-mix(in oklab, var(--ink) 14%, transparent);
+    color: color-mix(in oklab, var(--ink) 72%, transparent);
+    background: color-mix(in oklab, var(--card-bg) 86%, transparent);
+    border-radius: 12px;
+    padding: 6px 10px;
+    font-size: 12px;
 }

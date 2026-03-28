@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../layout/Header";
 import ThemeProvider from "../providers/ThemeProvider";
@@ -8,6 +8,8 @@ import { authApi } from "../app/auth";
 import { getDashboardOverview, type DashboardOverview } from "../api/dashboard";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/dashboard/index.css";
+
+const AUTO_REFRESH_MS = 45_000;
 
 const EMPTY_OVERVIEW: DashboardOverview = {
     todaySummary: { appointmentsToday: 0, newClientsThisWeek: 0, noShows: 0, completedVisitsToday: 0 },
@@ -23,28 +25,61 @@ const EMPTY_OVERVIEW: DashboardOverview = {
 export default function Dashboard() {
     const navigate = useNavigate();
     const [overview, setOverview] = useState<DashboardOverview>(EMPTY_OVERVIEW);
-    const [loading, setLoading] = useState(true);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const mountedRef = useRef(true);
+
+    const fetchOverview = useCallback(async (mode: "initial" | "refresh") => {
+        if (mode === "refresh") {
+            setIsRefreshing(true);
+        }
+
+        try {
+            const nextOverview = await getDashboardOverview();
+            if (!mountedRef.current) return;
+            setOverview(nextOverview);
+            setError(null);
+        } catch (err) {
+            if (!mountedRef.current) return;
+            console.error("Failed to load dashboard overview", err);
+            setError("Live updates are temporarily unavailable.");
+
+            if (mode === "initial") {
+                setOverview(EMPTY_OVERVIEW);
+            }
+        } finally {
+            if (!mountedRef.current) return;
+            if (mode === "initial") {
+                setIsInitialLoading(false);
+            } else {
+                setIsRefreshing(false);
+            }
+        }
+    }, []);
 
     useEffect(() => {
-        const controller = new AbortController();
-        setLoading(true);
-        setError(null);
+        mountedRef.current = true;
+        void fetchOverview("initial");
 
-        getDashboardOverview(controller.signal)
-            .then(setOverview)
-            .catch((err: unknown) => {
-                if (controller.signal.aborted) return;
-                console.error("Failed to load dashboard overview", err);
-                setError("Could not load dashboard data.");
-                setOverview(EMPTY_OVERVIEW);
-            })
-            .finally(() => {
-                if (!controller.signal.aborted) setLoading(false);
-            });
+        const intervalId = window.setInterval(() => {
+            void fetchOverview("refresh");
+        }, AUTO_REFRESH_MS);
 
-        return () => controller.abort();
-    }, []);
+        const handleFocus = () => {
+            void fetchOverview("refresh");
+        };
+
+        window.addEventListener("focus", handleFocus);
+        document.addEventListener("visibilitychange", handleFocus);
+
+        return () => {
+            mountedRef.current = false;
+            window.clearInterval(intervalId);
+            window.removeEventListener("focus", handleFocus);
+            document.removeEventListener("visibilitychange", handleFocus);
+        };
+    }, [fetchOverview]);
 
     const calendarEvents = useMemo<CalendarEvent[]>(() => (
         overview.calendarCounts.flatMap((entry) =>
@@ -75,8 +110,8 @@ export default function Dashboard() {
 
                 <section className="fx-row fx-top">
                     <div className="fx-quarter">
-                        <Widget title="Today (Salon)" footer="Overview" minH={160} onClick={() => navigate("/calendar")}>
-                            {loading ? <div className="nx-skeleton" /> : (
+                        <Widget title="Today (Salon)" footer="Overview" minH={132} onClick={() => navigate("/calendar")}>
+                            {isInitialLoading ? <div className="nx-skeleton nx-skeleton-compact" /> : (
                                 <ul className="nx-list nx-list-clickable">
                                     <li>Appointments: {overview.todaySummary.appointmentsToday}</li>
                                     <li>New clients (week): {overview.todaySummary.newClientsThisWeek}</li>
@@ -84,14 +119,13 @@ export default function Dashboard() {
                                     <li>Completed visits: {overview.todaySummary.completedVisitsToday}</li>
                                 </ul>
                             )}
-                            {!loading && !error && overview.todaySummary.appointmentsToday === 0 && <span className="nx-subtle">No appointments scheduled for today.</span>}
-                            {error && <button type="button" className="nx-inline-retry" onClick={() => window.location.reload()}>Retry</button>}
+                            {!isInitialLoading && overview.todaySummary.appointmentsToday === 0 && <span className="nx-subtle">No appointments scheduled for today.</span>}
                         </Widget>
                     </div>
 
                     <div className="fx-quarter">
-                        <Widget title="Next 2 hours" footer="Upcoming" minH={160} onClick={() => navigate("/calendar")}>
-                            {loading ? <div className="nx-skeleton" /> : overview.upcomingAppointments.length === 0 ? (
+                        <Widget title="Next 2 hours" footer="Upcoming" minH={132} onClick={() => navigate("/calendar")}>
+                            {isInitialLoading ? <div className="nx-skeleton nx-skeleton-compact" /> : overview.upcomingAppointments.length === 0 ? (
                                 <span className="nx-subtle">No upcoming appointments in the next 2 hours.</span>
                             ) : (
                                 <ul className="nx-list nx-list-clickable">
@@ -104,8 +138,8 @@ export default function Dashboard() {
                     </div>
 
                     <div className="fx-quarter">
-                        <Widget title="Revenue" footer="This month" minH={160} onClick={() => navigate("/analytics")}>
-                            {loading ? <div className="nx-skeleton" /> : (
+                        <Widget title="Revenue" footer="This month" minH={132} onClick={() => navigate("/analytics")}>
+                            {isInitialLoading ? <div className="nx-skeleton nx-skeleton-compact" /> : (
                                 <>
                                     <div className="nx-number">${overview.revenueSummary.currentMonthRevenue.toLocaleString()}</div>
                                     <span className={trendClass}>{overview.revenueSummary.growthPercent.toFixed(1)}% vs previous month</span>
@@ -115,8 +149,8 @@ export default function Dashboard() {
                     </div>
 
                     <div className="fx-quarter">
-                        <Widget title="Staff" footer="Status" minH={160} onClick={() => navigate("/workers")}>
-                            {loading ? <div className="nx-skeleton" /> : (
+                        <Widget title="Staff" footer="Status" minH={132} onClick={() => navigate("/workers")}>
+                            {isInitialLoading ? <div className="nx-skeleton nx-skeleton-compact" /> : (
                                 <ul className="nx-list">
                                     <li>In service: {overview.staffSummary.inService}</li>
                                     <li>On break: {overview.staffSummary.onBreak}</li>
@@ -129,8 +163,8 @@ export default function Dashboard() {
 
                 <section className="fx-row fx-main">
                     <div className="fx-left">
-                        <Widget minH={360}>
-                            {loading ? <div className="nx-skeleton nx-skeleton-calendar" /> : (
+                        <Widget minH={320}>
+                            {isInitialLoading ? <div className="nx-skeleton nx-skeleton-calendar" /> : (
                                 <MonthCalendar
                                     title="Calendar"
                                     events={calendarEvents}
@@ -142,8 +176,8 @@ export default function Dashboard() {
                     </div>
 
                     <aside className="fx-right">
-                        <Widget title="Clients" footer="Overview" minH={260} onClick={() => navigate("/clients")}>
-                            {loading ? <div className="nx-skeleton" /> : (
+                        <Widget title="Clients" footer="Overview" minH={220} onClick={() => navigate("/clients")}>
+                            {isInitialLoading ? <div className="nx-skeleton" /> : (
                                 <>
                                     {overview.recentClients.length === 0 ? (
                                         <div className="nx-empty-note">
@@ -156,7 +190,7 @@ export default function Dashboard() {
                                             <div className="nx-split-head">Recent clients</div>
                                             <ul className="nx-list nx-list-clickable">
                                                 {overview.recentClients.slice(0, 4).map((client) => (
-                                                    <li key={client.id} onClick={(e) => { e.stopPropagation(); navigate('/clients'); }}>
+                                                    <li key={client.id} onClick={(e) => { e.stopPropagation(); navigate("/clients"); }}>
                                                         <span>{client.name}</span>
                                                         <small className="nx-subtle">{client.createdAt}</small>
                                                     </li>
@@ -172,7 +206,7 @@ export default function Dashboard() {
                                             ) : (
                                                 <ul className="nx-list nx-list-clickable">
                                                     {overview.clientSegments.slice(0, 4).map((segment) => (
-                                                        <li key={segment.id} onClick={(e) => { e.stopPropagation(); navigate('/clients'); }}>
+                                                        <li key={segment.id} onClick={(e) => { e.stopPropagation(); navigate("/clients"); }}>
                                                             <span>{segment.name}</span>
                                                             <strong>{segment.count}</strong>
                                                         </li>
@@ -186,7 +220,7 @@ export default function Dashboard() {
                                         className="nx-inline-link"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            navigate('/clients');
+                                            navigate("/clients");
                                         }}
                                     >
                                         View all clients
@@ -195,8 +229,8 @@ export default function Dashboard() {
                             )}
                         </Widget>
 
-                        <Widget title="Reviews" footer="This week" minH={150} onClick={() => navigate("/reviews")}>
-                            {loading ? <div className="nx-skeleton" /> : overview.reviewsSummary.recentCount === 0 ? (
+                        <Widget title="Reviews" footer="This week" minH={132} onClick={() => navigate("/reviews")}>
+                            {isInitialLoading ? <div className="nx-skeleton nx-skeleton-compact" /> : overview.reviewsSummary.recentCount === 0 ? (
                                 <span className="nx-subtle">No recent reviews yet.</span>
                             ) : (
                                 <>
@@ -208,7 +242,11 @@ export default function Dashboard() {
                     </aside>
                 </section>
 
-                {error && <section className="nx-page-error">{error}</section>}
+                {(error || isRefreshing) && (
+                    <section className="nx-page-status" aria-live="polite">
+                        {error ?? "Refreshing dashboard data…"}
+                    </section>
+                )}
             </main>
         </ThemeProvider>
     );
