@@ -7,7 +7,7 @@ namespace NovaCRM.Server.Services;
 
 public static class DataSeeder
 {
-    public static async Task SeedAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken = default)
+    public static async System.Threading.Tasks.Task SeedAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
