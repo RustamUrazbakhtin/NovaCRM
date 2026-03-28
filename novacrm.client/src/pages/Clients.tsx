@@ -9,7 +9,7 @@ import type {
     ClientOverview,
     ClientTag,
 } from "../api/clients";
-import { createClient, getClientDetails, getClientFilters, getClientTags, getClientsOverview, searchClients } from "../api/clients";
+import { createClient, getClientDetails, getClientFilters, getClientTags, getClientsOverview, searchClients, updateClient } from "../api/clients";
 import "../styles/dashboard/index.css";
 import "../styles/clients/index.css";
 import { authApi } from "../app/auth";
@@ -32,6 +32,23 @@ const formatLastVisit = (value?: string | null) => {
 const statusSlug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 const initialsFor = (firstName?: string, lastName?: string) =>
     `${firstName?.charAt(0) ?? ""}${lastName?.charAt(0) ?? ""}`.toUpperCase() || "CL";
+const splitName = (name: string) => {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length <= 1) return { firstName: name, lastName: "" };
+    return { firstName: parts.slice(0, -1).join(" "), lastName: parts[parts.length - 1] };
+};
+
+const WORKFLOW_FILTERS = [
+    { key: "all", label: "All" },
+    { key: "new", label: "New" },
+    { key: "returning", label: "Returning" },
+    { key: "vip", label: "VIP" },
+    { key: "at-risk", label: "At Risk" },
+    { key: "no-recent-visit", label: "No recent visit" },
+    { key: "recent-visit", label: "Recent visit" },
+    { key: "has-tags", label: "Has tags" },
+    { key: "high-ltv", label: "High LTV" },
+] as const;
 
 export default function Clients() {
     const navigate = useNavigate();
@@ -49,11 +66,15 @@ export default function Clients() {
     const [loadingOverview, setLoadingOverview] = useState(false);
     const [loadingDetails, setLoadingDetails] = useState(false);
     const [clientsError, setClientsError] = useState<string | null>(null);
+    const [workflowFilter, setWorkflowFilter] = useState<(typeof WORKFLOW_FILTERS)[number]["key"]>("all");
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [selectedClient, setSelectedClient] = useState<ClientDetails | null>(null);
     const [isAddOpen, setIsAddOpen] = useState(false);
-    const [addForm, setAddForm] = useState({ firstName: "", lastName: "", phone: "", email: "", segmentTagId: "" });
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [addForm, setAddForm] = useState({ firstName: "", lastName: "", phone: "", email: "", notes: "", segmentTagId: "" });
+    const [editForm, setEditForm] = useState({ firstName: "", lastName: "", phone: "", email: "", notes: "" });
     const [savingClient, setSavingClient] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
     const [segmentTags, setSegmentTags] = useState<ClientTag[]>([]);
     const [loadingSegments, setLoadingSegments] = useState(false);
     const [segmentsError, setSegmentsError] = useState<string | null>(null);
@@ -207,6 +228,7 @@ export default function Clients() {
                 setSelectedClient(null);
                 setSelectedId(null);
                 setIsAddOpen(false);
+                setIsEditOpen(false);
             }
         };
 
@@ -220,22 +242,26 @@ export default function Clients() {
     };
 
     const handleOpenAdd = () => {
-        setAddForm({ firstName: "", lastName: "", phone: "", email: "", segmentTagId: "" });
+        setAddForm({ firstName: "", lastName: "", phone: "", email: "", notes: "", segmentTagId: "" });
+        setSaveError(null);
         setIsAddOpen(true);
     };
 
     const handleCreate = async () => {
         if (!addForm.firstName.trim() || !addForm.lastName.trim() || !addForm.phone.trim()) {
+            setSaveError("First name, last name, and phone are required.");
             return;
         }
 
         setSavingClient(true);
+        setSaveError(null);
         try {
             const created = await createClient({
                 firstName: addForm.firstName,
                 lastName: addForm.lastName,
                 phone: addForm.phone,
                 email: addForm.email || null,
+                notes: addForm.notes || null,
                 segmentTagId: addForm.segmentTagId || null,
             });
             setIsAddOpen(false);
@@ -243,13 +269,92 @@ export default function Clients() {
             await loadOverview();
             await loadClients(search, statusFilter);
         } catch (error: any) {
+            setSaveError(error?.response?.data?.message ?? "Failed to create client. Please review the form.");
             console.error("Failed to create client", error?.message ?? error);
         } finally {
             setSavingClient(false);
         }
     };
 
-    const sortedClients = useMemo(() => clients ?? [], [clients]);
+    const handleOpenEdit = async (clientId: string) => {
+        setSelectedId(clientId);
+        setSaveError(null);
+        setIsEditOpen(true);
+        await loadDetails(clientId);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!selectedId) return;
+        if (!editForm.firstName.trim() || !editForm.lastName.trim() || !editForm.phone.trim()) {
+            setSaveError("First name, last name, and phone are required.");
+            return;
+        }
+
+        setSavingClient(true);
+        setSaveError(null);
+        try {
+            await updateClient(selectedId, {
+                firstName: editForm.firstName,
+                lastName: editForm.lastName,
+                phone: editForm.phone,
+                email: editForm.email || null,
+                notes: editForm.notes || null,
+            });
+
+            setIsEditOpen(false);
+            await Promise.all([loadOverview(), loadClients(search, statusFilter)]);
+        } catch (error: any) {
+            setSaveError(error?.response?.data?.message ?? "Failed to update client. Please try again.");
+            console.error("Failed to update client", error?.message ?? error);
+        } finally {
+            setSavingClient(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!selectedClient) return;
+        const parsed = splitName(selectedClient.name);
+        setEditForm({
+            firstName: parsed.firstName,
+            lastName: parsed.lastName,
+            phone: selectedClient.phone ?? "",
+            email: selectedClient.email ?? "",
+            notes: selectedClient.notes ?? "",
+        });
+    }, [selectedClient]);
+
+    const sortedClients = useMemo(() => {
+        const source = clients ?? [];
+        const now = Date.now();
+
+        return source.filter((client) => {
+            const daysSinceVisit = client.lastVisitAt ? Math.floor((now - new Date(client.lastVisitAt).getTime()) / (1000 * 60 * 60 * 24)) : null;
+            const tagNames = (client.tags ?? []).map((tag) => tag.name.toLowerCase());
+            const status = (client.status ?? "").toLowerCase();
+            const ltv = client.lifetimeValue ?? 0;
+
+            switch (workflowFilter) {
+                case "new":
+                    return status.includes("new");
+                case "returning":
+                    return status.includes("returning") || status.includes("regular");
+                case "vip":
+                    return status.includes("vip") || tagNames.some((tag) => tag.includes("vip"));
+                case "at-risk":
+                    return status.includes("risk") || (daysSinceVisit !== null && daysSinceVisit > 45);
+                case "no-recent-visit":
+                    return daysSinceVisit === null || daysSinceVisit > 30;
+                case "recent-visit":
+                    return daysSinceVisit !== null && daysSinceVisit <= 14;
+                case "has-tags":
+                    return (client.tags ?? []).length > 0;
+                case "high-ltv":
+                    return ltv >= 250;
+                default:
+                    return true;
+            }
+        });
+    }, [clients, workflowFilter]);
 
     return (
         <ThemeProvider>
@@ -260,26 +365,62 @@ export default function Clients() {
                         <h1>Clients</h1>
                         <p>Manage your clients, visits, and value in one place.</p>
                     </div>
+                </section>
+
+                <section className="clients-topbar">
+                    <div className="clients-summary-strip" aria-label="Clients summary">
+                        <article>
+                            <span>Total</span>
+                            <strong>{loadingOverview ? "—" : overview?.totalClients ?? 0}</strong>
+                        </article>
+                        <article>
+                            <span>Returning</span>
+                            <strong>{loadingOverview ? "—" : overview?.returning ?? 0}</strong>
+                        </article>
+                        <article>
+                            <span>Avg LTV</span>
+                            <strong>{loadingOverview ? "—" : formatCurrency(overview?.averageLtv ?? 0)}</strong>
+                        </article>
+                        <article>
+                            <span>Satisfaction</span>
+                            <strong>{loadingOverview ? "—" : (overview?.satisfaction ?? 0).toFixed(1)}</strong>
+                        </article>
+                    </div>
+
                     <div className="clients-toolbar__actions">
-                        <button type="button" className="clients-add" onClick={handleOpenAdd}>
-                            <span className="clients-add__text">Add Client</span>
-                            <span className="clients-add__icon">+</span>
-                        </button>
-                        <label className="clients-search-wrap" aria-label="Search clients">
-                            <span className="clients-search-icon" aria-hidden="true">⌕</span>
-                            <input
-                                type="search"
-                                className="clients-search"
-                                placeholder="Search by name, phone, or email"
-                                value={search}
-                                onChange={(event) => setSearch(event.target.value)}
-                            />
-                        </label>
+                    <label className="clients-search-wrap" aria-label="Search clients">
+                        <span className="clients-search-icon" aria-hidden="true">⌕</span>
+                        <input
+                            type="search"
+                            className="clients-search"
+                            placeholder="Search by name, phone, or email"
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                        />
+                    </label>
+                    <button type="button" className="clients-add" onClick={handleOpenAdd}>
+                        <span className="clients-add__text">Add Client</span>
+                        <span className="clients-add__icon">+</span>
+                    </button>
                     </div>
                 </section>
 
                 <section className="clients-widget">
                     <header className="clients-widget__header">
+                        <div className="clients-workflow-filters" role="tablist" aria-label="Beauty workflow filters">
+                            {WORKFLOW_FILTERS.map((item) => (
+                                <button
+                                    key={item.key}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={workflowFilter === item.key}
+                                    className={`clients-segment${workflowFilter === item.key ? " is-active" : ""}`}
+                                    onClick={() => setWorkflowFilter(item.key)}
+                                >
+                                    {item.label}
+                                </button>
+                            ))}
+                        </div>
                         <div className="clients-segments" role="tablist" aria-label="Client segments">
                             {statusFilters.map((item) => (
                                 <button
@@ -371,12 +512,12 @@ export default function Clients() {
                                             <tr
                                                 key={client.id}
                                                 className={`clients-table-row${selectedId === client.id ? " is-selected" : ""}`}
-                                                onClick={() => setSelectedId(client.id)}
+                                                onClick={() => void handleOpenEdit(client.id)}
                                                 tabIndex={0}
                                                 onKeyDown={(event) => {
                                                     if (event.key === "Enter" || event.key === " ") {
                                                         event.preventDefault();
-                                                        setSelectedId(client.id);
+                                                        void handleOpenEdit(client.id);
                                                     }
                                                 }}
                                             >
@@ -425,87 +566,65 @@ export default function Clients() {
                     </div>
                 </section>
 
-                {selectedClient && (
+                {isEditOpen && (
                     <div className="clients-modal" role="dialog" aria-modal="true">
-                        <div className="clients-modal__backdrop" onClick={() => setSelectedClient(null)} />
+                        <div className="clients-modal__backdrop" onClick={() => setIsEditOpen(false)} />
                         <article className="clients-modal__content">
                             <header className="clients-modal__header">
                                 <div>
-                                    <h2>{selectedClient.name}</h2>
-                                    <p>
-                                        {selectedClient.city ? `${selectedClient.city} · ` : ""}
-                                        {selectedClient.master ? `Preferred master: ${selectedClient.master}` : ""}
-                                    </p>
+                                    <h2>Edit client</h2>
+                                    <p>Update profile details and keep your CRM records accurate.</p>
                                 </div>
-                                <div className="clients-modal__status">
-                                    <span
-                                        className={`clients-status clients-status--${statusSlug(selectedClient.status || "")}`}
-                                        style={selectedClient.statusColor ? { backgroundColor: selectedClient.statusColor } : undefined}
-                                    >
-                                        {selectedClient.status || "—"}
-                                    </span>
-                                    {loadingDetails && <span className="clients-loading">Refreshing…</span>}
-                                    <button type="button" className="clients-modal__close" onClick={() => setSelectedClient(null)}>
-                                        ×
-                                    </button>
-                                </div>
+                                <button type="button" className="clients-modal__close" onClick={() => setIsEditOpen(false)}>
+                                    ×
+                                </button>
                             </header>
-
-                            <div className="clients-detail-grid">
-                                <div>
-                                    <span className="clients-detail-label">LTV</span>
-                                    <strong>{formatCurrency(selectedClient.lifetimeValue)}</strong>
+                            {loadingDetails && <p className="clients-loading">Loading profile…</p>}
+                            {!loadingDetails && (
+                                <div className="clients-form-grid">
+                                    <label>
+                                        <span>First name</span>
+                                        <input type="text" value={editForm.firstName} onChange={(e) => setEditForm((prev) => ({ ...prev, firstName: e.target.value }))} />
+                                    </label>
+                                    <label>
+                                        <span>Last name</span>
+                                        <input type="text" value={editForm.lastName} onChange={(e) => setEditForm((prev) => ({ ...prev, lastName: e.target.value }))} />
+                                    </label>
+                                    <label>
+                                        <span>Phone</span>
+                                        <input type="tel" value={editForm.phone} onChange={(e) => setEditForm((prev) => ({ ...prev, phone: e.target.value }))} />
+                                    </label>
+                                    <label>
+                                        <span>Email</span>
+                                        <input type="email" value={editForm.email} onChange={(e) => setEditForm((prev) => ({ ...prev, email: e.target.value }))} />
+                                    </label>
+                                    <label className="clients-field-wide">
+                                        <span>Notes</span>
+                                        <textarea
+                                            value={editForm.notes}
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, notes: e.target.value }))}
+                                            placeholder="Add useful details about preferences or follow-up."
+                                            rows={3}
+                                        />
+                                    </label>
                                 </div>
-                                <div>
-                                    <span className="clients-detail-label">Visits</span>
-                                    <strong>{selectedClient.visits}</strong>
-                                </div>
-                                <div>
-                                    <span className="clients-detail-label">Rating</span>
-                                    <strong>{selectedClient.satisfaction.toFixed(1)}</strong>
-                                </div>
-                            </div>
-
-                            <section className="clients-detail-section">
-                                <h3>Contacts</h3>
-                                <div className="clients-detail-contacts">
-                                    <span>{selectedClient.phone}</span>
-                                    {selectedClient.email && <span>{selectedClient.email}</span>}
-                                </div>
-                            </section>
-
-                            <section className="clients-detail-section">
-                                <h3>Recent activity</h3>
-                                <ul className="clients-timeline">
-                                    {(selectedClient.recentActivity ?? []).length === 0 ? (
-                                        <li>No recent activity found.</li>
-                                    ) : (
-                                        (selectedClient.recentActivity ?? []).map((item) => (
-                                            <li key={`${item.occurredAt}-${item.title}`}>
-                                                <span className="clients-timeline-time">{formatDate(item.occurredAt)}</span>
-                                                <div>
-                                                    <strong>{item.title}</strong>
-                                                    {item.description && <p>{item.description}</p>}
-                                                </div>
-                                            </li>
-                                        ))
-                                    )}
-                                </ul>
-                            </section>
-
-                            <section className="clients-detail-section">
-                                <h3>Tags</h3>
-                                <div className="clients-client-tags">
-                                    {(selectedClient.tags ?? []).length
-                                        ? (selectedClient.tags ?? []).map((tag) => <span key={tag}>{tag}</span>)
-                                        : "—"}
-                                </div>
-                            </section>
-
-                            {selectedClient.notes && (
-                                <section className="clients-detail-section">
-                                    <h3>Notes</h3>
-                                    <p className="clients-detail-notes">{selectedClient.notes}</p>
+                            )}
+                            {saveError && <p className="clients-save-error">{saveError}</p>}
+                            <footer className="clients-modal__footer">
+                                <button type="button" className="clients-secondary" onClick={() => setIsEditOpen(false)}>
+                                    Cancel
+                                </button>
+                                <button type="button" className="clients-primary" onClick={() => void handleSaveEdit()} disabled={savingClient || loadingDetails}>
+                                    {savingClient ? "Saving…" : "Save changes"}
+                                </button>
+                            </footer>
+                            {selectedClient && (
+                                <section className="clients-edit-meta">
+                                    <span className={`clients-status clients-status--${statusSlug(selectedClient.status || "")}`}>
+                                        {selectedClient.status || "Regular"}
+                                    </span>
+                                    <span>Visits: {selectedClient.visits}</span>
+                                    <span>LTV: {formatCurrency(selectedClient.lifetimeValue)}</span>
                                 </section>
                             )}
                         </article>
@@ -562,6 +681,15 @@ export default function Clients() {
                                         placeholder="name@email.com"
                                     />
                                 </label>
+                                <label className="clients-field-wide">
+                                    <span>Notes</span>
+                                    <textarea
+                                        rows={3}
+                                        value={addForm.notes}
+                                        onChange={(e) => setAddForm((prev) => ({ ...prev, notes: e.target.value }))}
+                                        placeholder="Optional notes, preferences, or reminders."
+                                    />
+                                </label>
                                 <label>
                                     <span>Segment</span>
                                     <select
@@ -593,6 +721,7 @@ export default function Clients() {
                                     )}
                                 </label>
                             </div>
+                            {saveError && <p className="clients-save-error">{saveError}</p>}
                             <footer className="clients-modal__footer">
                                 <button type="button" className="clients-secondary" onClick={() => setIsAddOpen(false)}>
                                     Cancel
