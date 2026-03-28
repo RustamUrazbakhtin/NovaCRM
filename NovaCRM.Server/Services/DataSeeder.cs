@@ -93,9 +93,12 @@ public static class DataSeeder
 
         var clients = new[]
         {
-            new Client { Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, FirstName = "Anna", LastName = "Stone", Phone = "+1 555 0101", Email = "anna@example.com", TotalVisits = 2, Ltv = 220, CreatedAt = now, UpdatedAt = now },
-            new Client { Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, FirstName = "Mark", LastName = "Lee", Phone = "+1 555 0102", Email = "mark@example.com", TotalVisits = 1, Ltv = 90, CreatedAt = now, UpdatedAt = now },
-            new Client { Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, FirstName = "Sara", LastName = "Cole", Phone = "+1 555 0103", Email = "sara@example.com", TotalVisits = 3, Ltv = 340, CreatedAt = now, UpdatedAt = now }
+            new Client { Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, FirstName = "Anna", LastName = "Stone", Phone = "+1 555 0101", Email = "anna@example.com", TotalVisits = 2, Ltv = 220, LastVisitAt = now.AddDays(-5), Notes = "Prefers balayage and warm tones.", CreatedAt = now, UpdatedAt = now },
+            new Client { Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, FirstName = "Mark", LastName = "Lee", Phone = "+1 555 0102", Email = "mark@example.com", TotalVisits = 1, Ltv = 90, LastVisitAt = now.AddDays(-41), Notes = "Usually books beard trim and styling.", CreatedAt = now, UpdatedAt = now },
+            new Client { Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, FirstName = "Sara", LastName = "Cole", Phone = "+1 555 0103", Email = "sara@example.com", TotalVisits = 3, Ltv = 340, LastVisitAt = now.AddDays(-12), Notes = "VIP treatment package customer.", CreatedAt = now, UpdatedAt = now },
+            new Client { Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, FirstName = "Nina", LastName = "Wright", Phone = "+1 555 0104", Email = "nina@example.com", TotalVisits = 4, Ltv = 420, LastVisitAt = now.AddDays(-2), Notes = "Prefers morning slots and short appointments.", CreatedAt = now, UpdatedAt = now },
+            new Client { Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, FirstName = "Olivia", LastName = "Grant", Phone = "+1 555 0105", Email = "olivia@example.com", TotalVisits = 1, Ltv = 115, LastVisitAt = now.AddDays(-64), Notes = "Follow up for no-show from previous booking.", CreatedAt = now, UpdatedAt = now },
+            new Client { Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, FirstName = "Elena", LastName = "Parker", Phone = "+1 555 0106", Email = "elena@example.com", TotalVisits = 6, Ltv = 690, LastVisitAt = now.AddDays(-9), Notes = "High LTV; usually books color + treatment bundle.", CreatedAt = now, UpdatedAt = now }
         };
 
         db.Organizations.Add(organization);
@@ -109,7 +112,10 @@ public static class DataSeeder
             new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[0].Id, ClientTagId = tags[0].Id, CreatedAt = now },
             new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[0].Id, ClientTagId = tags[2].Id, CreatedAt = now },
             new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[1].Id, ClientTagId = tags[1].Id, CreatedAt = now },
-            new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[2].Id, ClientTagId = tags[2].Id, CreatedAt = now });
+            new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[2].Id, ClientTagId = tags[2].Id, CreatedAt = now },
+            new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[3].Id, ClientTagId = tags[0].Id, CreatedAt = now },
+            new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[4].Id, ClientTagId = tags[1].Id, CreatedAt = now },
+            new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[5].Id, ClientTagId = tags[2].Id, CreatedAt = now });
 
         await db.SaveChangesAsync(cancellationToken);
     }

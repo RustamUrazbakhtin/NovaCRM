@@ -37,6 +37,13 @@ const splitName = (name: string) => {
     if (parts.length <= 1) return { firstName: name, lastName: "" };
     return { firstName: parts.slice(0, -1).join(" "), lastName: parts[parts.length - 1] };
 };
+const isCanceledRequest = (error: unknown) =>
+    axios.isCancel?.(error) || (typeof error === "object" && error !== null && "name" in error && (error as { name?: string }).name === "CanceledError");
+
+const getApiErrorMessage = (error: unknown, fallback: string) =>
+    axios.isAxiosError<{ message?: string }>(error)
+        ? (error.response?.data?.message ?? fallback)
+        : fallback;
 
 const WORKFLOW_FILTERS = [
     { key: "all", label: "All" },
@@ -89,8 +96,8 @@ export default function Clients() {
         try {
             const data = await getClientsOverview();
             setOverview(data);
-        } catch (error: any) {
-            if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
+        } catch (error: unknown) {
+            if (isCanceledRequest(error)) return;
             setOverview({ totalClients: 0, returning: 0, averageLtv: 0, satisfaction: 0 });
             if (!hasLoggedOverviewError.current) {
                 console.error("Failed to load clients overview", error);
@@ -119,12 +126,12 @@ export default function Clients() {
                     current && incoming.some((item) => item.key === current) ? current : "All"
                 );
             })
-            .catch((error) => {
-                if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
+            .catch((error: unknown) => {
+                if (isCanceledRequest(error)) return;
                 setStatusFilters([{ key: "All", label: "All", color: null }]);
                 setStatusFilter("All");
                 if (!hasLoggedFiltersError.current) {
-                    console.error("Failed to load client filters", error?.message ?? error);
+                    console.error("Failed to load client filters", error);
                     hasLoggedFiltersError.current = true;
                 }
             });
@@ -144,11 +151,11 @@ export default function Clients() {
             if (data.length === 0) {
                 setSelectedId(null);
             }
-        } catch (error: any) {
-            if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
-            setClientsError("Failed to load clients. Please try again.");
+        } catch (error: unknown) {
+            if (isCanceledRequest(error)) return;
+            setClientsError(getApiErrorMessage(error, "Failed to load clients. Please try again."));
             if (!hasLoggedClientsError.current) {
-                console.error("Failed to load clients", error?.message ?? error);
+                console.error("Failed to load clients", error);
                 hasLoggedClientsError.current = true;
             }
         } finally {
@@ -162,8 +169,8 @@ export default function Clients() {
         try {
             const data = await getClientDetails(id);
             setSelectedClient(data);
-        } catch (error: any) {
-            if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
+        } catch (error: unknown) {
+            if (isCanceledRequest(error)) return;
             console.error("Failed to load client details", error);
         } finally {
             setLoadingDetails(false);
@@ -187,10 +194,10 @@ export default function Clients() {
         try {
             const data = await getClientTags(signal);
             setSegmentTags(data);
-        } catch (error: any) {
-            if (axios.isCancel?.(error) || error?.name === "CanceledError") return;
+        } catch (error: unknown) {
+            if (isCanceledRequest(error)) return;
             setSegmentsError("Failed to load segments.");
-            console.error("Failed to load segment tags", error?.message ?? error);
+            console.error("Failed to load segment tags", error);
         } finally {
             setLoadingSegments(false);
         }
@@ -208,7 +215,10 @@ export default function Clients() {
             return;
         }
 
-        handleRetrySegments();
+        segmentAbortRef.current?.abort();
+        const controller = new AbortController();
+        segmentAbortRef.current = controller;
+        void loadSegmentTags(controller.signal);
 
         return () => segmentAbortRef.current?.abort();
     }, [isAddOpen, segmentTags.length]);
@@ -268,9 +278,9 @@ export default function Clients() {
             setSelectedId(created.id);
             await loadOverview();
             await loadClients(search, statusFilter);
-        } catch (error: any) {
-            setSaveError(error?.response?.data?.message ?? "Failed to create client. Please review the form.");
-            console.error("Failed to create client", error?.message ?? error);
+        } catch (error: unknown) {
+            setSaveError(getApiErrorMessage(error, "Failed to create client. Please review the form."));
+            console.error("Failed to create client", error);
         } finally {
             setSavingClient(false);
         }
@@ -303,9 +313,9 @@ export default function Clients() {
 
             setIsEditOpen(false);
             await Promise.all([loadOverview(), loadClients(search, statusFilter)]);
-        } catch (error: any) {
-            setSaveError(error?.response?.data?.message ?? "Failed to update client. Please try again.");
-            console.error("Failed to update client", error?.message ?? error);
+        } catch (error: unknown) {
+            setSaveError(getApiErrorMessage(error, "Failed to update client. Please try again."));
+            console.error("Failed to update client", error);
         } finally {
             setSavingClient(false);
         }
