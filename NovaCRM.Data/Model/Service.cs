@@ -27,7 +27,6 @@ public partial class Service
 
     public DateTime? DeletedAt { get; set; }
 
-    public virtual ICollection<AppointmentService> AppointmentServices { get; set; } = new List<AppointmentService>();
 
     public virtual ServiceCategory? Category { get; set; }
 
