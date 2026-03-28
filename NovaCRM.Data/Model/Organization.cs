@@ -20,4 +20,6 @@ public partial class Organization
     public virtual ICollection<ClientTag> ClientTags { get; set; } = new List<ClientTag>();
     public virtual ICollection<ClientTagLink> ClientTagLinks { get; set; } = new List<ClientTagLink>();
     public virtual ICollection<Staff> Staff { get; set; } = new List<Staff>();
+    public virtual ICollection<Service> Services { get; set; } = new List<Service>();
+    public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 }

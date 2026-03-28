@@ -22,4 +22,5 @@ public partial class Staff
     public virtual Branch? Branch { get; set; }
     public virtual Organization Organization { get; set; } = null!;
     public virtual AspNetUser? User { get; set; }
+    public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 }

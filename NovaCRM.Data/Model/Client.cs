@@ -22,4 +22,5 @@ public partial class Client
     public virtual Branch? Branch { get; set; }
     public virtual Organization Organization { get; set; } = null!;
     public virtual ICollection<ClientTagLink> ClientTagLinks { get; set; } = new List<ClientTagLink>();
+    public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 }

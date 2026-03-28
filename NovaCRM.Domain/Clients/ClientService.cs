@@ -41,9 +41,9 @@ public class ClientService : IClientService
     {
         var trimmed = request with
         {
-            FirstName = request.FirstName.Trim(),
-            LastName = request.LastName.Trim(),
-            Phone = request.Phone.Trim(),
+            FirstName = (request.FirstName ?? string.Empty).Trim(),
+            LastName = (request.LastName ?? string.Empty).Trim(),
+            Phone = (request.Phone ?? string.Empty).Trim(),
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
             Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
         };
@@ -62,9 +62,9 @@ public class ClientService : IClientService
     {
         var trimmed = request with
         {
-            FirstName = request.FirstName.Trim(),
-            LastName = request.LastName.Trim(),
-            Phone = request.Phone.Trim(),
+            FirstName = (request.FirstName ?? string.Empty).Trim(),
+            LastName = (request.LastName ?? string.Empty).Trim(),
+            Phone = (request.Phone ?? string.Empty).Trim(),
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
             Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim()
         };

@@ -36,4 +36,6 @@ public partial class Service
     public virtual Organization Organization { get; set; } = null!;
 
     public virtual ICollection<ServiceStaff> ServiceStaffs { get; set; } = new List<ServiceStaff>();
+
+    public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 }
