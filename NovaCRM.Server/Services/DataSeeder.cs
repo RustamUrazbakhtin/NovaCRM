@@ -101,12 +101,29 @@ public static class DataSeeder
             new Client { Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, FirstName = "Elena", LastName = "Parker", Phone = "+1 555 0106", Email = "elena@example.com", TotalVisits = 6, Ltv = 690, LastVisitAt = now.AddDays(-9), Notes = "High LTV; usually books color + treatment bundle.", CreatedAt = now, UpdatedAt = now }
         };
 
+        var services = new[]
+        {
+            new Service { Id = Guid.NewGuid(), OrganizationId = organization.Id, Name = "Brows", DurationMinutes = 30, Price = 45, IsActive = true, CreatedAt = now, UpdatedAt = now },
+            new Service { Id = Guid.NewGuid(), OrganizationId = organization.Id, Name = "Lashes", DurationMinutes = 75, Price = 120, IsActive = true, CreatedAt = now, UpdatedAt = now },
+            new Service { Id = Guid.NewGuid(), OrganizationId = organization.Id, Name = "Manicure", DurationMinutes = 50, Price = 55, IsActive = true, CreatedAt = now, UpdatedAt = now },
+            new Service { Id = Guid.NewGuid(), OrganizationId = organization.Id, Name = "Hair color", DurationMinutes = 120, Price = 180, IsActive = true, CreatedAt = now, UpdatedAt = now },
+            new Service { Id = Guid.NewGuid(), OrganizationId = organization.Id, Name = "Facial", DurationMinutes = 60, Price = 95, IsActive = true, CreatedAt = now, UpdatedAt = now }
+        };
+
+        var appointments = new[]
+        {
+            new Appointment { Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, ClientId = clients[0].Id, ServiceId = services[3].Id, StaffId = staff.Id, StartAt = now.AddDays(-5).Date.AddHours(11), EndAt = now.AddDays(-5).Date.AddHours(13), Status = "Completed", Source = "seed", PriceAtVisit = services[3].Price, Notes = "Color refresh.", CreatedAt = now, UpdatedAt = now },
+            new Appointment { Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, ClientId = clients[3].Id, ServiceId = services[1].Id, StaffId = staff.Id, StartAt = now.AddDays(2).Date.AddHours(10), EndAt = now.AddDays(2).Date.AddHours(11).AddMinutes(15), Status = "Scheduled", Source = "seed", PriceAtVisit = services[1].Price, Notes = "Patch test already completed.", CreatedAt = now, UpdatedAt = now }
+        };
+
         db.Organizations.Add(organization);
         db.Branches.Add(branch);
         db.AspNetUsers.Add(user);
         db.Staff.Add(staff);
         db.ClientTags.AddRange(tags);
         db.Clients.AddRange(clients);
+        db.Services.AddRange(services);
+        db.Appointments.AddRange(appointments);
 
         db.ClientTagLinks.AddRange(
             new ClientTagLink { Id = Guid.NewGuid(), OrganizationId = organization.Id, ClientId = clients[0].Id, ClientTagId = tags[0].Id, CreatedAt = now },

@@ -18,4 +18,5 @@ public partial class Branch
     public virtual Organization Organization { get; set; } = null!;
     public virtual ICollection<Client> Clients { get; set; } = new List<Client>();
     public virtual ICollection<Staff> Staff { get; set; } = new List<Staff>();
+    public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 }
