@@ -143,11 +143,18 @@ export default function Dashboard() {
         navigate("/auth", { replace: true });
     };
 
+    const trendClass = `nx-trend nx-trend-${overview.revenueSummary.trend}`;
+
     return (
         <ThemeProvider>
             <Header breadcrumb="Dashboard" onLogout={handleLogout} />
 
             <main className="fx-page">
+                <section className="nx-actions">
+                    <button type="button" className="nx-action-btn" onClick={() => navigate("/calendar")}>New Appointment</button>
+                    <button type="button" className="nx-action-btn nx-action-btn-secondary" onClick={() => navigate("/clients")}>Add Client</button>
+                </section>
+
                 <section className="fx-row fx-top">
                     <div className="fx-quarter">
                         <Widget title="Today" footer="Operations" minH={132} onClick={() => navigate("/calendar")}>
