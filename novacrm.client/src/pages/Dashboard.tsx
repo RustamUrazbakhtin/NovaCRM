@@ -147,6 +147,8 @@ export default function Dashboard() {
         navigate("/auth", { replace: true });
     };
 
+    const trendClass = `nx-trend nx-trend-${overview.revenueSummary.trend}`;
+
     return (
         <ThemeProvider>
             <Header breadcrumb="Dashboard" onLogout={handleLogout} />
