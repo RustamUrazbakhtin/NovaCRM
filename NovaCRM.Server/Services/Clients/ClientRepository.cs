@@ -97,7 +97,7 @@ public class ClientRepository : IClientRepository
 
     public async Task<ClientDetailsRecord?> GetClientDetailsAsync(Guid organizationId, Guid clientId, CancellationToken cancellationToken = default)
     {
-        var client = await _dbContext.Clients
+            var client = await _dbContext.Clients
             .AsNoTracking()
             .Where(c => c.OrganizationId == organizationId && c.Id == clientId && c.DeletedAt == null)
             .Select(c => new
@@ -120,17 +120,26 @@ public class ClientRepository : IClientRepository
             return null;
         }
 
-        var tags = await _dbContext.ClientTagLinks
-            .AsNoTracking()
-            .Where(link => link.ClientId == clientId)
-            .Join(_dbContext.ClientTags.AsNoTracking().Where(t => t.OrganizationId == organizationId && t.DeletedAt == null),
-                link => link.TagId,
-                tag => tag.Id,
-                (_, tag) => new ClientTag(tag.Id, tag.Name, tag.Color))
-            .OrderBy(t => t.Name)
-            .ToListAsync(cancellationToken);
+            var tags = await _dbContext.ClientTagLinks
+        .AsNoTracking()
+        .Where(link => link.ClientId == clientId)
+        .Join(
+            _dbContext.ClientTags
+                .AsNoTracking()
+                .Where(t => t.OrganizationId == organizationId && t.DeletedAt == null),
+            link => link.TagId,
+            tag => tag.Id,
+            (_, tag) => new
+            {
+                tag.Id,
+                tag.Name,
+                tag.Color
+            })
+        .OrderBy(t => t.Name)
+        .Select(t => new ClientTag(t.Id, t.Name, t.Color))
+        .ToListAsync(cancellationToken);
 
-        return new ClientDetailsRecord(
+            return new ClientDetailsRecord(
             client.Id,
             client.FirstName,
             client.LastName,
