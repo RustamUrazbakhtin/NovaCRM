@@ -15,6 +15,9 @@ public partial class Staff
     public string? Address { get; set; }
     public string? Notes { get; set; }
     public DateTime? Birthday { get; set; }
+    public string EmploymentStatus { get; set; } = "Active";
+    public decimal RatingAverage { get; set; }
+    public int RatingCount { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
@@ -23,4 +26,8 @@ public partial class Staff
     public virtual Organization Organization { get; set; } = null!;
     public virtual AspNetUser? User { get; set; }
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+    public virtual ICollection<StaffRoleLink> StaffRoleLinks { get; set; } = new List<StaffRoleLink>();
+    public virtual ICollection<StaffSpecializationLink> StaffSpecializationLinks { get; set; } = new List<StaffSpecializationLink>();
+    public virtual ICollection<StaffCompensation> StaffCompensations { get; set; } = new List<StaffCompensation>();
+    public virtual ICollection<StaffCompensationHistory> StaffCompensationHistories { get; set; } = new List<StaffCompensationHistory>();
 }

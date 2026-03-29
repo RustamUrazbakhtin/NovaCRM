@@ -19,6 +19,8 @@ public partial class Organization
     public virtual ICollection<Client> Clients { get; set; } = new List<Client>();
     public virtual ICollection<ClientTag> ClientTags { get; set; } = new List<ClientTag>();
     public virtual ICollection<Staff> Staff { get; set; } = new List<Staff>();
+    public virtual ICollection<StaffRole> StaffRoles { get; set; } = new List<StaffRole>();
+    public virtual ICollection<StaffSpecialization> StaffSpecializations { get; set; } = new List<StaffSpecialization>();
     public virtual ICollection<Service> Services { get; set; } = new List<Service>();
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 }

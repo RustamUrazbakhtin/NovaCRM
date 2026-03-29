@@ -29,6 +29,12 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<ClientTagLink> ClientTagLinks { get; set; }
     public virtual DbSet<Service> Services { get; set; }
     public virtual DbSet<Appointment> Appointments { get; set; }
+    public virtual DbSet<StaffRole> StaffRoles { get; set; }
+    public virtual DbSet<StaffRoleLink> StaffRoleLinks { get; set; }
+    public virtual DbSet<StaffSpecialization> StaffSpecializations { get; set; }
+    public virtual DbSet<StaffSpecializationLink> StaffSpecializationLinks { get; set; }
+    public virtual DbSet<StaffCompensation> StaffCompensations { get; set; }
+    public virtual DbSet<StaffCompensationHistory> StaffCompensationHistories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -113,11 +119,71 @@ public partial class ApplicationDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.FirstName).IsRequired();
             entity.Property(e => e.LastName).IsRequired();
+            entity.Property(e => e.EmploymentStatus).HasDefaultValue("Available");
+            entity.Property(e => e.RatingAverage).HasPrecision(4, 2).HasDefaultValue(0m);
+            entity.Property(e => e.RatingCount).HasDefaultValue(0);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("now()");
             entity.HasOne(d => d.Organization).WithMany(p => p.Staff).HasForeignKey(d => d.OrganizationId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(d => d.Branch).WithMany(p => p.Staff).HasForeignKey(d => d.BranchId).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(d => d.User).WithMany(p => p.Staff).HasForeignKey(d => d.UserId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(e => new { e.OrganizationId, e.IsActive, e.EmploymentStatus });
+        });
+
+        modelBuilder.Entity<StaffRole>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired();
+            entity.Property(e => e.Code).IsRequired();
+            entity.HasIndex(e => new { e.OrganizationId, e.Code }).IsUnique();
+            entity.HasOne(d => d.Organization).WithMany(p => p.StaffRoles).HasForeignKey(d => d.OrganizationId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<StaffRoleLink>(entity =>
+        {
+            entity.HasKey(e => new { e.StaffId, e.RoleId });
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
+            entity.HasOne(d => d.Staff).WithMany(p => p.StaffRoleLinks).HasForeignKey(d => d.StaffId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(d => d.Role).WithMany(p => p.StaffRoleLinks).HasForeignKey(d => d.RoleId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<StaffSpecialization>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired();
+            entity.Property(e => e.Code).IsRequired();
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.HasIndex(e => new { e.OrganizationId, e.Code }).IsUnique();
+            entity.HasOne(d => d.Organization).WithMany(p => p.StaffSpecializations).HasForeignKey(d => d.OrganizationId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<StaffSpecializationLink>(entity =>
+        {
+            entity.HasKey(e => new { e.StaffId, e.SpecializationId });
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
+            entity.HasOne(d => d.Staff).WithMany(p => p.StaffSpecializationLinks).HasForeignKey(d => d.StaffId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(d => d.Specialization).WithMany(p => p.StaffSpecializationLinks).HasForeignKey(d => d.SpecializationId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<StaffCompensation>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CompensationType).IsRequired();
+            entity.Property(e => e.FixedSalary).HasPrecision(12, 2);
+            entity.Property(e => e.HourlyRate).HasPrecision(12, 2);
+            entity.Property(e => e.CommissionPercent).HasPrecision(5, 2);
+            entity.Property(e => e.PerServiceAmount).HasPrecision(12, 2);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
+            entity.HasOne(d => d.Staff).WithMany(p => p.StaffCompensations).HasForeignKey(d => d.StaffId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.StaffId, e.EffectiveFrom });
+        });
+
+        modelBuilder.Entity<StaffCompensationHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.NewSnapshot).IsRequired();
+            entity.Property(e => e.ChangedAt).HasDefaultValueSql("now()");
+            entity.HasOne(d => d.Staff).WithMany(p => p.StaffCompensationHistories).HasForeignKey(d => d.StaffId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Client>(entity =>
