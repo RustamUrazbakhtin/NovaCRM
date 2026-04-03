@@ -40,34 +40,54 @@ public class StaffController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<StaffListResponseDto>> Get([FromQuery] string? search, [FromQuery] string? filter = "all", CancellationToken cancellationToken = default)
+    public async Task<ActionResult<StaffListResponseDto>> Get(
+     [FromQuery] string? search,
+     [FromQuery] string? filter = "all",
+     CancellationToken cancellationToken = default)
     {
         var orgId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
-        if (orgId is null) return Ok(new StaffListResponseDto(new StaffOverviewDto(0, 0, 0, 0, 0, 0), Array.Empty<StaffListItemDto>()));
+        if (orgId is null)
+        {
+            return Ok(new StaffListResponseDto(
+                new StaffOverviewDto(0, 0, 0, 0, 0, 0),
+                Array.Empty<StaffListItemDto>()));
+        }
 
         var now = DateTime.UtcNow;
         var dayStart = now.Date;
         var dayEnd = dayStart.AddDays(1);
         var weekEnd = dayStart.AddDays(7);
 
-        var query = _db.Staff
+        IQueryable<Staff> query = _db.Staff
             .AsNoTracking()
             .Where(s => s.OrganizationId == orgId && s.DeletedAt == null)
             .Include(s => s.Branch)
-            .Include(s => s.StaffRoleLinks).ThenInclude(x => x.Role)
-            .Include(s => s.StaffSpecializationLinks).ThenInclude(x => x.Specialization)
+            .Include(s => s.StaffRoleLinks)
+                .ThenInclude(x => x.Role)
+            .Include(s => s.StaffSpecializationLinks)
+                .ThenInclude(x => x.Specialization)
             .Include(s => s.StaffCompensations)
-            .Include(s => s.Appointments.Where(a => a.DeletedAt == null && a.StartAt >= dayStart && a.StartAt < weekEnd));
+            .Include(s => s.Appointments.Where(a =>
+                a.DeletedAt == null &&
+                a.StartAt >= dayStart &&
+                a.StartAt < weekEnd));
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var normalized = search.Trim().ToLower();
+            var normalized = search.Trim();
+            var pattern = $"%{normalized}%";
+
             query = query.Where(s =>
-                (s.FirstName + " " + s.LastName).ToLower().Contains(normalized) ||
-                (s.Phone ?? "").ToLower().Contains(normalized) ||
-                (s.Email ?? "").ToLower().Contains(normalized) ||
-                s.StaffRoleLinks.Any(r => r.Role.Name.ToLower().Contains(normalized)) ||
-                s.StaffSpecializationLinks.Any(sp => sp.Specialization.Name.ToLower().Contains(normalized)));
+                EF.Functions.ILike(((s.FirstName ?? "") + " " + (s.LastName ?? "")).Trim(), pattern) ||
+                EF.Functions.ILike(s.Phone ?? "", pattern) ||
+                EF.Functions.ILike(s.Email ?? "", pattern) ||
+                s.StaffRoleLinks.Any(r =>
+                    r.Role != null &&
+                    EF.Functions.ILike(r.Role.Name, pattern)) ||
+                s.StaffSpecializationLinks.Any(sp =>
+                    sp.Specialization != null &&
+                    EF.Functions.ILike(sp.Specialization.Name, pattern))
+            );
         }
 
         var list = await query.ToListAsync(cancellationToken);
@@ -76,8 +96,13 @@ public class StaffController : ControllerBase
         {
             var apptsToday = s.Appointments.Count(a => a.StartAt >= dayStart && a.StartAt < dayEnd);
             var apptsWeek = s.Appointments.Count;
-            var currentComp = s.StaffCompensations.OrderByDescending(x => x.EffectiveFrom)
-                .FirstOrDefault(x => x.EffectiveFrom <= now && (x.EffectiveTo == null || x.EffectiveTo >= now));
+
+            var currentComp = s.StaffCompensations
+                .OrderByDescending(x => x.EffectiveFrom)
+                .FirstOrDefault(x =>
+                    x.EffectiveFrom <= now &&
+                    (x.EffectiveTo == null || x.EffectiveTo >= now));
+
             return new StaffListItemDto(
                 s.Id,
                 s.FirstName,
@@ -89,12 +114,30 @@ public class StaffController : ControllerBase
                 s.RatingAverage,
                 s.RatingCount,
                 s.Branch?.Name,
-                s.EmploymentStatus == "OnLeave" ? "On leave" : "Today: 10:00–18:00",
+                string.Equals(s.EmploymentStatus, "OnLeave", StringComparison.OrdinalIgnoreCase)
+                    ? "On leave"
+                    : "Today: 10:00–18:00",
                 apptsToday,
                 apptsWeek,
-                s.StaffRoleLinks.Select(x => new StaffLookupDto(x.RoleId, x.Role.Name, x.Role.Code)).ToList(),
-                s.StaffSpecializationLinks.Select(x => new StaffLookupDto(x.SpecializationId, x.Specialization.Name, x.Specialization.Code)).ToList(),
-                currentComp == null ? null : new StaffCompensationDto(currentComp.CompensationType, currentComp.FixedSalary, currentComp.HourlyRate, currentComp.CommissionPercent, currentComp.PerServiceAmount, currentComp.EffectiveFrom, currentComp.EffectiveTo, currentComp.Notes)
+                s.StaffRoleLinks
+                    .Where(x => x.Role != null)
+                    .Select(x => new StaffLookupDto(x.RoleId, x.Role.Name, x.Role.Code))
+                    .ToList(),
+                s.StaffSpecializationLinks
+                    .Where(x => x.Specialization != null)
+                    .Select(x => new StaffLookupDto(x.SpecializationId, x.Specialization.Name, x.Specialization.Code))
+                    .ToList(),
+                currentComp == null
+                    ? null
+                    : new StaffCompensationDto(
+                        currentComp.CompensationType,
+                        currentComp.FixedSalary,
+                        currentComp.HourlyRate,
+                        currentComp.CommissionPercent,
+                        currentComp.PerServiceAmount,
+                        currentComp.EffectiveFrom,
+                        currentComp.EffectiveTo,
+                        currentComp.Notes)
             );
         }).ToList();
 
@@ -104,9 +147,12 @@ public class StaffController : ControllerBase
             list.Count,
             list.Count(s => s.IsActive),
             list.Count(s => s.Appointments.Any(a => a.StartAt >= dayStart && a.StartAt < dayEnd)),
-            list.Count(s => s.EmploymentStatus.Equals("Available", StringComparison.OrdinalIgnoreCase)),
+            list.Count(s => string.Equals(s.EmploymentStatus, "Available", StringComparison.OrdinalIgnoreCase)),
             list.Count > 0 ? Math.Round(list.Average(s => s.RatingAverage), 2) : 0,
-            list.SelectMany(s => s.StaffCompensations).Where(c => c.FixedSalary.HasValue).Sum(c => c.FixedSalary ?? 0));
+            list.SelectMany(s => s.StaffCompensations)
+                .Where(c => c.FixedSalary.HasValue)
+                .Sum(c => c.FixedSalary ?? 0)
+        );
 
         return Ok(new StaffListResponseDto(overview, response));
     }

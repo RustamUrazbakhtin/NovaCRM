@@ -1,4 +1,8 @@
+using System;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,12 +11,13 @@ using NovaCRM.Data.Model;
 using NovaCRM.Server.Contracts.Staff;
 using NovaCRM.Server.Controllers;
 using NovaCRM.Server.Services;
+using Xunit;
 
 namespace NovaCRM.Server.Tests.Staff;
 
 public class StaffControllerTests
 {
-    [Fact]
+    [Xunit.Fact]
     public async Task Create_And_Update_Staff_With_Multiple_Roles_And_Specializations()
     {
         var orgId = Guid.NewGuid();

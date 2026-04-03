@@ -2,6 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using NovaCRM.Data;
 using NovaCRM.Data.Model;
 using NovaCRM.Server.Services.Clients;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace NovaCRM.Server.Tests.Clients;
 
