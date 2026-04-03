@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AuthPage from "../pages/AuthPage";
 import Dashboard from "../pages/Dashboard";
 import ClientsPage from "../pages/Clients";
-import WorkersPage from "../pages/Workers";
 import CalendarPage from "../pages/Calendar";
 import StaffPage from "../pages/Staff";
 import InventoryPage from "../pages/Inventory";
@@ -30,7 +29,7 @@ export default function Router() {
                 <Route path="/clients" element={<Private><ClientsPage /></Private>} />
                 <Route path="/calendar" element={<Private><CalendarPage /></Private>} />
                 <Route path="/staff" element={<Private><StaffPage /></Private>} />
-                <Route path="/workers" element={<Private><WorkersPage /></Private>} />
+                <Route path="/workers" element={<Private><Navigate to="/staff" replace /></Private>} />
                 <Route path="/inventory" element={<Private><InventoryPage /></Private>} />
                 <Route path="/analytics" element={<Private><AnalyticsPage /></Private>} />
                 <Route path="/tasks" element={<Private><TasksPage /></Private>} />

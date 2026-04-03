@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using NovaCRM.Data;
 using NovaCRM.Data.Model;
 using NovaCRM.Server.Contracts.Staff;
@@ -34,7 +35,22 @@ public class StaffController : ControllerBase
             .Select(x => new StaffLookupDto(x.Id, x.Name, x.Code)).ToListAsync(cancellationToken);
         var branches = await _db.Branches.AsNoTracking().Where(x => x.OrganizationId == orgId && x.DeletedAt == null).OrderBy(x => x.Name)
             .Select(x => new StaffLookupDto(x.Id, x.Name, x.Name)).ToListAsync(cancellationToken);
-        var users = await _db.AspNetUsers.AsNoTracking().OrderBy(x => x.Email).Select(x => new StaffLookupDto(Guid.Empty, x.Email ?? x.UserName ?? x.Id, x.Id)).ToListAsync(cancellationToken);
+        var orgLinkedUserIds = await _db.Staff.AsNoTracking()
+            .Where(x => x.OrganizationId == orgId && x.UserId != null && x.DeletedAt == null)
+            .Select(x => x.UserId!)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!string.IsNullOrWhiteSpace(currentUserId) && !orgLinkedUserIds.Contains(currentUserId))
+        {
+            orgLinkedUserIds.Add(currentUserId);
+        }
+
+        var users = await _db.AspNetUsers.AsNoTracking()
+            .Where(x => orgLinkedUserIds.Contains(x.Id))
+            .OrderBy(x => x.Email)
+            .Select(x => new StaffLookupDto(Guid.Empty, x.Email ?? x.UserName ?? x.Id, x.Id))
+            .ToListAsync(cancellationToken);
 
         return Ok(new StaffCatalogDto(roles, specializations, branches, users));
     }
@@ -116,9 +132,11 @@ public class StaffController : ControllerBase
                 s.Branch?.Name,
                 string.Equals(s.EmploymentStatus, "OnLeave", StringComparison.OrdinalIgnoreCase)
                     ? "On leave"
-                    : "Today: 10:00–18:00",
+                    : (apptsToday > 0 ? $"Busy today ({apptsToday})" : "No appointments today"),
                 apptsToday,
                 apptsWeek,
+                s.HasCrmAccess,
+                s.UserId,
                 s.StaffRoleLinks
                     .Where(x => x.Role != null)
                     .Select(x => new StaffLookupDto(x.RoleId, x.Role.Name, x.Role.Code))
@@ -176,7 +194,7 @@ public class StaffController : ControllerBase
         var history = staff.StaffCompensations.OrderByDescending(x => x.EffectiveFrom)
             .Select(c => new StaffCompensationDto(c.CompensationType, c.FixedSalary, c.HourlyRate, c.CommissionPercent, c.PerServiceAmount, c.EffectiveFrom, c.EffectiveTo, c.Notes)).ToList();
 
-        return Ok(new StaffDetailsDto(staff.Id, staff.BranchId, staff.UserId, staff.FirstName, staff.LastName, staff.Phone, staff.Email, staff.Notes,
+        return Ok(new StaffDetailsDto(staff.Id, staff.BranchId, staff.HasCrmAccess, staff.UserId, staff.FirstName, staff.LastName, staff.Phone, staff.Email, staff.Notes,
             staff.IsActive, staff.EmploymentStatus, staff.RatingAverage, staff.RatingCount,
             staff.StaffRoleLinks.Select(x => new StaffLookupDto(x.RoleId, x.Role.Name, x.Role.Code)).ToList(),
             staff.StaffSpecializationLinks.Select(x => new StaffLookupDto(x.SpecializationId, x.Specialization.Name, x.Specialization.Code)).ToList(),
@@ -195,7 +213,8 @@ public class StaffController : ControllerBase
             Id = Guid.NewGuid(),
             OrganizationId = orgId.Value,
             BranchId = request.BranchId,
-            UserId = string.IsNullOrWhiteSpace(request.UserId) ? null : request.UserId,
+            HasCrmAccess = request.HasCrmAccess,
+            UserId = request.HasCrmAccess && !string.IsNullOrWhiteSpace(request.UserId) ? request.UserId : null,
             FirstName = request.FirstName.Trim(),
             LastName = request.LastName.Trim(),
             Phone = request.Phone?.Trim(),
@@ -225,7 +244,8 @@ public class StaffController : ControllerBase
         if (staff is null) return NotFound();
 
         staff.BranchId = request.BranchId;
-        staff.UserId = string.IsNullOrWhiteSpace(request.UserId) ? null : request.UserId;
+        staff.HasCrmAccess = request.HasCrmAccess;
+        staff.UserId = request.HasCrmAccess && !string.IsNullOrWhiteSpace(request.UserId) ? request.UserId : null;
         staff.FirstName = request.FirstName.Trim();
         staff.LastName = request.LastName.Trim();
         staff.Phone = request.Phone?.Trim();

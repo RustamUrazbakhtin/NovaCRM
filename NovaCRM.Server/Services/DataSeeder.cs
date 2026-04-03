@@ -48,20 +48,20 @@ public static class DataSeeder
         };
         var specializations = specializationsData.Select((x, i) => new StaffSpecialization { Id = Guid.NewGuid(), OrganizationId = organization.Id, Name = x.Name, Code = x.Code, Category = x.Category, SortOrder = i + 1, IsActive = true }).ToArray();
 
-        Staff staff(string first, string last, Branch branch, string status, decimal rating, int count, string? userId = null) => new()
+        Staff staff(string first, string last, Branch branch, string status, decimal rating, int count, bool hasCrmAccess, string? userId = null) => new()
         {
-            Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, UserId = userId, FirstName = first, LastName = last, RoleTitle = "Team", Phone = $"+1 555 01{Random.Shared.Next(10,99)}", Email = $"{first.ToLower()}.{last.ToLower()}@novacrm.demo", IsActive = true, EmploymentStatus = status, RatingAverage = rating, RatingCount = count, CreatedAt = now, UpdatedAt = now
+            Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, HasCrmAccess = hasCrmAccess, UserId = hasCrmAccess ? userId : null, FirstName = first, LastName = last, RoleTitle = "Team", Phone = $"+1 555 01{Random.Shared.Next(10,99)}", Email = $"{first.ToLower()}.{last.ToLower()}@novacrm.demo", IsActive = true, EmploymentStatus = status, RatingAverage = rating, RatingCount = count, CreatedAt = now, UpdatedAt = now
         };
 
         var staffMembers = new[]
         {
-            staff("Demo", "Owner", downtown, "Busy", 4.9m, 55, user.Id),
-            staff("Maya", "Lash", downtown, "Available", 4.8m, 31),
-            staff("Olga", "Admin", downtown, "Available", 4.7m, 24),
-            staff("Iris", "Inject", uptown, "Busy", 4.95m, 40),
-            staff("Nora", "Nails", uptown, "Available", 4.6m, 22),
-            staff("Helen", "Hair", downtown, "OnLeave", 4.5m, 18),
-            staff("Sam", "Manager", downtown, "Available", 4.4m, 11)
+            staff("Demo", "Owner", downtown, "Busy", 4.9m, 55, true, user.Id),
+            staff("Maya", "Lash", downtown, "Available", 4.8m, 31, false),
+            staff("Olga", "Admin", downtown, "Available", 4.7m, 24, true),
+            staff("Iris", "Inject", uptown, "Busy", 4.95m, 40, true),
+            staff("Nora", "Nails", uptown, "Available", 4.6m, 22, false),
+            staff("Helen", "Hair", downtown, "OnLeave", 4.5m, 18, false),
+            staff("Sam", "Manager", downtown, "Available", 4.4m, 11, true)
         };
 
         var roleMap = roles.ToDictionary(x => x.Code);

@@ -185,7 +185,7 @@ export default function Dashboard() {
                     </div>
 
                     <div className="fx-quarter">
-                        <Widget title="Staff" footer="Status" minH={132} onClick={() => navigate("/workers")}>
+                        <Widget title="Staff" footer="Status" minH={132} onClick={() => navigate("/staff")}>
                             {isInitialLoading ? <div className="nx-skeleton nx-skeleton-compact" /> : (
                                 <ul className="nx-list">
                                     <li>In service: {overview.staffSummary.inService}</li>

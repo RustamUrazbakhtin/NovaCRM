@@ -17,17 +17,20 @@ const certificateName = 'novacrm.client';
 const certFilePath = path.join(baseFolder, `${certificateName}.pem`);
 const keyFilePath = path.join(baseFolder, `${certificateName}.key`);
 
-if (!fs.existsSync(baseFolder)) {
-    fs.mkdirSync(baseFolder, { recursive: true });
-}
+const isVitest = env.VITEST === "true";
+if (!isVitest) {
+    if (!fs.existsSync(baseFolder)) {
+        fs.mkdirSync(baseFolder, { recursive: true });
+    }
 
-if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
-    const res = child_process.spawnSync(
-        'dotnet',
-        ['dev-certs', 'https', '--export-path', certFilePath, '--format', 'Pem', '--no-password'],
-        { stdio: 'inherit' }
-    );
-    if (res.status !== 0) throw new Error('Could not create certificate.');
+    if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
+        const res = child_process.spawnSync(
+            'dotnet',
+            ['dev-certs', 'https', '--export-path', certFilePath, '--format', 'Pem', '--no-password'],
+            { stdio: 'inherit' }
+        );
+        if (res.status !== 0) throw new Error('Could not create certificate.');
+    }
 }
 
 // Порт ASP.NET берём из окружения, иначе fallback на твой 7226
@@ -48,7 +51,7 @@ const config: UserConfig & { test: VitestUserConfig['test'] } = {
     },
     server: {
         port: parseInt(env.DEV_SERVER_PORT || '58876'),
-        https: {
+        https: isVitest ? false : {
             key: fs.readFileSync(keyFilePath),
             cert: fs.readFileSync(certFilePath),
         },
