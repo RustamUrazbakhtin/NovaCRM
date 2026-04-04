@@ -4,7 +4,7 @@ export interface StaffLookup { id: string; name: string; code: string; }
 export interface StaffCompensation { compensationType: string; fixedSalary?: number | null; hourlyRate?: number | null; commissionPercent?: number | null; perServiceAmount?: number | null; effectiveFrom: string; effectiveTo?: string | null; notes?: string | null; }
 export interface StaffItem {
   id: string; firstName: string; lastName: string; phone?: string | null; email?: string | null; isActive: boolean; employmentStatus: string;
-  ratingAverage: number; ratingCount: number; branchName?: string | null; todaySchedule?: string | null; appointmentsToday: number; appointmentsWeek: number;
+  ratingAverage: number; ratingCount: number; branchId?: string | null; branchName?: string | null; todaySchedule?: string | null; appointmentsToday: number; appointmentsWeek: number;
   hasCrmAccess: boolean; userId?: string | null;
   roles: StaffLookup[]; specializations: StaffLookup[]; currentCompensation?: StaffCompensation | null;
 }

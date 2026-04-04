@@ -129,6 +129,7 @@ public class StaffController : ControllerBase
                 s.EmploymentStatus,
                 s.RatingAverage,
                 s.RatingCount,
+                s.BranchId,
                 s.Branch?.Name,
                 string.Equals(s.EmploymentStatus, "OnLeave", StringComparison.OrdinalIgnoreCase)
                     ? "On leave"

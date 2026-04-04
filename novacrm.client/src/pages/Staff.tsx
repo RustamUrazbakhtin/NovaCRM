@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { createStaff, getStaffCatalog, getStaffList, type StaffCatalog, type StaffItem, updateStaff, type UpsertStaffPayload } from "../api/staff";
 import "../styles/dashboard/index.css";
 import "../styles/clients/index.css";
+import "../styles/staff/index.css";
 
 const FILTERS = [
   ["all", "All"], ["active", "Active"], ["available", "Available"], ["busy", "Busy"], ["on-leave", "On leave"], ["admin", "Admin"], ["specialist", "Specialist"], ["owner", "Owner"], ["manager", "Manager"], ["top-rated", "Top rated"], ["upcoming", "Has upcoming appointments"]
@@ -26,6 +27,8 @@ const blankForm = (): UpsertStaffPayload => ({
   specializationIds: [],
   compensation: { compensationType: "Fixed", fixedSalary: 0, hourlyRate: null, commissionPercent: null, perServiceAmount: null, effectiveFrom: new Date().toISOString(), effectiveTo: null, notes: "" }
 });
+
+const initials = (firstName: string, lastName: string) => `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase();
 
 export default function StaffPage() {
   const navigate = useNavigate();
@@ -48,7 +51,7 @@ export default function StaffPage() {
       setData(res.items ?? []);
       setOverview(res.overview);
     } catch {
-      setError("Could not load staff right now. Please retry.");
+      setError("We couldn’t load staff right now. Please retry.");
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +71,7 @@ export default function StaffPage() {
       setOpen(false); setEditing(null); setForm(blankForm());
       await load();
     } catch {
-      setError("Failed to save staff profile.");
+      setError("Failed to save staff profile. Please try again.");
     }
   };
 
@@ -76,7 +79,7 @@ export default function StaffPage() {
   const openEdit = (item: StaffItem) => {
     setEditing(item);
     setForm({
-      branchId: null,
+      branchId: item.branchId ?? null,
       hasCrmAccess: item.hasCrmAccess,
       userId: item.userId,
       firstName: item.firstName,
@@ -93,63 +96,115 @@ export default function StaffPage() {
     setOpen(true);
   };
 
-  const title = useMemo(() => `${overview.totalStaff} team members`, [overview.totalStaff]);
+  const staffTitle = useMemo(() => `${overview.totalStaff} team members`, [overview.totalStaff]);
 
   return <ThemeProvider>
     <Header breadcrumb="Staff" onLogout={logout} />
-    <main className="fx-page clients-page">
-      <section className="clients-header"><h1>Staff</h1><p>Manage your team, roles, schedules, pay, performance, and CRM access in one place.</p></section>
-      <section className="clients-stats-grid">
-        <div className="client-stat-card"><span>Total Staff</span><strong>{overview.totalStaff}</strong></div>
-        <div className="client-stat-card"><span>Active Today</span><strong>{overview.activeToday}</strong></div>
-        <div className="client-stat-card"><span>Booked Today</span><strong>{overview.bookedToday}</strong></div>
-        <div className="client-stat-card"><span>Available Today</span><strong>{overview.availableToday}</strong></div>
-        <div className="client-stat-card"><span>Avg Rating</span><strong>{overview.avgRating.toFixed(1)}</strong></div>
-        <div className="client-stat-card"><span>Payroll</span><strong>${Math.round(overview.payrollThisMonth).toLocaleString()}</strong></div>
+
+    <main className="fx-page clients-page staff-page">
+      <section className="clients-header">
+        <h1>Staff</h1>
+        <p>Manage your team, roles, schedules, pay, performance, and CRM access in one place.</p>
       </section>
-      <section className="clients-toolbar">
-        <div className="workflow-filter-row">{FILTERS.map(([k, l]) => <button key={k} type="button" className={`workflow-chip ${filter === k ? "active" : ""}`} onClick={() => setFilter(k)}>{l}</button>)}</div>
-        <div className="clients-controls-row">
-          <input className="clients-search" placeholder="Search name, phone, email, role, specialization" value={search} onChange={e => setSearch(e.target.value)} />
-          <button type="button" className="nx-btn primary" onClick={openCreate}>Add Staff</button>
+
+      <section className="staff-kpi-grid" aria-label="Staff KPI cards">
+        <article className="staff-kpi-card"><span>Total Staff</span><strong>{overview.totalStaff}</strong></article>
+        <article className="staff-kpi-card"><span>Active Today</span><strong>{overview.activeToday}</strong></article>
+        <article className="staff-kpi-card"><span>Booked Today</span><strong>{overview.bookedToday}</strong></article>
+        <article className="staff-kpi-card"><span>Available Today</span><strong>{overview.availableToday}</strong></article>
+        <article className="staff-kpi-card"><span>Avg Rating</span><strong>{overview.avgRating.toFixed(1)}</strong></article>
+        <article className="staff-kpi-card"><span>Payroll</span><strong>${Math.round(overview.payrollThisMonth).toLocaleString()}</strong></article>
+      </section>
+
+      <section className="clients-widget staff-toolbar-shell">
+        <div className="clients-workflow-filters">
+          {FILTERS.map(([k, l]) => <button key={k} type="button" className={`clients-segment ${filter === k ? "is-active" : ""}`} onClick={() => setFilter(k)}>{l}</button>)}
+        </div>
+        <div className="clients-toolbar__actions staff-toolbar-actions">
+          <div className="clients-search-wrap">
+            <span className="clients-search-icon">⌕</span>
+            <input className="clients-search" placeholder="Search name, phone, email, role, specialization" value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <button type="button" className="clients-add" onClick={openCreate}><span className="clients-add__text">Add Staff</span><span className="clients-add__icon">＋</span></button>
         </div>
       </section>
-      <section className="clients-shell">
-        <div className="clients-list-panel"><h2>{title}</h2>
-          {isLoading ? <div className="clients-empty"><p>Loading staff…</p></div> : error ? <div className="clients-empty"><p>{error}</p><button className="nx-btn ghost" onClick={() => void load()}>Retry</button></div> : data.length === 0 ? <div className="clients-empty"><p>No staff yet. Add your first team member to start scheduling and CRM access.</p><button type="button" className="nx-btn primary" onClick={openCreate}>Add first staff</button></div> :
-            <table className="clients-table"><thead><tr><th>Name</th><th>Branch</th><th>Roles</th><th>Specializations</th><th>Schedule</th><th>Appointments</th><th>Compensation</th><th>Rating</th><th>Status</th><th /></tr></thead>
-              <tbody>{data.map(item => <tr key={item.id}><td><strong>{item.firstName} {item.lastName}</strong><div>{item.phone} · {item.email}</div></td>
-                <td>{item.branchName ?? "—"}</td>
-                <td>{item.roles.map(r => <span key={r.id} className="status-pill">{r.name}</span>)}</td>
-                <td>{item.specializations.slice(0, 3).map(s => <span key={s.id} className="status-pill">{s.name}</span>)}{item.specializations.length > 3 && <span className="status-pill">+{item.specializations.length - 3}</span>}</td>
-                <td>{item.todaySchedule ?? "—"}</td><td>{item.appointmentsToday} today / {item.appointmentsWeek} week</td><td>{item.currentCompensation?.compensationType ?? "—"}</td><td>{item.ratingAverage.toFixed(1)} ({item.ratingCount})</td><td>{item.employmentStatus}{item.hasCrmAccess ? " · CRM" : ""}</td><td><button className="nx-btn ghost" onClick={() => openEdit(item)}>Edit</button></td></tr>)}</tbody></table>}
+
+      <section className="clients-widget">
+        <div className="clients-widget__header">
+          <div className="clients-heading"><h2>{staffTitle}</h2></div>
         </div>
+
+        {isLoading ? <div className="staff-state"><div className="clients-skeleton-row" /><p>Loading team data…</p></div> : null}
+        {!isLoading && error ? <div className="clients-error"><span>{error}</span><button type="button" className="clients-retry" onClick={() => void load()}>Retry</button></div> : null}
+        {!isLoading && !error && data.length === 0 ? <div className="clients-empty staff-state"><div className="clients-empty__icon">✦</div><h3>Your team is empty</h3><p>Add your first staff member to start scheduling, payroll, and CRM access control.</p><button type="button" className="clients-add" onClick={openCreate}><span className="clients-add__text">Add first staff</span></button></div> : null}
+
+        {!isLoading && !error && data.length > 0 ? <div className="clients-table-card">
+          <div className="clients-table-scroll">
+            <table className="clients-table">
+              <thead><tr><th>Staff</th><th>Branch</th><th>Roles</th><th>Specializations</th><th>Availability</th><th>Appointments</th><th>Compensation</th><th>Rating</th><th>Status</th><th /></tr></thead>
+              <tbody>
+                {data.map(item => <tr key={item.id}>
+                  <td>
+                    <div className="staff-person-cell">
+                      <span className="clients-avatar">{initials(item.firstName, item.lastName)}</span>
+                      <div>
+                        <strong>{item.firstName} {item.lastName}</strong>
+                        <div className="clients-client-meta">{item.phone ?? "—"} · {item.email ?? "—"}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{item.branchName ?? "—"}</td>
+                  <td className="staff-chip-wrap">{item.roles.map(r => <span key={r.id} className="clients-status">{r.name}</span>)}</td>
+                  <td className="staff-chip-wrap">{item.specializations.slice(0, 3).map(s => <span key={s.id} className="clients-status">{s.name}</span>)}{item.specializations.length > 3 && <span className="clients-status">+{item.specializations.length - 3}</span>}</td>
+                  <td>{item.todaySchedule ?? "No schedule"}</td>
+                  <td>{item.appointmentsToday} today / {item.appointmentsWeek} week</td>
+                  <td>{item.currentCompensation?.compensationType ?? "—"}</td>
+                  <td>{item.ratingAverage.toFixed(1)} ({item.ratingCount})</td>
+                  <td><span className={`clients-status clients-status--${item.employmentStatus.toLowerCase()}`}>{item.employmentStatus}{item.hasCrmAccess ? " · CRM" : ""}</span></td>
+                  <td><button className="clients-secondary" onClick={() => openEdit(item)}>Edit</button></td>
+                </tr>)}
+              </tbody>
+            </table>
+          </div>
+        </div> : null}
       </section>
     </main>
-    {open && <div className="clients-modal-overlay" onClick={() => setOpen(false)}><section className="clients-modal" onClick={e => e.stopPropagation()}>
-      <h3>{editing ? "Edit staff" : "Add staff"}</h3>
-      <div className="form-grid" style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" }}>
-        <input placeholder="First name" value={form.firstName} onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))} />
-        <input placeholder="Last name" value={form.lastName} onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))} />
-        <input placeholder="Phone" value={form.phone ?? ""} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
-        <input placeholder="Email" value={form.email ?? ""} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-        <select value={form.employmentStatus} onChange={e => setForm(f => ({ ...f, employmentStatus: e.target.value }))}><option>Available</option><option>Busy</option><option>OnLeave</option><option>Active</option></select>
-        <select value={form.branchId ?? ""} onChange={e => setForm(f => ({ ...f, branchId: e.target.value || null }))}><option value="">Branch</option>{catalog.branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
-      </div>
-      <div style={{ marginTop: 10 }}><strong>Roles</strong><div className="workflow-filter-row">{catalog.roles.map(r => <button key={r.id} type="button" className={`workflow-chip ${form.roleIds.includes(r.id) ? "active" : ""}`} onClick={() => setForm(f => ({ ...f, roleIds: f.roleIds.includes(r.id) ? f.roleIds.filter(x => x !== r.id) : [...f.roleIds, r.id] }))}>{r.name}</button>)}</div></div>
-      <div><strong>Specializations</strong><div className="workflow-filter-row">{catalog.specializations.map(s => <button key={s.id} type="button" className={`workflow-chip ${form.specializationIds.includes(s.id) ? "active" : ""}`} onClick={() => setForm(f => ({ ...f, specializationIds: f.specializationIds.includes(s.id) ? f.specializationIds.filter(x => x !== s.id) : [...f.specializationIds, s.id] }))}>{s.name}</button>)}</div></div>
-      <div style={{ marginTop: 10 }}>
-        <label style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" checked={form.hasCrmAccess} onChange={e => setForm(f => ({ ...f, hasCrmAccess: e.target.checked, userId: e.target.checked ? f.userId : null }))} />Allow CRM access</label>
-        {form.hasCrmAccess && <select value={form.userId ?? ""} onChange={e => setForm(f => ({ ...f, userId: e.target.value || null }))}><option value="">Link user (optional)</option>{catalog.users.map(u => <option key={u.code} value={u.code}>{u.name}</option>)}</select>}
-      </div>
-      <div className="form-grid" style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr", marginTop: 10 }}>
-        <select value={form.compensation?.compensationType ?? "Fixed"} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, compensationType: e.target.value } }))}><option>Fixed</option><option>Hourly</option><option>Commission</option><option>Hybrid</option></select>
-        <input type="number" placeholder="Fixed salary" value={form.compensation?.fixedSalary ?? ""} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, fixedSalary: Number(e.target.value) } }))} />
-        <input type="number" placeholder="Hourly rate" value={form.compensation?.hourlyRate ?? ""} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, hourlyRate: Number(e.target.value) } }))} />
-        <input type="number" placeholder="Commission %" value={form.compensation?.commissionPercent ?? ""} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, commissionPercent: Number(e.target.value) } }))} />
-      </div>
-      <textarea placeholder="Notes" value={form.notes ?? ""} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} style={{ width: "100%", minHeight: 90, marginTop: 10 }} />
-      <div className="clients-modal-actions"><button className="nx-btn ghost" onClick={() => setOpen(false)}>Cancel</button><button className="nx-btn primary" onClick={() => void onSave()}>Save</button></div>
-    </section></div>}
+
+    {open ? <div className="clients-modal" role="dialog" aria-modal="true">
+      <div className="clients-modal__backdrop" onClick={() => setOpen(false)} />
+      <section className="clients-modal__content">
+        <div className="clients-modal__header">
+          <div><h2>{editing ? "Edit staff" : "Add staff"}</h2><p>Profile, roles, compensation, and CRM access</p></div>
+          <button className="clients-modal__close" onClick={() => setOpen(false)}>✕</button>
+        </div>
+
+        <div className="clients-form-grid">
+          <label>First name<input value={form.firstName} onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))} /></label>
+          <label>Last name<input value={form.lastName} onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))} /></label>
+          <label>Phone<input value={form.phone ?? ""} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></label>
+          <label>Email<input value={form.email ?? ""} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} /></label>
+          <label>Status<select value={form.employmentStatus} onChange={e => setForm(f => ({ ...f, employmentStatus: e.target.value }))}><option>Available</option><option>Busy</option><option>OnLeave</option><option>Active</option></select></label>
+          <label>Branch<select value={form.branchId ?? ""} onChange={e => setForm(f => ({ ...f, branchId: e.target.value || null }))}><option value="">Not selected</option>{catalog.branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
+          <label className="clients-field-wide">Notes<textarea value={form.notes ?? ""} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} /></label>
+        </div>
+
+        <div><strong>Roles</strong><div className="clients-segments">{catalog.roles.map(r => <button key={r.id} type="button" className={`clients-segment ${form.roleIds.includes(r.id) ? "is-active" : ""}`} onClick={() => setForm(f => ({ ...f, roleIds: f.roleIds.includes(r.id) ? f.roleIds.filter(x => x !== r.id) : [...f.roleIds, r.id] }))}>{r.name}</button>)}</div></div>
+        <div><strong>Specializations</strong><div className="clients-segments">{catalog.specializations.map(s => <button key={s.id} type="button" className={`clients-segment ${form.specializationIds.includes(s.id) ? "is-active" : ""}`} onClick={() => setForm(f => ({ ...f, specializationIds: f.specializationIds.includes(s.id) ? f.specializationIds.filter(x => x !== s.id) : [...f.specializationIds, s.id] }))}>{s.name}</button>)}</div></div>
+
+        <div className="clients-form-grid">
+          <label className="clients-field-wide"><input type="checkbox" checked={form.hasCrmAccess} onChange={e => setForm(f => ({ ...f, hasCrmAccess: e.target.checked, userId: e.target.checked ? f.userId : null }))} /> Allow CRM access</label>
+          {form.hasCrmAccess ? <label className="clients-field-wide">Linked user<select value={form.userId ?? ""} onChange={e => setForm(f => ({ ...f, userId: e.target.value || null }))}><option value="">Link existing user (optional)</option>{catalog.users.map(u => <option key={u.code} value={u.code}>{u.name}</option>)}</select></label> : null}
+          <label>Compensation type<select value={form.compensation?.compensationType ?? "Fixed"} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, compensationType: e.target.value } }))}><option>Fixed</option><option>Hourly</option><option>Commission</option><option>Hybrid</option></select></label>
+          <label>Fixed salary<input type="number" value={form.compensation?.fixedSalary ?? ""} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, fixedSalary: Number(e.target.value) } }))} /></label>
+          <label>Hourly rate<input type="number" value={form.compensation?.hourlyRate ?? ""} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, hourlyRate: Number(e.target.value) } }))} /></label>
+          <label>Commission %<input type="number" value={form.compensation?.commissionPercent ?? ""} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, commissionPercent: Number(e.target.value) } }))} /></label>
+        </div>
+
+        <footer className="clients-modal__footer">
+          <button className="clients-secondary" onClick={() => setOpen(false)}>Cancel</button>
+          <button className="clients-primary" onClick={() => void onSave()}>Save</button>
+        </footer>
+      </section>
+    </div> : null}
   </ThemeProvider>;
 }

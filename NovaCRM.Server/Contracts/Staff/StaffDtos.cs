@@ -12,6 +12,7 @@ public record StaffListItemDto(
     string EmploymentStatus,
     decimal RatingAverage,
     int RatingCount,
+    Guid? BranchId,
     string? BranchName,
     string? TodaySchedule,
     int AppointmentsToday,
