@@ -12,10 +12,13 @@ public record StaffListItemDto(
     string EmploymentStatus,
     decimal RatingAverage,
     int RatingCount,
+    Guid? BranchId,
     string? BranchName,
     string? TodaySchedule,
     int AppointmentsToday,
     int AppointmentsWeek,
+    bool HasCrmAccess,
+    string? UserId,
     IReadOnlyCollection<StaffLookupDto> Roles,
     IReadOnlyCollection<StaffLookupDto> Specializations,
     StaffCompensationDto? CurrentCompensation);
@@ -26,6 +29,7 @@ public record StaffListResponseDto(StaffOverviewDto Overview, IReadOnlyCollectio
 
 public record UpsertStaffRequest(
     Guid? BranchId,
+    bool HasCrmAccess,
     string? UserId,
     string FirstName,
     string LastName,
@@ -43,6 +47,7 @@ public record UpsertStaffRequest(
 public record StaffDetailsDto(
     Guid Id,
     Guid? BranchId,
+    bool HasCrmAccess,
     string? UserId,
     string FirstName,
     string LastName,

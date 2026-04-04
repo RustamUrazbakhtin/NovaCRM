@@ -120,6 +120,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.FirstName).IsRequired();
             entity.Property(e => e.LastName).IsRequired();
             entity.Property(e => e.EmploymentStatus).HasDefaultValue("Available");
+            entity.Property(e => e.HasCrmAccess).HasDefaultValue(false);
             entity.Property(e => e.RatingAverage).HasPrecision(4, 2).HasDefaultValue(0m);
             entity.Property(e => e.RatingCount).HasDefaultValue(0);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");

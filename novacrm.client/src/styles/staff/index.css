@@ -1,0 +1,107 @@
+.staff-page {
+  gap: 14px;
+}
+
+.staff-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.staff-kpi-card {
+  border-radius: 16px;
+  border: 1px solid color-mix(in oklab, var(--card-bd) 95%, transparent);
+  background: linear-gradient(165deg, color-mix(in oklab, var(--card-bg) 92%, #fff), color-mix(in oklab, var(--ink) 2.6%, var(--card-bg)));
+  box-shadow: 0 12px 28px -24px color-mix(in oklab, var(--ink) 34%, transparent);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.staff-kpi-card span {
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--ink) 52%, transparent);
+}
+
+.staff-kpi-card strong {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.staff-toolbar-shell {
+  gap: 12px;
+}
+
+.staff-toolbar-actions {
+  width: 100%;
+  max-width: none;
+  justify-content: space-between;
+}
+
+.staff-state {
+  min-height: 170px;
+}
+
+.staff-person-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.staff-chip-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.staff-toggle-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid color-mix(in oklab, var(--card-bd) 95%, transparent);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.staff-toggle {
+  width: 44px;
+  height: 27px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--card-bd) 92%, transparent);
+  background: color-mix(in oklab, var(--ink) 12%, var(--card-bg));
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  transition: all .2s ease;
+}
+
+.staff-toggle span {
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .22);
+  transform: translateX(0);
+  transition: transform .2s ease;
+}
+
+.staff-toggle.is-on {
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  border-color: transparent;
+}
+
+.staff-toggle.is-on span {
+  transform: translateX(17px);
+}
+
+@media (max-width: 1200px) {
+  .staff-kpi-grid { grid-template-columns: repeat(3, minmax(120px, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .staff-kpi-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+}

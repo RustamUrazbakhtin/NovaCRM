@@ -13,7 +13,7 @@ vi.mock("../api/staff", () => ({
 describe("StaffPage", () => {
   it("renders KPI cards", async () => {
     render(<MemoryRouter><StaffPage /></MemoryRouter>);
-    await waitFor(() => expect(screen.getByText("Staff")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Staff" })).toBeInTheDocument());
     expect(screen.getByText("Total Staff")).toBeInTheDocument();
     expect(screen.getByText("Payroll")).toBeInTheDocument();
   });
