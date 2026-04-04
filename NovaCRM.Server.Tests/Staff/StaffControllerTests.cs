@@ -40,12 +40,14 @@ public class StaffControllerTests
 
         var roles = db.StaffRoles.Select(x => x.Id).ToArray();
         var specs = db.StaffSpecializations.Take(2).Select(x => x.Id).ToArray();
-        var create = new UpsertStaffRequest(null, null, "A", "B", "+1", "a@b.com", null, true, "Available", 4.5m, 10, roles, specs,
+        var create = new UpsertStaffRequest(null, true, "seed-user", "A", "B", "+1", "a@b.com", null, true, "Available", 4.5m, 10, roles, specs,
             new StaffCompensationDto("Fixed", 3000, null, null, null, DateTime.UtcNow, null, null));
 
         var createResult = await controller.Create(create, CancellationToken.None);
         var created = Assert.IsType<OkObjectResult>(createResult.Result).Value as StaffDetailsDto;
         Assert.NotNull(created);
+        Assert.True(created.HasCrmAccess);
+        Assert.Equal("seed-user", created.UserId);
         Assert.Equal(2, created.Roles.Count);
         Assert.Equal(2, created.Specializations.Count);
 
