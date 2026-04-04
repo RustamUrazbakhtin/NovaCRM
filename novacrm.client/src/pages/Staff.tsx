@@ -58,7 +58,9 @@ export default function StaffPage() {
   };
 
   useEffect(() => { void load(); }, [search, filter]);
-  useEffect(() => { getStaffCatalog().then(setCatalog).catch(() => undefined); }, []);
+  useEffect(() => {
+    getStaffCatalog().then(setCatalog).catch(() => undefined);
+  }, []);
 
   const logout = () => { authApi.logout(); navigate("/auth", { replace: true }); };
 
