@@ -55,13 +55,13 @@ public static class DataSeeder
 
         var staffMembers = new[]
         {
-            staff("Demo", "Owner", downtown, "Busy", 4.9m, 55, true, user.Id),
-            staff("Maya", "Lash", downtown, "Available", 4.8m, 31, false),
-            staff("Olga", "Admin", downtown, "Available", 4.7m, 24, true),
-            staff("Iris", "Inject", uptown, "Busy", 4.95m, 40, true),
-            staff("Nora", "Nails", uptown, "Available", 4.6m, 22, false),
+            staff("Demo", "Owner", downtown, "Active", 4.9m, 55, true, user.Id),
+            staff("Maya", "Lash", downtown, "Active", 4.8m, 31, false),
+            staff("Olga", "Admin", downtown, "Active", 4.7m, 24, true),
+            staff("Iris", "Inject", uptown, "Active", 4.95m, 40, true),
+            staff("Nora", "Nails", uptown, "Active", 4.6m, 22, false),
             staff("Helen", "Hair", downtown, "OnLeave", 4.5m, 18, false),
-            staff("Sam", "Manager", downtown, "Available", 4.4m, 11, true)
+            staff("Sam", "Manager", downtown, "Terminated", 4.4m, 11, true)
         };
 
         var roleMap = roles.ToDictionary(x => x.Code);

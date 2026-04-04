@@ -22,7 +22,7 @@ const blankForm = (): UpsertStaffPayload => ({
   email: "",
   notes: "",
   isActive: true,
-  employmentStatus: "Available",
+  employmentStatus: "Active",
   roleIds: [],
   specializationIds: [],
   compensation: { compensationType: "Fixed", fixedSalary: 0, hourlyRate: null, commissionPercent: null, perServiceAmount: null, effectiveFrom: new Date().toISOString(), effectiveTo: null, notes: "" }
@@ -67,7 +67,18 @@ export default function StaffPage() {
   const onSave = async () => {
     if (!form.firstName.trim() || !form.lastName.trim()) return;
     try {
-      if (editing) await updateStaff(editing.id, form); else await createStaff(form);
+      const nextComp = form.compensation
+        ? {
+          ...form.compensation,
+          fixedSalary: form.compensation.compensationType === "Fixed" ? form.compensation.fixedSalary ?? null : null,
+          hourlyRate: form.compensation.compensationType === "Hourly" ? form.compensation.hourlyRate ?? null : null,
+          commissionPercent: form.compensation.compensationType === "Commission" ? form.compensation.commissionPercent ?? null : null,
+          perServiceAmount: null,
+        }
+        : null;
+      const payload = { ...form, compensation: nextComp };
+
+      if (editing) await updateStaff(editing.id, payload); else await createStaff(payload);
       setOpen(false); setEditing(null); setForm(blankForm());
       await load();
     } catch {
@@ -91,12 +102,24 @@ export default function StaffPage() {
       employmentStatus: item.employmentStatus,
       roleIds: item.roles.map(r => r.id),
       specializationIds: item.specializations.map(s => s.id),
-      compensation: item.currentCompensation ?? { compensationType: "Fixed", fixedSalary: 0, effectiveFrom: new Date().toISOString() }
+      compensation: item.currentCompensation
+        ? {
+          ...item.currentCompensation,
+          compensationType: ["Fixed", "Hourly", "Commission"].includes(item.currentCompensation.compensationType) ? item.currentCompensation.compensationType : "Fixed"
+        }
+        : { compensationType: "Fixed", fixedSalary: 0, effectiveFrom: new Date().toISOString() }
     });
     setOpen(true);
   };
 
   const staffTitle = useMemo(() => `${overview.totalStaff} team members`, [overview.totalStaff]);
+  const shouldShowLocationField = catalog.branches.length > 1;
+  const singleLocation = catalog.branches.length === 1 ? catalog.branches[0] : null;
+
+  useEffect(() => {
+    if (!open || editing || !singleLocation) return;
+    setForm((f) => ({ ...f, branchId: f.branchId ?? singleLocation.id }));
+  }, [open, editing, singleLocation]);
 
   return <ThemeProvider>
     <Header breadcrumb="Staff" onLogout={logout} />
@@ -183,8 +206,8 @@ export default function StaffPage() {
           <label>Last name<input value={form.lastName} onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))} /></label>
           <label>Phone<input value={form.phone ?? ""} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></label>
           <label>Email<input value={form.email ?? ""} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} /></label>
-          <label>Status<select value={form.employmentStatus} onChange={e => setForm(f => ({ ...f, employmentStatus: e.target.value }))}><option>Available</option><option>Busy</option><option>OnLeave</option><option>Active</option></select></label>
-          <label>Branch<select value={form.branchId ?? ""} onChange={e => setForm(f => ({ ...f, branchId: e.target.value || null }))}><option value="">Not selected</option>{catalog.branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
+          <label>Status<select value={form.employmentStatus} onChange={e => setForm(f => ({ ...f, employmentStatus: e.target.value }))}><option value="Active">Active</option><option value="OnLeave">On leave</option><option value="Terminated">Terminated</option></select></label>
+          {shouldShowLocationField ? <label>Location<select value={form.branchId ?? ""} onChange={e => setForm(f => ({ ...f, branchId: e.target.value || null }))}><option value="">Not selected</option>{catalog.branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label> : <label>Location<input value={singleLocation?.name ?? "Main location"} readOnly /></label>}
           <label className="clients-field-wide">Notes<textarea value={form.notes ?? ""} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} /></label>
         </div>
 
@@ -192,12 +215,12 @@ export default function StaffPage() {
         <div><strong>Specializations</strong><div className="clients-segments">{catalog.specializations.map(s => <button key={s.id} type="button" className={`clients-segment ${form.specializationIds.includes(s.id) ? "is-active" : ""}`} onClick={() => setForm(f => ({ ...f, specializationIds: f.specializationIds.includes(s.id) ? f.specializationIds.filter(x => x !== s.id) : [...f.specializationIds, s.id] }))}>{s.name}</button>)}</div></div>
 
         <div className="clients-form-grid">
-          <label className="clients-field-wide"><input type="checkbox" checked={form.hasCrmAccess} onChange={e => setForm(f => ({ ...f, hasCrmAccess: e.target.checked, userId: e.target.checked ? f.userId : null }))} /> Allow CRM access</label>
+          <label className="clients-field-wide staff-toggle-row"><span>Allow CRM access</span><button type="button" role="switch" aria-checked={form.hasCrmAccess} className={`staff-toggle ${form.hasCrmAccess ? "is-on" : ""}`} onClick={() => setForm(f => ({ ...f, hasCrmAccess: !f.hasCrmAccess, userId: !f.hasCrmAccess ? f.userId : null }))}><span /></button></label>
           {form.hasCrmAccess ? <label className="clients-field-wide">Linked user<select value={form.userId ?? ""} onChange={e => setForm(f => ({ ...f, userId: e.target.value || null }))}><option value="">Link existing user (optional)</option>{catalog.users.map(u => <option key={u.code} value={u.code}>{u.name}</option>)}</select></label> : null}
-          <label>Compensation type<select value={form.compensation?.compensationType ?? "Fixed"} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, compensationType: e.target.value } }))}><option>Fixed</option><option>Hourly</option><option>Commission</option><option>Hybrid</option></select></label>
-          <label>Fixed salary<input type="number" value={form.compensation?.fixedSalary ?? ""} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, fixedSalary: Number(e.target.value) } }))} /></label>
-          <label>Hourly rate<input type="number" value={form.compensation?.hourlyRate ?? ""} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, hourlyRate: Number(e.target.value) } }))} /></label>
-          <label>Commission %<input type="number" value={form.compensation?.commissionPercent ?? ""} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, commissionPercent: Number(e.target.value) } }))} /></label>
+          <label>Compensation type<select value={form.compensation?.compensationType ?? "Fixed"} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, compensationType: e.target.value } }))}><option value="Fixed">Fixed salary</option><option value="Hourly">Hourly rate</option><option value="Commission">Commission</option></select></label>
+          {form.compensation?.compensationType === "Hourly" ? <label>Hourly rate<input type="number" value={form.compensation?.hourlyRate ?? ""} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, hourlyRate: Number(e.target.value) } }))} /></label> : null}
+          {form.compensation?.compensationType === "Commission" ? <label>Commission %<input type="number" value={form.compensation?.commissionPercent ?? ""} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, commissionPercent: Number(e.target.value) } }))} /></label> : null}
+          {(!form.compensation?.compensationType || form.compensation.compensationType === "Fixed") ? <label>Monthly salary<input type="number" value={form.compensation?.fixedSalary ?? ""} onChange={e => setForm(f => ({ ...f, compensation: { ...f.compensation, fixedSalary: Number(e.target.value) } }))} /></label> : null}
         </div>
 
         <footer className="clients-modal__footer">

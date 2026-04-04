@@ -164,9 +164,9 @@ public class StaffController : ControllerBase
 
         var overview = new StaffOverviewDto(
             list.Count,
-            list.Count(s => s.IsActive),
+            list.Count(s => s.IsActive && s.EmploymentStatus.Equals("Active", StringComparison.OrdinalIgnoreCase)),
             list.Count(s => s.Appointments.Any(a => a.StartAt >= dayStart && a.StartAt < dayEnd)),
-            list.Count(s => string.Equals(s.EmploymentStatus, "Available", StringComparison.OrdinalIgnoreCase)),
+            list.Count(s => s.IsActive && s.EmploymentStatus.Equals("Active", StringComparison.OrdinalIgnoreCase) && !s.Appointments.Any(a => a.StartAt >= dayStart && a.StartAt < dayEnd)),
             list.Count > 0 ? Math.Round(list.Average(s => s.RatingAverage), 2) : 0,
             list.SelectMany(s => s.StaffCompensations)
                 .Where(c => c.FixedSalary.HasValue)
@@ -267,9 +267,9 @@ public class StaffController : ControllerBase
     {
         return filter?.ToLowerInvariant() switch
         {
-            "active" => source.Where(x => x.IsActive).ToList(),
-            "available" => source.Where(x => x.EmploymentStatus.Equals("Available", StringComparison.OrdinalIgnoreCase)).ToList(),
-            "busy" => source.Where(x => x.EmploymentStatus.Equals("Busy", StringComparison.OrdinalIgnoreCase)).ToList(),
+            "active" => source.Where(x => x.IsActive && x.EmploymentStatus.Equals("Active", StringComparison.OrdinalIgnoreCase)).ToList(),
+            "available" => source.Where(x => x.IsActive && x.EmploymentStatus.Equals("Active", StringComparison.OrdinalIgnoreCase) && x.AppointmentsToday == 0).ToList(),
+            "busy" => source.Where(x => x.IsActive && x.EmploymentStatus.Equals("Active", StringComparison.OrdinalIgnoreCase) && x.AppointmentsToday > 0).ToList(),
             "on-leave" => source.Where(x => x.EmploymentStatus.Equals("OnLeave", StringComparison.OrdinalIgnoreCase)).ToList(),
             "admin" => source.Where(x => x.Roles.Any(r => r.Code == "admin")).ToList(),
             "specialist" => source.Where(x => x.Roles.Any(r => r.Code == "specialist")).ToList(),
