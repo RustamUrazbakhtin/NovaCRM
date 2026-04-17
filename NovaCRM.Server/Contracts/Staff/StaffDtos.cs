@@ -42,7 +42,10 @@ public record UpsertStaffRequest(
     int? RatingCount,
     IReadOnlyCollection<Guid> RoleIds,
     IReadOnlyCollection<Guid> SpecializationIds,
-    StaffCompensationDto? Compensation);
+    string CompensationType,
+    decimal? FixedSalary,
+    decimal? HourlyRate,
+    decimal? CommissionPercent);
 
 public record StaffDetailsDto(
     Guid Id,
