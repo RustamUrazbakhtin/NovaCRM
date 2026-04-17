@@ -1,14 +1,12 @@
-﻿using NovaCRM.Domain.Staff.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using NovaCRM.Domain.Staff.Model;
 
-namespace NovaCRM.Domain.Staff.Services
+namespace NovaCRM.Domain.Staff.Services;
+
+public interface IStaffService
 {
-    public interface IStaffService
-    {
-        public StaffItem AddStaff(StaffItem staff);
-    }
+    StaffItem BuildForUpsert(StaffUpsertInput input, Guid? existingId = null);
+    IReadOnlyCollection<EnumOption> GetStatusOptions();
+    IReadOnlyCollection<EnumOption> GetCompensationTypeOptions();
+    string GetStatusName(StaffStatusEnum status);
+    string GetCompensationTypeName(CompensationTypeEnum compensationType);
 }

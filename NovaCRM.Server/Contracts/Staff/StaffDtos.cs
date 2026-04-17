@@ -1,7 +1,8 @@
 namespace NovaCRM.Server.Contracts.Staff;
 
 public record StaffLookupDto(Guid Id, string Name, string Code);
-public record StaffCompensationDto(string CompensationType, decimal? FixedSalary, decimal? HourlyRate, decimal? CommissionPercent, decimal? PerServiceAmount, DateTime EffectiveFrom, DateTime? EffectiveTo, string? Notes);
+public record EnumOptionDto(int Id, string Name);
+public record StaffCompensationDto(int CompensationType, string CompensationTypeName, decimal? FixedSalary, decimal? HourlyRate, decimal? CommissionPercent, decimal? PerServiceAmount, DateTime EffectiveFrom, DateTime? EffectiveTo, string? Notes);
 public record StaffListItemDto(
     Guid Id,
     string FirstName,
@@ -9,7 +10,8 @@ public record StaffListItemDto(
     string? Phone,
     string? Email,
     bool IsActive,
-    string EmploymentStatus,
+    int EmploymentStatus,
+    string EmploymentStatusName,
     decimal RatingAverage,
     int RatingCount,
     Guid? BranchId,
@@ -37,12 +39,12 @@ public record UpsertStaffRequest(
     string? Email,
     string? Notes,
     bool IsActive,
-    string EmploymentStatus,
+    int Status,
     decimal? RatingAverage,
     int? RatingCount,
     IReadOnlyCollection<Guid> RoleIds,
     IReadOnlyCollection<Guid> SpecializationIds,
-    string CompensationType,
+    int CompensationType,
     decimal? FixedSalary,
     decimal? HourlyRate,
     decimal? CommissionPercent);
@@ -58,7 +60,8 @@ public record StaffDetailsDto(
     string? Email,
     string? Notes,
     bool IsActive,
-    string EmploymentStatus,
+    int EmploymentStatus,
+    string EmploymentStatusName,
     decimal RatingAverage,
     int RatingCount,
     IReadOnlyCollection<StaffLookupDto> Roles,
@@ -66,4 +69,10 @@ public record StaffDetailsDto(
     StaffCompensationDto? CurrentCompensation,
     IReadOnlyCollection<StaffCompensationDto> CompensationHistory);
 
-public record StaffCatalogDto(IReadOnlyCollection<StaffLookupDto> Roles, IReadOnlyCollection<StaffLookupDto> Specializations, IReadOnlyCollection<StaffLookupDto> Branches, IReadOnlyCollection<StaffLookupDto> Users);
+public record StaffCatalogDto(
+    IReadOnlyCollection<StaffLookupDto> Roles,
+    IReadOnlyCollection<StaffLookupDto> Specializations,
+    IReadOnlyCollection<StaffLookupDto> Branches,
+    IReadOnlyCollection<StaffLookupDto> Users,
+    IReadOnlyCollection<EnumOptionDto> Statuses,
+    IReadOnlyCollection<EnumOptionDto> CompensationTypes);
