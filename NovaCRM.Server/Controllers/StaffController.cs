@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using NovaCRM.Data;
 using NovaCRM.Data.Model;
 using NovaCRM.Server.Contracts.Staff;
@@ -36,6 +37,8 @@ public class StaffController : ControllerBase
         "HourlyRate",
         "Commission"
     };
+
+    private static readonly Regex EmailRegex = new(@"^[^\s@]+@[^\s@]+\.[^\s@]+$", RegexOptions.Compiled);
 
     [HttpGet("catalog")]
     public async Task<ActionResult<StaffCatalogDto>> GetCatalog(CancellationToken cancellationToken)
@@ -227,6 +230,11 @@ public class StaffController : ControllerBase
         }
 
         var (fixedSalary, hourlyRate, commissionPercent) = NormalizeCompensationValues(normalizedCompensationType, request.FixedSalary, request.HourlyRate, request.CommissionPercent);
+        var validationError = ValidateRequest(request, fixedSalary, hourlyRate, commissionPercent);
+        if (validationError is not null)
+        {
+            return BadRequest(validationError);
+        }
 
         var now = DateTime.UtcNow;
         var staff = new Staff
@@ -277,6 +285,11 @@ public class StaffController : ControllerBase
         }
 
         var (fixedSalary, hourlyRate, commissionPercent) = NormalizeCompensationValues(normalizedCompensationType, request.FixedSalary, request.HourlyRate, request.CommissionPercent);
+        var validationError = ValidateRequest(request, fixedSalary, hourlyRate, commissionPercent);
+        if (validationError is not null)
+        {
+            return BadRequest(validationError);
+        }
 
         staff.BranchId = request.BranchId;
         staff.HasCrmAccess = request.HasCrmAccess;
@@ -435,5 +448,35 @@ public class StaffController : ControllerBase
             compensation.EffectiveFrom,
             compensation.EffectiveTo,
             compensation.Notes);
+    }
+
+    private static string? ValidateRequest(UpsertStaffRequest request, decimal? fixedSalary, decimal? hourlyRate, decimal? commissionPercent)
+    {
+        if (string.IsNullOrWhiteSpace(request.FirstName))
+        {
+            return "FirstName is required.";
+        }
+
+        if (string.IsNullOrWhiteSpace(request.LastName))
+        {
+            return "LastName is required.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Email) && !EmailRegex.IsMatch(request.Email.Trim()))
+        {
+            return "Email format is invalid.";
+        }
+
+        var normalizedCompensationType = NormalizeCompensationType(request.CompensationType) ?? "FixedSalary";
+        return normalizedCompensationType switch
+        {
+            "FixedSalary" when fixedSalary is null => "FixedSalary is required for FixedSalary compensation type.",
+            "FixedSalary" when fixedSalary < 0 => "FixedSalary cannot be negative.",
+            "HourlyRate" when hourlyRate is null => "HourlyRate is required for HourlyRate compensation type.",
+            "HourlyRate" when hourlyRate < 0 => "HourlyRate cannot be negative.",
+            "Commission" when commissionPercent is null => "CommissionPercent is required for Commission compensation type.",
+            "Commission" when commissionPercent < 0 || commissionPercent > 100 => "CommissionPercent must be between 0 and 100.",
+            _ => null
+        };
     }
 }

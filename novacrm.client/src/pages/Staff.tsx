@@ -52,6 +52,35 @@ const normalizeEmploymentStatus = (status?: string | null): typeof STATUS_OPTION
   return "Active";
 };
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const validateForm = (form: UpsertStaffPayload): string | null => {
+  if (!form.firstName.trim()) return "First name is required.";
+  if (!form.lastName.trim()) return "Last name is required.";
+
+  if (form.email?.trim() && !emailRegex.test(form.email.trim())) {
+    return "Enter a valid email address.";
+  }
+
+  const compensationType = normalizeCompensationType(form.compensationType);
+  if (compensationType === "FixedSalary") {
+    if (form.fixedSalary === null || form.fixedSalary === undefined || Number.isNaN(form.fixedSalary)) return "Monthly salary is required.";
+    if (form.fixedSalary < 0) return "Monthly salary cannot be negative.";
+  }
+
+  if (compensationType === "HourlyRate") {
+    if (form.hourlyRate === null || form.hourlyRate === undefined || Number.isNaN(form.hourlyRate)) return "Hourly rate is required.";
+    if (form.hourlyRate < 0) return "Hourly rate cannot be negative.";
+  }
+
+  if (compensationType === "Commission") {
+    if (form.commissionPercent === null || form.commissionPercent === undefined || Number.isNaN(form.commissionPercent)) return "Commission percent is required.";
+    if (form.commissionPercent < 0 || form.commissionPercent > 100) return "Commission percent must be between 0 and 100.";
+  }
+
+  return null;
+};
+
 const buildPayload = (form: UpsertStaffPayload): UpsertStaffPayload => {
   const compensationType = normalizeCompensationType(form.compensationType);
   return {
@@ -115,8 +144,13 @@ export default function StaffPage() {
   const logout = () => { authApi.logout(); navigate("/auth", { replace: true }); };
 
   const onSave = async () => {
-    if (!form.firstName.trim() || !form.lastName.trim()) return;
+    const validationError = validateForm(form);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setIsSaving(true);
+    setError(null);
     try {
       const payload = buildPayload(form);
 
@@ -285,7 +319,7 @@ export default function StaffPage() {
         </div>
 
         <footer className="clients-modal__footer">
-          <button className="clients-secondary" onClick={() => setOpen(false)}>Cancel</button>
+          <button className="clients-secondary" onClick={() => setOpen(false)} disabled={isSaving}>Cancel</button>
           <button className="clients-primary" onClick={() => void onSave()} disabled={isSaving}>{isSaving ? "Saving…" : "Save"}</button>
         </footer>
       </section>
