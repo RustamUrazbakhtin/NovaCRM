@@ -1,10 +1,12 @@
+using NovaCRM.Domain.Staff.Model;
+
 namespace NovaCRM.Data.Model;
 
 public partial class StaffCompensation
 {
     public Guid Id { get; set; }
     public Guid StaffId { get; set; }
-    public string CompensationType { get; set; } = null!;
+    public CompensationTypeEnum CompensationType { get; set; }
     public decimal? FixedSalary { get; set; }
     public decimal? HourlyRate { get; set; }
     public decimal? CommissionPercent { get; set; }
