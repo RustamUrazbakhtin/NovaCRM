@@ -4,7 +4,6 @@ import Header from "../layout/Header";
 import ThemeProvider from "../providers/ThemeProvider";
 import type {
     ClientDetails,
-    ClientFilter,
     ClientListItem,
     ClientOverview,
     ClientTag,
@@ -67,7 +66,6 @@ export default function Clients() {
     });
     const [clients, setClients] = useState<ClientListItem[]>([]);
     const [statusFilter, setStatusFilter] = useState<string>("All");
-    const [statusFilters, setStatusFilters] = useState<ClientFilter[]>([{ key: "All", label: "All", color: null }]);
     const [search, setSearch] = useState("");
     const [loadingList, setLoadingList] = useState(false);
     const [loadingOverview, setLoadingOverview] = useState(false);
@@ -121,14 +119,12 @@ export default function Clients() {
                       ]
                     : [{ key: "All", label: "All", color: null }];
 
-                setStatusFilters(incoming);
                 setStatusFilter((current) =>
                     current && incoming.some((item) => item.key === current) ? current : "All"
                 );
             })
             .catch((error: unknown) => {
                 if (isCanceledRequest(error)) return;
-                setStatusFilters([{ key: "All", label: "All", color: null }]);
                 setStatusFilter("All");
                 if (!hasLoggedFiltersError.current) {
                     console.error("Failed to load client filters", error);

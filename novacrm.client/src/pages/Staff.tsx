@@ -12,8 +12,7 @@ const FILTERS = [
   ["all", "All"], ["active", "Active"], ["available", "Available"], ["busy", "Busy"], ["on-leave", "On leave"], ["admin", "Admin"], ["specialist", "Specialist"], ["owner", "Owner"], ["manager", "Manager"], ["top-rated", "Top rated"], ["upcoming", "Has upcoming appointments"]
 ] as const;
 
-type CompensationType = "FixedSalary" | "HourlyRate" | "Commission";
-const STATUS_OPTIONS = ["Active", "Vacation", "Terminated"] as const;
+type CompensationType = 1 | 2 | 3;
 
 const blankForm = (): UpsertStaffPayload => ({
   branchId: null,
@@ -25,32 +24,17 @@ const blankForm = (): UpsertStaffPayload => ({
   email: "",
   notes: "",
   isActive: true,
-  employmentStatus: "Active",
+  status: 1,
   roleIds: [],
   specializationIds: [],
-  compensationType: "FixedSalary",
+  compensationType: 1,
   fixedSalary: null,
   hourlyRate: null,
   commissionPercent: null,
 });
 
-const normalizeCompensationType = (type?: string | null): CompensationType => {
-  if (type === "Hourly" || type === "HourlyRate") return "HourlyRate";
-  if (type === "Commission") return "Commission";
-  return "FixedSalary";
-};
-const compensationTypeLabel = (type?: string | null): string => {
-  const normalized = normalizeCompensationType(type);
-  if (normalized === "FixedSalary") return "Fixed salary";
-  if (normalized === "HourlyRate") return "Hourly rate";
-  return "Commission";
-};
-
-const normalizeEmploymentStatus = (status?: string | null): typeof STATUS_OPTIONS[number] => {
-  if (status === "OnLeave") return "Vacation";
-  if (status === "Vacation" || status === "Terminated") return status;
-  return "Active";
-};
+const normalizeCompensationType = (type?: number | null): CompensationType => (type === 2 || type === 3 ? type : 1);
+const normalizeStatus = (status?: number | null): number => (status === 2 || status === 3 ? status : 1);
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -63,17 +47,17 @@ const validateForm = (form: UpsertStaffPayload): string | null => {
   }
 
   const compensationType = normalizeCompensationType(form.compensationType);
-  if (compensationType === "FixedSalary") {
+  if (compensationType === 1) {
     if (form.fixedSalary === null || form.fixedSalary === undefined || Number.isNaN(form.fixedSalary)) return "Monthly salary is required.";
     if (form.fixedSalary < 0) return "Monthly salary cannot be negative.";
   }
 
-  if (compensationType === "HourlyRate") {
+  if (compensationType === 2) {
     if (form.hourlyRate === null || form.hourlyRate === undefined || Number.isNaN(form.hourlyRate)) return "Hourly rate is required.";
     if (form.hourlyRate < 0) return "Hourly rate cannot be negative.";
   }
 
-  if (compensationType === "Commission") {
+  if (compensationType === 3) {
     if (form.commissionPercent === null || form.commissionPercent === undefined || Number.isNaN(form.commissionPercent)) return "Commission percent is required.";
     if (form.commissionPercent < 0 || form.commissionPercent > 100) return "Commission percent must be between 0 and 100.";
   }
@@ -93,15 +77,15 @@ const buildPayload = (form: UpsertStaffPayload): UpsertStaffPayload => {
     email: form.email?.trim() || null,
     notes: form.notes?.trim() || null,
     isActive: form.isActive,
-    employmentStatus: normalizeEmploymentStatus(form.employmentStatus),
+    status: normalizeStatus(form.status),
     ratingAverage: form.ratingAverage ?? null,
     ratingCount: form.ratingCount ?? null,
     roleIds: [...form.roleIds],
     specializationIds: [...form.specializationIds],
     compensationType,
-    fixedSalary: compensationType === "FixedSalary" ? form.fixedSalary ?? null : null,
-    hourlyRate: compensationType === "HourlyRate" ? form.hourlyRate ?? null : null,
-    commissionPercent: compensationType === "Commission" ? form.commissionPercent ?? null : null,
+    fixedSalary: compensationType === 1 ? form.fixedSalary ?? null : null,
+    hourlyRate: compensationType === 2 ? form.hourlyRate ?? null : null,
+    commissionPercent: compensationType === 3 ? form.commissionPercent ?? null : null,
   };
 };
 
@@ -115,7 +99,7 @@ export default function StaffPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [overview, setOverview] = useState({ totalStaff: 0, activeToday: 0, bookedToday: 0, availableToday: 0, avgRating: 0, payrollThisMonth: 0 });
-  const [catalog, setCatalog] = useState<StaffCatalog>({ roles: [], specializations: [], branches: [], users: [] });
+  const [catalog, setCatalog] = useState<StaffCatalog>({ roles: [], specializations: [], branches: [], users: [], statuses: [], compensationTypes: [] });
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<StaffItem | null>(null);
   const [form, setForm] = useState<UpsertStaffPayload>(blankForm);
@@ -181,13 +165,13 @@ export default function StaffPage() {
         email: details.email,
         notes: details.notes ?? "",
         isActive: details.isActive,
-        employmentStatus: normalizeEmploymentStatus(details.employmentStatus),
+        status: normalizeStatus(details.employmentStatus),
         roleIds: details.roles.map(r => r.id),
         specializationIds: details.specializations.map(s => s.id),
         compensationType,
-        fixedSalary: compensationType === "FixedSalary" ? details.currentCompensation?.fixedSalary ?? null : null,
-        hourlyRate: compensationType === "HourlyRate" ? details.currentCompensation?.hourlyRate ?? null : null,
-        commissionPercent: compensationType === "Commission" ? details.currentCompensation?.commissionPercent ?? null : null,
+        fixedSalary: compensationType === 1 ? details.currentCompensation?.fixedSalary ?? null : null,
+        hourlyRate: compensationType === 2 ? details.currentCompensation?.hourlyRate ?? null : null,
+        commissionPercent: compensationType === 3 ? details.currentCompensation?.commissionPercent ?? null : null,
       });
       setOpen(true);
       setSaveMessage(null);
@@ -267,9 +251,9 @@ export default function StaffPage() {
                   <td className="staff-chip-wrap">{item.specializations.slice(0, 3).map(s => <span key={s.id} className="clients-status">{s.name}</span>)}{item.specializations.length > 3 && <span className="clients-status">+{item.specializations.length - 3}</span>}</td>
                   <td>{item.todaySchedule ?? "No schedule"}</td>
                   <td>{item.appointmentsToday} today / {item.appointmentsWeek} week</td>
-                  <td>{item.currentCompensation ? compensationTypeLabel(item.currentCompensation.compensationType) : "—"}</td>
+                  <td>{item.currentCompensation?.compensationTypeName ?? "—"}</td>
                   <td>{item.ratingAverage.toFixed(1)} ({item.ratingCount})</td>
-                  <td><span className={`clients-status clients-status--${item.employmentStatus.toLowerCase()}`}>{item.employmentStatus}{item.hasCrmAccess ? " · CRM" : ""}</span></td>
+                  <td><span className={`clients-status clients-status--${item.employmentStatusName.toLowerCase()}`}>{item.employmentStatusName}{item.hasCrmAccess ? " · CRM" : ""}</span></td>
                   <td><button className="clients-secondary" onClick={() => void openEdit(item)}>Edit</button></td>
                 </tr>)}
               </tbody>
@@ -292,7 +276,7 @@ export default function StaffPage() {
           <label>Last name<input value={form.lastName} onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))} /></label>
           <label>Phone<input value={form.phone ?? ""} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></label>
           <label>Email<input value={form.email ?? ""} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} /></label>
-          <label>Status<select value={normalizeEmploymentStatus(form.employmentStatus)} onChange={e => setForm(f => ({ ...f, employmentStatus: e.target.value }))}><option value="Active">Active</option><option value="Vacation">Vacation</option><option value="Terminated">Terminated</option></select></label>
+          <label>Status<select value={normalizeStatus(form.status)} onChange={e => setForm(f => ({ ...f, status: Number(e.target.value) }))}>{catalog.statuses.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}</select></label>
           {shouldShowLocationField ? <label>Location<select value={form.branchId ?? ""} onChange={e => setForm(f => ({ ...f, branchId: e.target.value || null }))}><option value="">Not selected</option>{catalog.branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label> : <label>Location<input value={singleLocation?.name ?? "Main location"} readOnly /></label>}
           <label className="clients-field-wide">Notes<textarea value={form.notes ?? ""} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} /></label>
         </div>
@@ -304,18 +288,18 @@ export default function StaffPage() {
           <label className="clients-field-wide staff-toggle-row"><span>Allow CRM access</span><button type="button" role="switch" aria-checked={form.hasCrmAccess} className={`staff-toggle ${form.hasCrmAccess ? "is-on" : ""}`} onClick={() => setForm(f => ({ ...f, hasCrmAccess: !f.hasCrmAccess, userId: !f.hasCrmAccess ? f.userId : null }))}><span /></button></label>
           {form.hasCrmAccess ? <label className="clients-field-wide">Linked user<select value={form.userId ?? ""} onChange={e => setForm(f => ({ ...f, userId: e.target.value || null }))}><option value="">Link existing user (optional)</option>{catalog.users.map(u => <option key={u.code} value={u.code}>{u.name}</option>)}</select></label> : null}
           <label>Compensation type<select value={normalizeCompensationType(form.compensationType)} onChange={e => setForm(f => {
-            const compensationType = normalizeCompensationType(e.target.value);
+            const compensationType = normalizeCompensationType(Number(e.target.value));
             return {
               ...f,
               compensationType,
-              fixedSalary: compensationType === "FixedSalary" ? f.fixedSalary : null,
-              hourlyRate: compensationType === "HourlyRate" ? f.hourlyRate : null,
-              commissionPercent: compensationType === "Commission" ? f.commissionPercent : null,
+              fixedSalary: compensationType === 1 ? f.fixedSalary : null,
+              hourlyRate: compensationType === 2 ? f.hourlyRate : null,
+              commissionPercent: compensationType === 3 ? f.commissionPercent : null,
             };
-          })}><option value="FixedSalary">Fixed salary</option><option value="HourlyRate">Hourly rate</option><option value="Commission">Commission</option></select></label>
-          {normalizeCompensationType(form.compensationType) === "HourlyRate" ? <label>Hourly rate<input type="number" value={form.hourlyRate ?? ""} onChange={e => setForm(f => ({ ...f, hourlyRate: e.target.value === "" ? null : Number(e.target.value) }))} /></label> : null}
-          {normalizeCompensationType(form.compensationType) === "Commission" ? <label>Commission %<input type="number" value={form.commissionPercent ?? ""} onChange={e => setForm(f => ({ ...f, commissionPercent: e.target.value === "" ? null : Number(e.target.value) }))} /></label> : null}
-          {normalizeCompensationType(form.compensationType) === "FixedSalary" ? <label>Monthly salary<input type="number" value={form.fixedSalary ?? ""} onChange={e => setForm(f => ({ ...f, fixedSalary: e.target.value === "" ? null : Number(e.target.value) }))} /></label> : null}
+          })}>{catalog.compensationTypes.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}</select></label>
+          {normalizeCompensationType(form.compensationType) === 2 ? <label>Hourly rate<input type="number" value={form.hourlyRate ?? ""} onChange={e => setForm(f => ({ ...f, hourlyRate: e.target.value === "" ? null : Number(e.target.value) }))} /></label> : null}
+          {normalizeCompensationType(form.compensationType) === 3 ? <label>Commission %<input type="number" value={form.commissionPercent ?? ""} onChange={e => setForm(f => ({ ...f, commissionPercent: e.target.value === "" ? null : Number(e.target.value) }))} /></label> : null}
+          {normalizeCompensationType(form.compensationType) === 1 ? <label>Monthly salary<input type="number" value={form.fixedSalary ?? ""} onChange={e => setForm(f => ({ ...f, fixedSalary: e.target.value === "" ? null : Number(e.target.value) }))} /></label> : null}
         </div>
 
         <footer className="clients-modal__footer">

@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace NovaCRM.Domain.Staff.Model;
 
-namespace NovaCRM.Domain.Staff.Model
+public enum CompensationTypeEnum
 {
-    public enum CompensationTypeEnum
-    {
-        FixiedSalary = 1,
-        HourlyRate = 2,
-        Commission = 3
-    }
+    FixedSalary = 1,
+    HourlyRate = 2,
+    Commission = 3
 }

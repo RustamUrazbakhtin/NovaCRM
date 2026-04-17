@@ -11,7 +11,11 @@ const { createStaffMock, updateStaffMock, getStaffByIdMock } = vi.hoisted(() => 
 
 vi.mock("../api/staff", () => ({
   getStaffList: vi.fn(async () => ({ overview: { totalStaff: 1, activeToday: 1, bookedToday: 1, availableToday: 0, avgRating: 4.8, payrollThisMonth: 5000 }, items: [] })),
-  getStaffCatalog: vi.fn(async () => ({ roles: [], specializations: [], branches: [], users: [] })),
+  getStaffCatalog: vi.fn(async () => ({
+    roles: [], specializations: [], branches: [], users: [],
+    statuses: [{ id: 1, name: "Active" }, { id: 2, name: "Vacation" }, { id: 3, name: "Terminated" }],
+    compensationTypes: [{ id: 1, name: "Fixed salary" }, { id: 2, name: "Hourly rate" }, { id: 3, name: "Commission" }],
+  })),
   getStaffById: getStaffByIdMock,
   createStaff: createStaffMock,
   updateStaff: updateStaffMock,
@@ -31,9 +35,9 @@ describe("StaffPage", () => {
     fireEvent.click((await screen.findAllByRole("button", { name: /Add Staff/i }))[0]);
     fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Jane" } });
     fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Doe" } });
-    fireEvent.change(screen.getByLabelText("Status"), { target: { value: "Vacation" } });
+    fireEvent.change(screen.getByLabelText("Status"), { target: { value: "2" } });
     fireEvent.click(screen.getByRole("switch"));
-    fireEvent.change(screen.getByLabelText("Compensation type"), { target: { value: "HourlyRate" } });
+    fireEvent.change(screen.getByLabelText("Compensation type"), { target: { value: "2" } });
     fireEvent.change(screen.getByLabelText("Hourly rate"), { target: { value: "35" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
@@ -41,8 +45,8 @@ describe("StaffPage", () => {
     expect(createStaffMock.mock.calls[0][0]).toMatchObject({
       firstName: "Jane",
       lastName: "Doe",
-      employmentStatus: "Vacation",
-      compensationType: "HourlyRate",
+      status: 2,
+      compensationType: 2,
       hourlyRate: 35,
       fixedSalary: null,
       commissionPercent: null,

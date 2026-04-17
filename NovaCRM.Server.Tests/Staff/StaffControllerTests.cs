@@ -10,6 +10,7 @@ using NovaCRM.Data;
 using NovaCRM.Data.Model;
 using NovaCRM.Server.Contracts.Staff;
 using NovaCRM.Server.Controllers;
+using NovaCRM.Domain.Staff.Services;
 using NovaCRM.Server.Services;
 using Xunit;
 
@@ -33,15 +34,15 @@ public class StaffControllerTests
             new StaffSpecialization { Id = Guid.NewGuid(), OrganizationId = orgId, Name = "Laser", Code = "laser", IsActive = true });
         await db.SaveChangesAsync();
 
-        var controller = new StaffController(db, new FakeOrgContext(orgId))
+        var controller = new StaffController(db, new FakeOrgContext(orgId), new StaffService())
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(new ClaimsIdentity()) } }
         };
 
         var roles = db.StaffRoles.Select(x => x.Id).ToArray();
         var specs = db.StaffSpecializations.Take(2).Select(x => x.Id).ToArray();
-        var create = new UpsertStaffRequest(null, true, "seed-user", "A", "B", "+1", "a@b.com", null, true, "Active", 4.5m, 10, roles, specs,
-            "FixedSalary", 3000, null, null);
+        var create = new UpsertStaffRequest(null, true, "seed-user", "A", "B", "+1", "a@b.com", null, true, 1, 4.5m, 10, roles, specs,
+            1, 3000, null, null);
 
         var createResult = await controller.Create(create, CancellationToken.None);
         var created = Assert.IsType<OkObjectResult>(createResult.Result).Value as StaffDetailsDto;
@@ -52,13 +53,13 @@ public class StaffControllerTests
         Assert.Equal(2, created.Specializations.Count);
 
         var updatedSpecs = db.StaffSpecializations.Skip(1).Select(x => x.Id).ToArray();
-        var updateRequest = create with { SpecializationIds = updatedSpecs, CompensationType = "Commission", FixedSalary = 3200, CommissionPercent = 15 };
+        var updateRequest = create with { SpecializationIds = updatedSpecs, CompensationType = 3, FixedSalary = 3200, CommissionPercent = 15 };
         var updateResult = await controller.Update(created.Id, updateRequest, CancellationToken.None);
         var updated = Assert.IsType<OkObjectResult>(updateResult.Result).Value as StaffDetailsDto;
 
         Assert.NotNull(updated);
         Assert.Equal(2, updated.Specializations.Count);
-        Assert.Equal("Commission", updated.CurrentCompensation?.CompensationType);
+        Assert.Equal(3, updated.CurrentCompensation?.CompensationType);
         Assert.Null(updated.CurrentCompensation?.FixedSalary);
         Assert.True(updated.CompensationHistory.Count >= 2);
     }

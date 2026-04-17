@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NovaCRM.Data;
 using NovaCRM.Data.Model;
+using NovaCRM.Domain.Staff.Model;
 
 namespace NovaCRM.Server.Services;
 
@@ -48,20 +49,20 @@ public static class DataSeeder
         };
         var specializations = specializationsData.Select((x, i) => new StaffSpecialization { Id = Guid.NewGuid(), OrganizationId = organization.Id, Name = x.Name, Code = x.Code, Category = x.Category, SortOrder = i + 1, IsActive = true }).ToArray();
 
-        Staff staff(string first, string last, Branch branch, string status, decimal rating, int count, bool hasCrmAccess, string? userId = null) => new()
+        Staff staff(string first, string last, Branch branch, StaffStatusEnum status, decimal rating, int count, bool hasCrmAccess, string? userId = null) => new()
         {
             Id = Guid.NewGuid(), OrganizationId = organization.Id, BranchId = branch.Id, HasCrmAccess = hasCrmAccess, UserId = hasCrmAccess ? userId : null, FirstName = first, LastName = last, RoleTitle = "Team", Phone = $"+1 555 01{Random.Shared.Next(10,99)}", Email = $"{first.ToLower()}.{last.ToLower()}@novacrm.demo", IsActive = true, EmploymentStatus = status, RatingAverage = rating, RatingCount = count, CreatedAt = now, UpdatedAt = now
         };
 
         var staffMembers = new[]
         {
-            staff("Demo", "Owner", downtown, "Active", 4.9m, 55, true, user.Id),
-            staff("Maya", "Lash", downtown, "Active", 4.8m, 31, false),
-            staff("Olga", "Admin", downtown, "Active", 4.7m, 24, true),
-            staff("Iris", "Inject", uptown, "Active", 4.95m, 40, true),
-            staff("Nora", "Nails", uptown, "Active", 4.6m, 22, false),
-            staff("Helen", "Hair", downtown, "OnLeave", 4.5m, 18, false),
-            staff("Sam", "Manager", downtown, "Terminated", 4.4m, 11, true)
+            staff("Demo", "Owner", downtown, StaffStatusEnum.Active, 4.9m, 55, true, user.Id),
+            staff("Maya", "Lash", downtown, StaffStatusEnum.Active, 4.8m, 31, false),
+            staff("Olga", "Admin", downtown, StaffStatusEnum.Active, 4.7m, 24, true),
+            staff("Iris", "Inject", uptown, StaffStatusEnum.Active, 4.95m, 40, true),
+            staff("Nora", "Nails", uptown, StaffStatusEnum.Active, 4.6m, 22, false),
+            staff("Helen", "Hair", downtown, StaffStatusEnum.Vacation, 4.5m, 18, false),
+            staff("Sam", "Manager", downtown, StaffStatusEnum.Terminated, 4.4m, 11, true)
         };
 
         var roleMap = roles.ToDictionary(x => x.Code);
@@ -91,13 +92,13 @@ public static class DataSeeder
 
         var compensations = new[]
         {
-            new StaffCompensation{Id=Guid.NewGuid(),StaffId=staffMembers[0].Id,CompensationType="Hybrid",FixedSalary=6000,CommissionPercent=12,EffectiveFrom=now.AddMonths(-2),Notes="Owner compensation",CreatedAt=now},
-            new StaffCompensation{Id=Guid.NewGuid(),StaffId=staffMembers[1].Id,CompensationType="Commission",CommissionPercent=35,PerServiceAmount=15,EffectiveFrom=now.AddMonths(-1),CreatedAt=now},
-            new StaffCompensation{Id=Guid.NewGuid(),StaffId=staffMembers[2].Id,CompensationType="Hourly",HourlyRate=35,EffectiveFrom=now.AddMonths(-3),CreatedAt=now},
-            new StaffCompensation{Id=Guid.NewGuid(),StaffId=staffMembers[3].Id,CompensationType="Hybrid",FixedSalary=4500,CommissionPercent=20,EffectiveFrom=now.AddMonths(-1),CreatedAt=now},
-            new StaffCompensation{Id=Guid.NewGuid(),StaffId=staffMembers[4].Id,CompensationType="Fixed",FixedSalary=3800,EffectiveFrom=now.AddMonths(-1),CreatedAt=now},
-            new StaffCompensation{Id=Guid.NewGuid(),StaffId=staffMembers[5].Id,CompensationType="Fixed",FixedSalary=4200,EffectiveFrom=now.AddMonths(-1),CreatedAt=now},
-            new StaffCompensation{Id=Guid.NewGuid(),StaffId=staffMembers[6].Id,CompensationType="Fixed",FixedSalary=5000,EffectiveFrom=now.AddMonths(-1),CreatedAt=now}
+            new StaffCompensation{Id=Guid.NewGuid(),StaffId=staffMembers[0].Id,CompensationType=CompensationTypeEnum.FixedSalary,FixedSalary=6000,EffectiveFrom=now.AddMonths(-2),Notes="Owner compensation",CreatedAt=now},
+            new StaffCompensation{Id=Guid.NewGuid(),StaffId=staffMembers[1].Id,CompensationType=CompensationTypeEnum.Commission,CommissionPercent=35,PerServiceAmount=15,EffectiveFrom=now.AddMonths(-1),CreatedAt=now},
+            new StaffCompensation{Id=Guid.NewGuid(),StaffId=staffMembers[2].Id,CompensationType=CompensationTypeEnum.HourlyRate,HourlyRate=35,EffectiveFrom=now.AddMonths(-3),CreatedAt=now},
+            new StaffCompensation{Id=Guid.NewGuid(),StaffId=staffMembers[3].Id,CompensationType=CompensationTypeEnum.FixedSalary,FixedSalary=4500,EffectiveFrom=now.AddMonths(-1),CreatedAt=now},
+            new StaffCompensation{Id=Guid.NewGuid(),StaffId=staffMembers[4].Id,CompensationType=CompensationTypeEnum.FixedSalary,FixedSalary=3800,EffectiveFrom=now.AddMonths(-1),CreatedAt=now},
+            new StaffCompensation{Id=Guid.NewGuid(),StaffId=staffMembers[5].Id,CompensationType=CompensationTypeEnum.FixedSalary,FixedSalary=4200,EffectiveFrom=now.AddMonths(-1),CreatedAt=now},
+            new StaffCompensation{Id=Guid.NewGuid(),StaffId=staffMembers[6].Id,CompensationType=CompensationTypeEnum.FixedSalary,FixedSalary=5000,EffectiveFrom=now.AddMonths(-1),CreatedAt=now}
         };
 
         var services = new[]
@@ -138,7 +139,7 @@ public static class DataSeeder
         db.StaffRoleLinks.AddRange(roleLinks);
         db.StaffSpecializationLinks.AddRange(specLinks);
         db.StaffCompensations.AddRange(compensations);
-        db.StaffCompensationHistories.AddRange(compensations.Select(c => new StaffCompensationHistory{Id=Guid.NewGuid(),StaffId=c.StaffId,NewSnapshot=$"{c.CompensationType}:{c.FixedSalary}:{c.HourlyRate}:{c.CommissionPercent}:{c.PerServiceAmount}",ChangedAt=now,Notes="Initial seed compensation"}));
+        db.StaffCompensationHistories.AddRange(compensations.Select(c => new StaffCompensationHistory{Id=Guid.NewGuid(),StaffId=c.StaffId,NewSnapshot=$"{(int)c.CompensationType}:{c.FixedSalary}:{c.HourlyRate}:{c.CommissionPercent}:{c.PerServiceAmount}",ChangedAt=now,Notes="Initial seed compensation"}));
         db.Clients.AddRange(clients);
         db.Services.AddRange(services);
         db.Appointments.AddRange(appointments);

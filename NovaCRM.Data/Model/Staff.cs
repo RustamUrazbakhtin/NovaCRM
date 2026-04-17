@@ -1,3 +1,5 @@
+using NovaCRM.Domain.Staff.Model;
+
 namespace NovaCRM.Data.Model;
 
 public partial class Staff
@@ -16,7 +18,7 @@ public partial class Staff
     public string? Address { get; set; }
     public string? Notes { get; set; }
     public DateTime? Birthday { get; set; }
-    public string EmploymentStatus { get; set; } = "Active";
+    public StaffStatusEnum EmploymentStatus { get; set; } = StaffStatusEnum.Active;
     public decimal RatingAverage { get; set; }
     public int RatingCount { get; set; }
     public DateTime CreatedAt { get; set; }
