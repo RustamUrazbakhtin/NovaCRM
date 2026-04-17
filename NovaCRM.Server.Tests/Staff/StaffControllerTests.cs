@@ -40,8 +40,8 @@ public class StaffControllerTests
 
         var roles = db.StaffRoles.Select(x => x.Id).ToArray();
         var specs = db.StaffSpecializations.Take(2).Select(x => x.Id).ToArray();
-        var create = new UpsertStaffRequest(null, true, "seed-user", "A", "B", "+1", "a@b.com", null, true, "Available", 4.5m, 10, roles, specs,
-            new StaffCompensationDto("Fixed", 3000, null, null, null, DateTime.UtcNow, null, null));
+        var create = new UpsertStaffRequest(null, true, "seed-user", "A", "B", "+1", "a@b.com", null, true, "Active", 4.5m, 10, roles, specs,
+            "FixedSalary", 3000, null, null);
 
         var createResult = await controller.Create(create, CancellationToken.None);
         var created = Assert.IsType<OkObjectResult>(createResult.Result).Value as StaffDetailsDto;
@@ -52,13 +52,14 @@ public class StaffControllerTests
         Assert.Equal(2, created.Specializations.Count);
 
         var updatedSpecs = db.StaffSpecializations.Skip(1).Select(x => x.Id).ToArray();
-        var updateRequest = create with { SpecializationIds = updatedSpecs, Compensation = new StaffCompensationDto("Hybrid", 3200, null, 15, null, DateTime.UtcNow, null, "raise") };
+        var updateRequest = create with { SpecializationIds = updatedSpecs, CompensationType = "Commission", FixedSalary = 3200, CommissionPercent = 15 };
         var updateResult = await controller.Update(created.Id, updateRequest, CancellationToken.None);
         var updated = Assert.IsType<OkObjectResult>(updateResult.Result).Value as StaffDetailsDto;
 
         Assert.NotNull(updated);
         Assert.Equal(2, updated.Specializations.Count);
-        Assert.Equal("Hybrid", updated.CurrentCompensation?.CompensationType);
+        Assert.Equal("Commission", updated.CurrentCompensation?.CompensationType);
+        Assert.Null(updated.CurrentCompensation?.FixedSalary);
         Assert.True(updated.CompensationHistory.Count >= 2);
     }
 

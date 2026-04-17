@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using NovaCRM.Data;
 using NovaCRM.Data.Model;
 using NovaCRM.Server.Contracts.Staff;
@@ -22,6 +23,22 @@ public class StaffController : ControllerBase
         _db = db;
         _organizationContext = organizationContext;
     }
+
+    private static readonly HashSet<string> AllowedEmploymentStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Active",
+        "Vacation",
+        "Terminated"
+    };
+
+    private static readonly HashSet<string> AllowedCompensationTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "FixedSalary",
+        "HourlyRate",
+        "Commission"
+    };
+
+    private static readonly Regex EmailRegex = new(@"^[^\s@]+@[^\s@]+\.[^\s@]+$", RegexOptions.Compiled);
 
     [HttpGet("catalog")]
     public async Task<ActionResult<StaffCatalogDto>> GetCatalog(CancellationToken cancellationToken)
@@ -131,8 +148,8 @@ public class StaffController : ControllerBase
                 s.RatingCount,
                 s.BranchId,
                 s.Branch?.Name,
-                string.Equals(s.EmploymentStatus, "OnLeave", StringComparison.OrdinalIgnoreCase)
-                    ? "On leave"
+                string.Equals(s.EmploymentStatus, "Vacation", StringComparison.OrdinalIgnoreCase)
+                    ? "On vacation"
                     : (apptsToday > 0 ? $"Busy today ({apptsToday})" : "No appointments today"),
                 apptsToday,
                 apptsWeek,
@@ -146,17 +163,7 @@ public class StaffController : ControllerBase
                     .Where(x => x.Specialization != null)
                     .Select(x => new StaffLookupDto(x.SpecializationId, x.Specialization.Name, x.Specialization.Code))
                     .ToList(),
-                currentComp == null
-                    ? null
-                    : new StaffCompensationDto(
-                        currentComp.CompensationType,
-                        currentComp.FixedSalary,
-                        currentComp.HourlyRate,
-                        currentComp.CommissionPercent,
-                        currentComp.PerServiceAmount,
-                        currentComp.EffectiveFrom,
-                        currentComp.EffectiveTo,
-                        currentComp.Notes)
+                currentComp == null ? null : ToCompensationDto(currentComp)
             );
         }).ToList();
 
@@ -192,14 +199,16 @@ public class StaffController : ControllerBase
         if (staff is null) return NotFound();
 
         var currentComp = staff.StaffCompensations.OrderByDescending(x => x.EffectiveFrom).FirstOrDefault();
-        var history = staff.StaffCompensations.OrderByDescending(x => x.EffectiveFrom)
-            .Select(c => new StaffCompensationDto(c.CompensationType, c.FixedSalary, c.HourlyRate, c.CommissionPercent, c.PerServiceAmount, c.EffectiveFrom, c.EffectiveTo, c.Notes)).ToList();
+        var history = staff.StaffCompensations
+            .OrderByDescending(x => x.EffectiveFrom)
+            .Select(ToCompensationDto)
+            .ToList();
 
         return Ok(new StaffDetailsDto(staff.Id, staff.BranchId, staff.HasCrmAccess, staff.UserId, staff.FirstName, staff.LastName, staff.Phone, staff.Email, staff.Notes,
             staff.IsActive, staff.EmploymentStatus, staff.RatingAverage, staff.RatingCount,
             staff.StaffRoleLinks.Select(x => new StaffLookupDto(x.RoleId, x.Role.Name, x.Role.Code)).ToList(),
             staff.StaffSpecializationLinks.Select(x => new StaffLookupDto(x.SpecializationId, x.Specialization.Name, x.Specialization.Code)).ToList(),
-            currentComp is null ? null : new StaffCompensationDto(currentComp.CompensationType, currentComp.FixedSalary, currentComp.HourlyRate, currentComp.CommissionPercent, currentComp.PerServiceAmount, currentComp.EffectiveFrom, currentComp.EffectiveTo, currentComp.Notes), history));
+            currentComp is null ? null : ToCompensationDto(currentComp), history));
     }
 
     [HttpPost]
@@ -207,6 +216,25 @@ public class StaffController : ControllerBase
     {
         var orgId = await _organizationContext.GetOrganizationIdAsync(User, cancellationToken);
         if (orgId is null) return Unauthorized();
+
+        var normalizedStatus = NormalizeEmploymentStatus(request.EmploymentStatus);
+        if (normalizedStatus is null)
+        {
+            return BadRequest("EmploymentStatus must be one of: Active, Vacation, Terminated.");
+        }
+
+        var normalizedCompensationType = NormalizeCompensationType(request.CompensationType);
+        if (normalizedCompensationType is null)
+        {
+            return BadRequest("CompensationType must be one of: FixedSalary, HourlyRate, Commission.");
+        }
+
+        var (fixedSalary, hourlyRate, commissionPercent) = NormalizeCompensationValues(normalizedCompensationType, request.FixedSalary, request.HourlyRate, request.CommissionPercent);
+        var validationError = ValidateRequest(request, fixedSalary, hourlyRate, commissionPercent);
+        if (validationError is not null)
+        {
+            return BadRequest(validationError);
+        }
 
         var now = DateTime.UtcNow;
         var staff = new Staff
@@ -222,7 +250,7 @@ public class StaffController : ControllerBase
             Email = request.Email?.Trim(),
             Notes = request.Notes?.Trim(),
             IsActive = request.IsActive,
-            EmploymentStatus = request.EmploymentStatus,
+            EmploymentStatus = normalizedStatus,
             RatingAverage = request.RatingAverage ?? 0,
             RatingCount = request.RatingCount ?? 0,
             CreatedAt = now,
@@ -231,7 +259,7 @@ public class StaffController : ControllerBase
 
         _db.Staff.Add(staff);
         await _db.SaveChangesAsync(cancellationToken);
-        await UpsertLinksAndCompensationAsync(staff.Id, orgId.Value, request, cancellationToken);
+        await UpsertLinksAndCompensationAsync(staff.Id, orgId.Value, request, normalizedCompensationType, fixedSalary, hourlyRate, commissionPercent, cancellationToken);
         return await GetById(staff.Id, cancellationToken);
     }
 
@@ -244,6 +272,25 @@ public class StaffController : ControllerBase
         var staff = await _db.Staff.FirstOrDefaultAsync(s => s.OrganizationId == orgId && s.Id == id && s.DeletedAt == null, cancellationToken);
         if (staff is null) return NotFound();
 
+        var normalizedStatus = NormalizeEmploymentStatus(request.EmploymentStatus);
+        if (normalizedStatus is null)
+        {
+            return BadRequest("EmploymentStatus must be one of: Active, Vacation, Terminated.");
+        }
+
+        var normalizedCompensationType = NormalizeCompensationType(request.CompensationType);
+        if (normalizedCompensationType is null)
+        {
+            return BadRequest("CompensationType must be one of: FixedSalary, HourlyRate, Commission.");
+        }
+
+        var (fixedSalary, hourlyRate, commissionPercent) = NormalizeCompensationValues(normalizedCompensationType, request.FixedSalary, request.HourlyRate, request.CommissionPercent);
+        var validationError = ValidateRequest(request, fixedSalary, hourlyRate, commissionPercent);
+        if (validationError is not null)
+        {
+            return BadRequest(validationError);
+        }
+
         staff.BranchId = request.BranchId;
         staff.HasCrmAccess = request.HasCrmAccess;
         staff.UserId = request.HasCrmAccess && !string.IsNullOrWhiteSpace(request.UserId) ? request.UserId : null;
@@ -253,13 +300,13 @@ public class StaffController : ControllerBase
         staff.Email = request.Email?.Trim();
         staff.Notes = request.Notes?.Trim();
         staff.IsActive = request.IsActive;
-        staff.EmploymentStatus = request.EmploymentStatus;
+        staff.EmploymentStatus = normalizedStatus;
         staff.RatingAverage = request.RatingAverage ?? staff.RatingAverage;
         staff.RatingCount = request.RatingCount ?? staff.RatingCount;
         staff.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync(cancellationToken);
-        await UpsertLinksAndCompensationAsync(staff.Id, orgId.Value, request, cancellationToken);
+        await UpsertLinksAndCompensationAsync(staff.Id, orgId.Value, request, normalizedCompensationType, fixedSalary, hourlyRate, commissionPercent, cancellationToken);
         return await GetById(staff.Id, cancellationToken);
     }
 
@@ -270,7 +317,7 @@ public class StaffController : ControllerBase
             "active" => source.Where(x => x.IsActive && x.EmploymentStatus.Equals("Active", StringComparison.OrdinalIgnoreCase)).ToList(),
             "available" => source.Where(x => x.IsActive && x.EmploymentStatus.Equals("Active", StringComparison.OrdinalIgnoreCase) && x.AppointmentsToday == 0).ToList(),
             "busy" => source.Where(x => x.IsActive && x.EmploymentStatus.Equals("Active", StringComparison.OrdinalIgnoreCase) && x.AppointmentsToday > 0).ToList(),
-            "on-leave" => source.Where(x => x.EmploymentStatus.Equals("OnLeave", StringComparison.OrdinalIgnoreCase)).ToList(),
+            "on-leave" => source.Where(x => x.EmploymentStatus.Equals("Vacation", StringComparison.OrdinalIgnoreCase)).ToList(),
             "admin" => source.Where(x => x.Roles.Any(r => r.Code == "admin")).ToList(),
             "specialist" => source.Where(x => x.Roles.Any(r => r.Code == "specialist")).ToList(),
             "owner" => source.Where(x => x.Roles.Any(r => r.Code == "owner")).ToList(),
@@ -281,10 +328,20 @@ public class StaffController : ControllerBase
         };
     }
 
-    private async Task UpsertLinksAndCompensationAsync(Guid staffId, Guid orgId, UpsertStaffRequest request, CancellationToken cancellationToken)
+    private async Task UpsertLinksAndCompensationAsync(
+        Guid staffId,
+        Guid orgId,
+        UpsertStaffRequest request,
+        string compensationType,
+        decimal? fixedSalary,
+        decimal? hourlyRate,
+        decimal? commissionPercent,
+        CancellationToken cancellationToken)
     {
-        var roleIds = await _db.StaffRoles.Where(r => r.OrganizationId == orgId && request.RoleIds.Contains(r.Id)).Select(r => r.Id).ToListAsync(cancellationToken);
-        var specIds = await _db.StaffSpecializations.Where(s => s.OrganizationId == orgId && request.SpecializationIds.Contains(s.Id)).Select(s => s.Id).ToListAsync(cancellationToken);
+        var requestRoleIds = request.RoleIds ?? Array.Empty<Guid>();
+        var requestSpecIds = request.SpecializationIds ?? Array.Empty<Guid>();
+        var roleIds = await _db.StaffRoles.Where(r => r.OrganizationId == orgId && requestRoleIds.Contains(r.Id)).Select(r => r.Id).ToListAsync(cancellationToken);
+        var specIds = await _db.StaffSpecializations.Where(s => s.OrganizationId == orgId && requestSpecIds.Contains(s.Id)).Select(s => s.Id).ToListAsync(cancellationToken);
 
         var currentRoles = _db.StaffRoleLinks.Where(x => x.StaffId == staffId);
         _db.StaffRoleLinks.RemoveRange(currentRoles);
@@ -294,39 +351,132 @@ public class StaffController : ControllerBase
         _db.StaffSpecializationLinks.RemoveRange(currentSpecs);
         _db.StaffSpecializationLinks.AddRange(specIds.Select(id => new StaffSpecializationLink { StaffId = staffId, SpecializationId = id, CreatedAt = DateTime.UtcNow }));
 
-        if (request.Compensation is not null)
+        var latest = await _db.StaffCompensations.Where(x => x.StaffId == staffId).OrderByDescending(x => x.EffectiveFrom).FirstOrDefaultAsync(cancellationToken);
+        if (latest is null ||
+            !string.Equals(latest.CompensationType, compensationType, StringComparison.OrdinalIgnoreCase) ||
+            latest.FixedSalary != fixedSalary ||
+            latest.HourlyRate != hourlyRate ||
+            latest.CommissionPercent != commissionPercent)
         {
-            var latest = await _db.StaffCompensations.Where(x => x.StaffId == staffId).OrderByDescending(x => x.EffectiveFrom).FirstOrDefaultAsync(cancellationToken);
-            if (latest is null || latest.CompensationType != request.Compensation.CompensationType || latest.FixedSalary != request.Compensation.FixedSalary || latest.HourlyRate != request.Compensation.HourlyRate || latest.CommissionPercent != request.Compensation.CommissionPercent || latest.PerServiceAmount != request.Compensation.PerServiceAmount)
+            _db.StaffCompensations.Add(new StaffCompensation
             {
-                _db.StaffCompensations.Add(new StaffCompensation
-                {
-                    Id = Guid.NewGuid(),
-                    StaffId = staffId,
-                    CompensationType = request.Compensation.CompensationType,
-                    FixedSalary = request.Compensation.FixedSalary,
-                    HourlyRate = request.Compensation.HourlyRate,
-                    CommissionPercent = request.Compensation.CommissionPercent,
-                    PerServiceAmount = request.Compensation.PerServiceAmount,
-                    EffectiveFrom = request.Compensation.EffectiveFrom == default ? DateTime.UtcNow : request.Compensation.EffectiveFrom,
-                    EffectiveTo = request.Compensation.EffectiveTo,
-                    Notes = request.Compensation.Notes,
-                    CreatedAt = DateTime.UtcNow
-                });
+                Id = Guid.NewGuid(),
+                StaffId = staffId,
+                CompensationType = compensationType,
+                FixedSalary = fixedSalary,
+                HourlyRate = hourlyRate,
+                CommissionPercent = commissionPercent,
+                PerServiceAmount = null,
+                EffectiveFrom = DateTime.UtcNow,
+                EffectiveTo = null,
+                Notes = null,
+                CreatedAt = DateTime.UtcNow
+            });
 
-                _db.StaffCompensationHistories.Add(new StaffCompensationHistory
-                {
-                    Id = Guid.NewGuid(),
-                    StaffId = staffId,
-                    PreviousSnapshot = latest is null ? null : $"{latest.CompensationType}:{latest.FixedSalary}:{latest.HourlyRate}:{latest.CommissionPercent}:{latest.PerServiceAmount}",
-                    NewSnapshot = $"{request.Compensation.CompensationType}:{request.Compensation.FixedSalary}:{request.Compensation.HourlyRate}:{request.Compensation.CommissionPercent}:{request.Compensation.PerServiceAmount}",
-                    ChangedAt = DateTime.UtcNow,
-                    ChangedBy = User.Identity?.Name,
-                    Notes = request.Compensation.Notes
-                });
-            }
+            _db.StaffCompensationHistories.Add(new StaffCompensationHistory
+            {
+                Id = Guid.NewGuid(),
+                StaffId = staffId,
+                PreviousSnapshot = latest is null ? null : $"{latest.CompensationType}:{latest.FixedSalary}:{latest.HourlyRate}:{latest.CommissionPercent}:{latest.PerServiceAmount}",
+                NewSnapshot = $"{compensationType}:{fixedSalary}:{hourlyRate}:{commissionPercent}:",
+                ChangedAt = DateTime.UtcNow,
+                ChangedBy = User.Identity?.Name,
+                Notes = null
+            });
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static string? NormalizeEmploymentStatus(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return null;
+        }
+
+        var normalized = status.Trim();
+        if (string.Equals(normalized, "OnLeave", StringComparison.OrdinalIgnoreCase))
+        {
+            normalized = "Vacation";
+        }
+
+        return AllowedEmploymentStatuses.Contains(normalized) ? AllowedEmploymentStatuses.Single(x => x.Equals(normalized, StringComparison.OrdinalIgnoreCase)) : null;
+    }
+
+    private static string? NormalizeCompensationType(string? compensationType)
+    {
+        if (string.IsNullOrWhiteSpace(compensationType))
+        {
+            return null;
+        }
+
+        var normalized = compensationType.Trim();
+        normalized = normalized switch
+        {
+            "Fixed" => "FixedSalary",
+            "Hourly" => "HourlyRate",
+            _ => normalized
+        };
+
+        return AllowedCompensationTypes.Contains(normalized)
+            ? AllowedCompensationTypes.Single(x => x.Equals(normalized, StringComparison.OrdinalIgnoreCase))
+            : null;
+    }
+
+    private static (decimal? FixedSalary, decimal? HourlyRate, decimal? CommissionPercent) NormalizeCompensationValues(string compensationType, decimal? fixedSalary, decimal? hourlyRate, decimal? commissionPercent)
+    {
+        return compensationType switch
+        {
+            "FixedSalary" => (fixedSalary, null, null),
+            "HourlyRate" => (null, hourlyRate, null),
+            "Commission" => (null, null, commissionPercent),
+            _ => (null, null, null)
+        };
+    }
+
+    private static StaffCompensationDto ToCompensationDto(StaffCompensation compensation)
+    {
+        var normalizedCompensationType = NormalizeCompensationType(compensation.CompensationType) ?? "FixedSalary";
+        var (fixedSalary, hourlyRate, commissionPercent) = NormalizeCompensationValues(normalizedCompensationType, compensation.FixedSalary, compensation.HourlyRate, compensation.CommissionPercent);
+        return new StaffCompensationDto(
+            normalizedCompensationType,
+            fixedSalary,
+            hourlyRate,
+            commissionPercent,
+            null,
+            compensation.EffectiveFrom,
+            compensation.EffectiveTo,
+            compensation.Notes);
+    }
+
+    private static string? ValidateRequest(UpsertStaffRequest request, decimal? fixedSalary, decimal? hourlyRate, decimal? commissionPercent)
+    {
+        if (string.IsNullOrWhiteSpace(request.FirstName))
+        {
+            return "FirstName is required.";
+        }
+
+        if (string.IsNullOrWhiteSpace(request.LastName))
+        {
+            return "LastName is required.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Email) && !EmailRegex.IsMatch(request.Email.Trim()))
+        {
+            return "Email format is invalid.";
+        }
+
+        var normalizedCompensationType = NormalizeCompensationType(request.CompensationType) ?? "FixedSalary";
+        return normalizedCompensationType switch
+        {
+            "FixedSalary" when fixedSalary is null => "FixedSalary is required for FixedSalary compensation type.",
+            "FixedSalary" when fixedSalary < 0 => "FixedSalary cannot be negative.",
+            "HourlyRate" when hourlyRate is null => "HourlyRate is required for HourlyRate compensation type.",
+            "HourlyRate" when hourlyRate < 0 => "HourlyRate cannot be negative.",
+            "Commission" when commissionPercent is null => "CommissionPercent is required for Commission compensation type.",
+            "Commission" when commissionPercent < 0 || commissionPercent > 100 => "CommissionPercent must be between 0 and 100.",
+            _ => null
+        };
     }
 }
