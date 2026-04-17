@@ -67,6 +67,17 @@ public class StaffController : ControllerBase
             _staffService.GetCompensationTypeOptions().Select(x => new EnumOptionDto(x.Id, x.Name)).ToArray()));
     }
 
+
+    [HttpGet("lookups")]
+    public ActionResult<object> GetLookups()
+    {
+        return Ok(new
+        {
+            statuses = _staffService.GetStatusOptions().Select(x => new EnumOptionDto(x.Id, x.Name)).ToArray(),
+            compensationTypes = _staffService.GetCompensationTypeOptions().Select(x => new EnumOptionDto(x.Id, x.Name)).ToArray()
+        });
+    }
+
     [HttpGet]
     public async Task<ActionResult<StaffListResponseDto>> Get([FromQuery] string? search, [FromQuery] string? filter = "all", CancellationToken cancellationToken = default)
     {
@@ -330,7 +341,7 @@ public class StaffController : ControllerBase
     private StaffCompensationDto ToCompensationDto(StaffCompensation compensation)
         => new((int)compensation.CompensationType, _staffService.GetCompensationTypeName(compensation.CompensationType), compensation.FixedSalary, compensation.HourlyRate, compensation.CommissionPercent, null, compensation.EffectiveFrom, compensation.EffectiveTo, compensation.Notes);
 
-    private static StaffUpsertInput ToDomainInput(UpsertStaffRequest request) => new()
+    private static StaffInsertInput ToDomainInput(UpsertStaffRequest request) => new()
     {
         BranchId = request.BranchId,
         HasCrmAccess = request.HasCrmAccess,

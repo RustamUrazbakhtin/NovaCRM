@@ -7,7 +7,7 @@ public sealed class StaffService : IStaffService
 {
     private static readonly Regex EmailRegex = new(@"^[^\s@]+@[^\s@]+\.[^\s@]+$", RegexOptions.Compiled);
 
-    public StaffItem BuildForUpsert(StaffUpsertInput input, Guid? existingId = null)
+    public StaffItem BuildForUpsert(StaffInsertInput input, Guid? existingId = null)
     {
         if (string.IsNullOrWhiteSpace(input.FirstName)) throw new StaffValidationException("FirstName is required.");
         if (string.IsNullOrWhiteSpace(input.LastName)) throw new StaffValidationException("LastName is required.");

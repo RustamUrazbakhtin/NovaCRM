@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NovaCRM.Data.Model;
+using NovaCRM.Domain.Staff.Model;
 
 namespace NovaCRM.Data;
 
@@ -119,7 +120,7 @@ public partial class ApplicationDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.FirstName).IsRequired();
             entity.Property(e => e.LastName).IsRequired();
-            entity.Property(e => e.EmploymentStatus).HasConversion<int>().HasDefaultValue(1);
+            entity.Property(e => e.EmploymentStatus).HasConversion<int>().HasDefaultValue(StaffStatusEnum.Active);
             entity.Property(e => e.HasCrmAccess).HasDefaultValue(false);
             entity.Property(e => e.RatingAverage).HasPrecision(4, 2).HasDefaultValue(0m);
             entity.Property(e => e.RatingCount).HasDefaultValue(0);
@@ -169,7 +170,7 @@ public partial class ApplicationDbContext : DbContext
         modelBuilder.Entity<StaffCompensation>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.CompensationType).HasConversion<int>().IsRequired();
+            entity.Property(e => e.CompensationType).HasConversion<int>().HasDefaultValue(CompensationTypeEnum.FixedSalary).IsRequired();
             entity.Property(e => e.FixedSalary).HasPrecision(12, 2);
             entity.Property(e => e.HourlyRate).HasPrecision(12, 2);
             entity.Property(e => e.CommissionPercent).HasPrecision(5, 2);
